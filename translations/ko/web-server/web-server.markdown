@@ -503,18 +503,17 @@ Python이 Windows 라인 엔딩처럼 보이는 바이트 시퀀스를 변경하
         self.wfile.write(content)
 ```
 
-파일을 찾을 수 없을 때 `ServerException`을 발생시키지 않는다는 점에 주목하세요,
-but generate an error page instead.
-A `ServerException` is meant to signal an internal error in the server code,
-i.e.,
-something that *we* got wrong.
-The error page created by `handle_error`,
-on the other hand,
-appears when the *user* got something wrong,
-i.e.,
-sent us the URL of a file that doesn't exist. [^handleerror]
+파일을 찾을 수 없을 때 `ServerException`을 발생시키지 않고,
+대신 오류 페이지를 생성한다는 점에 주목하세요.
+`ServerException`은 서버 코드의 내부 오류를 알리기 위한 것입니다,
+즉,
+*우리가* 잘못한 것을 의미합니다.
+반면에 `handle_error`에 의해 생성된 오류 페이지는
+*사용자가* 무언가를 잘못했을 때 나타납니다,
+즉,
+존재하지 않는 파일의 URL을 우리에게 보냈을 때입니다. [^handleerror]
 
-[^handleerror]: We're going to use `handle_error` several times throughout this chapter, including several cases where the status code `404` isn't appropriate. As you read on, try to think of how you would extend this program so that the status response code can be supplied easily in each case.
+[^handleerror]: 이 장 전체에서 `handle_error`를 여러 번 사용할 것인데, 상태 코드 `404`가 적절하지 않은 여러 경우가 포함됩니다. 읽어나가면서, 각 경우에 상태 응답 코드를 쉽게 제공할 수 있도록 이 프로그램을 어떻게 확장할지 생각해보세요.
 
 ## 디렉터리 목록 표시
 
@@ -615,17 +614,16 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     ...everything else as before...
 ```
 
-Now,
-on the surface this has made our server more complicated,
-not less:
-the file has grown from 74 lines to 99,
-and there's an extra level of indirection
-without any new functionality.
-The benefit comes when we go back to the task that started this chapter
-and try to teach our server to serve up
-the `index.html` page for a directory if there is one,
-and a listing of the directory if there isn't.
-The handler for the former is:
+이제,
+표면적으로는 이것이 우리 서버를 더 복잡하게 만들었습니다,
+덜 복잡하게 한 것이 아니라:
+파일이 74줄에서 99줄로 늘어났고,
+새로운 기능 없이 추가적인 간접 계층이 있습니다.
+이점은 이 장을 시작한 작업으로 돌아가서
+디렉터리에 `index.html` 페이지가 있으면 그것을 제공하고,
+없으면 디렉터리 목록을 제공하도록
+서버를 가르치려고 할 때 나타납니다.
+전자를 위한 핸들러는 다음과 같습니다:
 
 ```python
 class case_directory_index_file(object):
@@ -642,13 +640,13 @@ class case_directory_index_file(object):
         handler.handle_file(self.index_path(handler))
 ```
 
-Here,
-the helper method `index_path` constructs the path to the `index.html` file;
-putting it in the case handler prevents clutter in the main `RequestHandler`.
-`test` checks whether the path is a directory containing an `index.html` page,
-and `act` asks the main request handler to serve that page.
+여기서,
+도우미 메서드 `index_path`는 `index.html` 파일의 경로를 구성합니다;
+이를 케이스 핸들러에 넣으면 메인 `RequestHandler`의 혼란을 방지합니다.
+`test`는 경로가 `index.html` 페이지를 포함하는 디렉터리인지 확인하고,
+`act`는 메인 요청 핸들러에게 그 페이지를 제공하도록 요청합니다.
 
-The only change needed to `RequestHandler` is to add a `case_directory_index_file` object to our `Cases` list:
+`RequestHandler`에 필요한 유일한 변경사항은 `Cases` 리스트에 `case_directory_index_file` 객체를 추가하는 것입니다:
 
 ```python 
     Cases = [case_no_file(),
@@ -657,11 +655,11 @@ The only change needed to `RequestHandler` is to add a `case_directory_index_fil
              case_always_fail()]
 ```
 
-What about directories that don't contain `index.html` pages?
-The test is the same as the one above
-with a `not` strategically inserted,
-but what about the `act` method?
-What should it do?
+`index.html` 페이지를 포함하지 않는 디렉터리는 어떨까요?
+테스트는 위의 것과 동일하지만
+전략적으로 `not`이 삽입되었고,
+`act` 메서드는 어떨까요?
+무엇을 해야 할까요?
 
 ```python
 class case_directory_no_index_file(object):
@@ -678,15 +676,15 @@ class case_directory_no_index_file(object):
         ???
 ```
 
-It seems we've backed ourselves into a corner.
-Logically,
-the `act` method should create and return the directory listing,
-but our existing code doesn't allow for that:
-`RequestHandler.do_GET` calls `act`,
-but doesn't expect or handle a return value from it.
-For now,
-let's add a method to `RequestHandler` to generate a directory listing,
-and call that from the case handler's `act`:
+우리가 다시 막다른 지경에 빠진 것 같습니다.
+논리적으로,
+`act` 메서드는 디렉터리 목록을 생성하고 반환해야 하지만,
+기존 코드는 이를 허용하지 않습니다:
+`RequestHandler.do_GET`은 `act`를 호출하지만,
+그것으로부터의 반환 값을 기대하거나 처리하지 않습니다.
+일단은,
+디렉터리 목록을 생성하는 메서드를 `RequestHandler`에 추가하고,
+케이스 핸들러의 `act`에서 그것을 호출해봅시다:
 
 ```python 
 class case_directory_no_index_file(object):
@@ -725,21 +723,20 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.handle_error(msg)
 ```
 
-## The CGI Protocol
+## CGI 프로토콜
 
-Of course,
-most people won't want to edit the source of their web server
-in order to add new functionality.
-To save them from having to do so,
-servers have always supported a mechanism called
-the Common Gateway Interface (CGI),
-which provides a standard way for a web server to run an external program
-in order to satisfy a request.
+물론,
+대부분의 사람들은 새로운 기능을 추가하기 위해
+웹 서버의 소스 코드를 편집하고 싶어하지 않을 것입니다.
+그들이 그렇게 할 필요가 없도록 하기 위해,
+서버들은 항상 CGI(Common Gateway Interface)라고 불리는
+메커니즘을 지원해왔는데,
+이는 웹 서버가 요청을 만족시키기 위해
+외부 프로그램을 실행하는 표준적인 방법을 제공합니다.
 
-For example,
-suppose we want the server to be able to display the local time
-in an HTML page.
-We can do this in a standalone program with just a few lines of code:
+예를 들어,
+서버가 HTML 페이지에 로컬 시간을 표시할 수 있기를 원한다고 가정해봅시다.
+단지 보 줄의 코드로 독립실행형 프로그램에서 이를 수행할 수 있습니다:
 
 ```python
 from datetime import datetime
@@ -751,8 +748,8 @@ print '''\
 </html>'''.format(datetime.now())
 ```
 
-In order to get the web server to run this program for us,
-we add this case handler:
+웹 서버가 우리를 위해 이 프로그램을 실행하도록 하기 위해,
+이 케이스 핸들러를 추가합니다:
 
 ```python 
 class case_cgi_file(object):
@@ -766,9 +763,9 @@ class case_cgi_file(object):
         handler.run_cgi(handler.full_path)
 ```
 
-The test is simple:
-does the file path end with `.py`? 
-If so, `RequestHandler` runs this program.
+테스트는 간단합니다:
+파일 경로가 `.py`로 끝나는가?
+그렇다면, `RequestHandler`가 이 프로그램을 실행합니다.
 
 ```python 
     def run_cgi(self, full_path):
@@ -780,42 +777,41 @@ If so, `RequestHandler` runs this program.
         self.send_content(data)
 ```
 
-This is horribly insecure:
-if someone knows the path to a Python file on our server,
-we're just letting them run it
-without worrying about what data it has access to,
-whether it might contain an infinite loop,
-or anything else.[^popen]
+이것은 끔찍스럽게 비보안적입니다:
+누군가가 우리 서버의 Python 파일 경로를 알고 있다면,
+그것이 어떤 데이터에 액세스할 수 있는지,
+무한 루프를 포함할 수 있는지,
+또는 다른 어떤 것에 대한 걱정 없이
+우리는 단순히 그것을 실행하도록 냉니다.[^popen]
 
-[^popen]: Our code also uses the `popen2` library function, which has been deprecated in favor of the `subprocess` module. However, `popen2` was the less distracting tool to use in this example.
+[^popen]: 우리 코드는 `subprocess` 모듈을 선호하여 더 이상 사용되지 않는 `popen2` 라이브러리 함수도 사용합니다. 하지만 `popen2`는 이 예시에서 사용하기에 덜 주의를 산만하게 하는 도구였습니다.
 
-Sweeping that aside,
-the core idea is simple:
+그것을 제쳐두고,
+핵심 아이디어는 간단합니다:
 
-1.  Run the program in a subprocess.
-2.  Capture whatever that subprocess sends to standard output.
-3.  Send that back to the client that made the request.
+1.  프로그램을 서브프로세스에서 실행합니다.
+2.  그 서브프로세스가 표준 출력으로 보내는 모든 것을 캐처합니다.
+3.  요청을 한 클라이언트에게 그것을 다시 보냅니다.
 
-The full CGI protocol is much richer than this&mdash;in particular,
-it allows for parameters in the URL,
-which the server passes into the program being run&mdash;but
-those details don't affect the overall architecture of the system...
+완전한 CGI 프로토콜은 이보다 훨씬 풍부합니다&mdash;특히,
+URL에서 매개변수를 허용하여
+서버가 실행 중인 프로그램에 전달합니다&mdash;하지만
+그러한 세부사항들은 시스템의 전체 아키텍처에 영향을 주지 않습니다...
 
-...which is once again becoming rather tangled.
-`RequestHandler` initially had one method,
-`handle_file`,
-for dealing with content.
-We have now added two special cases
-in the form of `list_dir` and `run_cgi`.
-These three methods don't really belong where they are,
-since they're primarily used by others.
+...다시 한 번 상당히 얽혀가고 있는 시스템말입니다.
+`RequestHandler`는 처음에 콘텐츠를 처리하기 위한
+하나의 메서드인 `handle_file`을 가지고 있었습니다.
+이제 우리는 `list_dir`과 `run_cgi` 형태로
+두 개의 특수 케이스를 추가했습니다.
+이 세 메서드들은 주로 다른 것들에 의해 사용되므로,
+실제로는 있는 곳에 속하지 않습니다.
 
-The fix is straightforward:
-create a parent class for all our case handlers,
-and move other methods to that class
-if (and only if) they are shared by two or more handlers.
-When we're done,
-the `RequestHandler` class looks like this:
+수정은 간단합니다:
+모든 케이스 핸들러를 위한 부모 클래스를 생성하고,
+두 개 이상의 핸들러에 의해 공유되는 경우에만
+다른 메서드들을 그 클래스로 이동시킵니다.
+완료되면,
+`RequestHandler` 클래스는 다음과 같이 보입니다:
 
 ```python
 class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
@@ -868,7 +864,7 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.wfile.write(content)
 ```
 
-\noindent while the parent class for our case handlers is:
+\noindent 그리고 케이스 핸들러들의 부모 클래스는 다음과 같습니다:
 
 ```python 
 class base_case(object):
@@ -893,8 +889,8 @@ class base_case(object):
         assert False, 'Not implemented.'
 ```
 
-\noindent and the handler for an existing file
-(just to pick an example at random) is:
+\noindent 그리고 기존 파일을 위한 핸들러는
+(무작위로 예시를 선택하자면) 다음과 같습니다:
 
 ```python 
 class case_existing_file(base_case):
