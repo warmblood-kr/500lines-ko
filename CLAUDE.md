@@ -91,6 +91,14 @@ The build system detects language via `LANGUAGE` environment variable:
 4. **Test builds**: Run `LANGUAGE=ko python3 build.py [chapter] --epub` after changes
 5. **Commit frequently**: Small, focused commits with clear messages
 
+### GitHub Context Reading Principle
+**ALWAYS read complete context including comments:**
+- `gh issue view [number]` - Shows full issue INCLUDING all comments
+- `gh pr view [number]` - Shows full PR INCLUDING all comments  
+- **Comments contain latest progress** - Issue/PR bodies may be outdated
+- **Decision history in comments** - Implementation choices and changes
+- **Session continuity** - Previous work and next steps documented in comments
+
 ### Branch Strategy
 - `master`: Stable with working build system
 - Feature branches: `translate/[chapter-name]` for individual chapters
@@ -219,19 +227,21 @@ LANGUAGE=ko python3 build.py web-server --epub
 - Translation sample started (web-server chapter: ~8%)
 - Style guide calibration ([PR #3](https://github.com/warmblood-kr/500lines-ko/pull/3))
 - Project documentation and workflow established
+- **Translation quality fixes applied** - Fixed awkward Korean expressions
 
 ### 🔄 **Current Status:**
 - **Infrastructure**: ✅ Ready for full translation work
-- **Style Sample**: 🔄 Ready for review in PR #3  
+- **Style Sample**: ✅ Quality improved, ready for review in PR #3  
 - **Build System**: ✅ Working with Korean content
 - **Progress**: ~5% overall (infrastructure + sample)
+- **Translation Quality**: ✅ Natural Korean flow established
 
 ### 🎯 **Next Session Priorities:**
-1. Review translation quality in PR #3
-2. Finalize Korean style guide based on feedback
-3. Complete web-server chapter translation
-4. Test full build pipeline with Korean content
-5. Begin next high-priority chapter
+1. Complete remaining web-server chapter sections (~92% remaining)
+2. Apply established translation standards consistently
+3. Test full build pipeline with complete Korean chapter
+4. Begin next high-priority chapter (interpreter or template-engine)
+5. Refine translation workflow based on completed chapter
 
 ### 📋 **Active Tasks:**
 - **Main Project**: [GitHub Issue #1](https://github.com/warmblood-kr/500lines-ko/issues/1)
