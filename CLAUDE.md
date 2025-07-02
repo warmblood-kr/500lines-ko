@@ -203,8 +203,10 @@ LANGUAGE=ko python3 build.py web-server --epub
 4. **Final Verification**: `grep -n "^[A-Z][a-z].*\.$" file.markdown` to find remaining English
 
 ### Quality Standards
-- **Style Guide**: Established through web-server chapter (see PR #3)
+- **Style Guide**: Comprehensive Korean translation guidelines ([GitHub Issue #4](https://github.com/warmblood-kr/500lines-ko/issues/4))
 - **Verification Required**: Zero untranslated English paragraphs in final version
+- **Natural Korean**: Prioritize natural expressions over literal translations
+- **Technical Accuracy**: Preserve all technical concepts and relationships
 - **Tool Consistency**: Stick with one primary tool per session when possible
 - **Code Preservation**: All examples and technical content unchanged
 
