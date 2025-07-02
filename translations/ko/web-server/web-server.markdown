@@ -53,25 +53,22 @@ HTTP는 의도적으로 단순합니다:
 
 \aosafigure[240pt]{web-server-images/http-cycle.png}{The HTTP Cycle}{500l.web-server.cycle}
 
-The most important thing about an HTTP request is that it's just text:
-any program that wants to can create one or parse one.
-In order to be understood,
-though,
-that text must have the parts shown in \aosafigref{500l.web-server.request}.
+HTTP 요청에서 가장 중요한 것은 이것이 단순한 텍스트라는 점입니다:
+원하는 프로그램이라면 누구든지 HTTP 요청을 생성하거나 파싱할 수 있습니다.
+하지만 제대로 인식되려면,
+이 텍스트는 \aosafigref{500l.web-server.request}에 나타난 부분들을 가져야 합니다.
 
 \aosafigure[240pt]{web-server-images/http-request.png}{An HTTP Request}{500l.web-server.request}
 
-The HTTP method is almost always either "GET" (to fetch information)
-or "POST" (to submit form data or upload files).
-The URL specifies what the client wants;
-it is often a path to a file on disk,
-such as `/research/experiments.html`,
-but (and this is the crucial part)
-it's completely up to the server to decide what to do with it.
-The HTTP version is usually "HTTP/1.0" or "HTTP/1.1";
-the differences between the two don't matter to us.
+HTTP 메서드는 거의 항상 "GET"(정보를 가져오기 위해) 또는 "POST"(폼 데이터를 제출하거나 파일을 업로드하기 위해) 중 하나입니다.
+URL은 클라이언트가 원하는 것을 지정합니다;
+종종 `/research/experiments.html`과 같이 디스크상의 파일 경로이지만,
+(이 부분이 핵심입니다)
+그것을 어떻게 처리할지는 완전히 서버가 결정하는 것입니다.
+HTTP 버전은 보통 "HTTP/1.0" 또는 "HTTP/1.1"입니다;
+이 둘 사이의 차이는 우리에게는 중요하지 않습니다.
 
-HTTP headers are key/value pairs like the three shown below:
+HTTP 헤더는 아래에 나타난 세 개의 예시와 같은 키/값 쌍입니다:
 
 ```
 Accept: text/html
@@ -79,98 +76,96 @@ Accept-Language: en, fr
 If-Modified-Since: 16-May-2005
 ```
 
-Unlike the keys in hash tables,
-keys may appear any number of times in HTTP headers.
-This allows a request to do things like
-specify that it's willing to accept several types of content.
+해시 테이블의 키와는 달리,
+HTTP 헤더에서는 키가 몇 번이든 나타날 수 있습니다.
+이를 통해 요청은 여러 유형의 콘텐츠를 받아들일 의향이 있다고
+명시하는 것과 같은 일들을 할 수 있습니다.
 
-Finally,
-the body of the request is any extra data associated with the request.
-This is used when submitting data via web forms,
-when uploading files,
-and so on.
-There must be a blank line between the last header and the start of the body
-to signal the end of the headers.
+마지막으로,
+요청의 본문(body)은 요청과 연관된 추가 데이터입니다.
+이는 웹 폼을 통해 데이터를 제출할 때,
+파일을 업로드할 때,
+그리고 기타 등등에 사용됩니다.
+헤더의 끝을 알리기 위해
+마지막 헤더와 본문의 시작 사이에는 반드시 빈 줄이 있어야 합니다.
 
+`Content-Length`라고 불리는 헤더는
+서버에게 요청의 본문에서 읽어야 할 바이트 수를 알려줍니다.
 
-One header,
-called `Content-Length`,
-tells the server how many bytes to expect to read in the body of the request.
-
-HTTP responses are formatted like HTTP requests (\aosafigref{500l.web-server.response}):
+HTTP 응답은 HTTP 요청과 같은 형식을 갖습니다(\aosafigref{500l.web-server.response}):
 
 \aosafigure[240pt]{web-server-images/http-response.png}{An HTTP Response}{500l.web-server.response}
 
-The version, headers, and body have the same form and meaning.
-The status code is a number indicating what happened when the request was processed:
-200 means "everything worked",
-404 means "not found",
-and other codes have other meanings.
-The status phrase repeats that information in a human-readable phrase like "OK" or "not found".
+버전, 헤더, 본문은 같은 형태와 의미를 갖습니다.
+상태 코드는 요청이 처리될 때 무엇이 일어났는지를 나타내는 숫자입니다:
+200은 "모든 것이 정상적으로 작동했다"는 뜻이고,
+404는 "찾을 수 없다"는 뜻이며,
+다른 코드들은 다른 의미를 갖습니다.
+상태 구문은 "OK"나 "not found"와 같이 사람이 읽을 수 있는 구문으로 그 정보를 반복합니다.
 
-For the purposes of this chapter
-there are only two other things we need to know about HTTP.
+이 장의 목적상
+HTTP에 대해 알아야 할 다른 것들은 단 두 가지뿐입니다.
 
-The first is that it is *stateless*:
-each request is handled on its own,
-and the server doesn't remember anything between one request and the next.
-If an application wants to keep track of something like a user's identity,
-it must do so itself.
+첫 번째는 HTTP가 *무상태(stateless)*라는 것입니다:
+각 요청은 독립적으로 처리되며,
+서버는 한 요청과 다음 요청 사이에 아무것도 기억하지 않습니다.
+애플리케이션이 사용자의 신원과 같은 정보를 추적하고 싶다면,
+스스로 그렇게 해야 합니다.
 
-The usual way to do this is with a cookie,
-which is a short character string that the server sends to the client,
-and the client later returns to the server.
-When a user performs some function that requires state to be saved across several requests,
-the server creates a new cookie,
-stores it in a database,
-and sends it to her browser.
-Each time her browser sends the cookie back,
-the server uses it to look up information about what the user is doing.
+이를 위한 일반적인 방법은 쿠키를 사용하는 것인데,
+쿠키는 서버가 클라이언트에게 보내는 짧은 문자열이며,
+클라이언트가 나중에 서버로 다시 돌려보냅니다.
+사용자가 여러 요청에 걸쳐 상태를 저장해야 하는 기능을 수행할 때,
+서버는 새로운 쿠키를 생성하고,
+이를 데이터베이스에 저장한 다음,
+사용자의 브라우저로 보냅니다.
+브라우저가 쿠키를 다시 보낼 때마다,
+서버는 이를 사용해 사용자가 무엇을 하고 있는지에 대한 정보를 조회합니다.
 
-The second thing we need to know about HTTP 
-is that a URL can be supplemented with parameters
-to provide even more information.
-For example,
-if we're using a search engine,
-we have to specify what our search terms are.
-We could add these to the path in the URL,
-but what we should do is add parameters to the URL.
-We do this by adding '?' to the URL
-followed by 'key=value' pairs separated by '&amp;'.
-For example,
-the URL `http://www.google.ca?q=Python`
-asks Google to search for pages related to Python:
-the key is the letter 'q',
-and the value is 'Python'.
-The longer query
-`http://www.google.ca/search?q=Python&amp;client=Firefox`
-tells Google that we're using Firefox,
-and so on.
-We can pass whatever parameters we want,
-but again,
-it's up to the application running on the web site to decide
-which ones to pay attention to,
-and how to interpret them.
+HTTP에 대해 알아야 할 두 번째는
+URL이 더 많은 정보를 제공하기 위해
+매개변수로 보완될 수 있다는 것입니다.
+예를 들어,
+검색 엔진을 사용한다면,
+검색어가 무엇인지 명시해야 합니다.
+이것들을 URL의 경로에 추가할 수도 있지만,
+해야 할 일은 URL에 매개변수를 추가하는 것입니다.
+URL에 '?'를 추가한 다음
+'&amp;'로 구분된 'key=value' 쌍들을 따라오게 하여 이를 수행합니다.
+예를 들어,
+URL `http://www.google.ca?q=Python`은
+Google에게 Python과 관련된 페이지를 검색하라고 요청합니다:
+키는 문자 'q'이고,
+값은 'Python'입니다.
+더 긴 쿼리인
+`http://www.google.ca/search?q=Python&amp;client=Firefox`는
+Google에게 우리가 Firefox를 사용하고 있다고 알려주며,
+이런 식으로 계속됩니다.
+원하는 매개변수는 무엇이든 전달할 수 있지만,
+다시 말하지만,
+어떤 것들에 주의를 기울일지,
+그리고 그것들을 어떻게 해석할지 결정하는 것은
+웹 사이트에서 실행되는 애플리케이션에 달려 있습니다.
 
-Of course,
-if '?' and '&amp;' are special characters,
-there must be a way to escape them,
-just as there must be a way to put a double quote character inside a character string
-delimited by double quotes.
-The URL encoding standard
-represents special characters using '%' followed by a 2-digit code,
-and replaces spaces with the '+' character.
-Thus,
-to search Google for "grade&nbsp;=&nbsp;A+" (with the spaces),
-we would use the URL `http://www.google.ca/search?q=grade+%3D+A%2B`.
+물론,
+'?'와 '&amp;'가 특수 문자라면,
+이들을 이스케이프하는 방법이 있어야 합니다.
+마치 큰따옴표로 구분된 문자열 안에
+큰따옴표 문자를 넣는 방법이 있어야 하는 것과 같습니다.
+URL 인코딩 표준은
+'%' 다음에 2자리 코드를 사용하여 특수 문자를 표현하고,
+공백을 '+' 문자로 바꿉니다.
+따라서,
+Google에서 "grade&nbsp;=&nbsp;A+" (공백 포함)를 검색하려면,
+URL `http://www.google.ca/search?q=grade+%3D+A%2B`를 사용해야 합니다.
 
-Opening sockets, constructing HTTP requests, and parsing responses is tedious,
-so most people use libraries to do most of the work.
-Python comes with such a library called `urllib2`
-(because it's a replacement for an earlier library called `urllib`),
-but it exposes a lot of plumbing that most people never want to care about.
-The [Requests](https://pypi.python.org/pypi/requests) library is an easier-to-use alternative to `urllib2`.
-Here's an example that uses it to download a page from the AOSA book site:
+소켓을 열고, HTTP 요청을 구성하고, 응답을 파싱하는 것은 지루한 일이므로,
+대부분의 사람들은 라이브러리를 사용해 대부분의 작업을 처리합니다.
+Python에는 `urllib2`라는 라이브러리가 함께 제공되는데
+(이는 `urllib`라는 이전 라이브러리의 대체재이기 때문입니다),
+하지만 이는 대부분의 사람들이 신경 쓰고 싶어하지 않는 많은 내부 구조를 노출합니다.
+[Requests](https://pypi.python.org/pypi/requests) 라이브러리는 `urllib2`보다 사용하기 쉬운 대안입니다.
+다음은 AOSA 도서 사이트에서 페이지를 다운로드하는 데 사용하는 예시입니다:
 
 ```python
 import requests
@@ -190,30 +185,30 @@ content length: 61
 </html>
 ```
 
-`request.get` sends an HTTP GET request to a server
-and returns an object containing the response.
-That object's `status_code` member is the response's status code;
-its `content_length` member  is the number of bytes in the response data,
-and `text` is the actual data
-(in this case, an HTML page).
+`request.get`은 서버에 HTTP GET 요청을 보내고
+응답을 담고 있는 객체를 반환합니다.
+이 객체의 `status_code` 멤버는 응답의 상태 코드이고;
+`content_length` 멤버는 응답 데이터의 바이트 수이며,
+`text`는 실제 데이터입니다
+(이 경우에는 HTML 페이지).
 
 ## Hello, Web
 
-We're now ready to write our first simple web server.
-The basic idea is simple:
+이제 첫 번째 간단한 웹 서버를 작성할 준비가 되었습니다.
+기본 아이디어는 간단합니다:
 
-1.  Wait for someone to connect to our server and send an HTTP request;
-2.  parse that request;
-3.  figure out what it's asking for;
-4.  fetch that data (or generate it dynamically);
-5.  format the data as HTML; and
-6.  send it back.
+1.  누군가가 우리 서버에 연결하여 HTTP 요청을 보낼 때까지 기다립니다;
+2.  그 요청을 파싱합니다;
+3.  무엇을 요청하고 있는지 파악합니다;
+4.  그 데이터를 가져옵니다 (또는 동적으로 생성합니다);
+5.  데이터를 HTML로 포맷합니다; 그리고
+6.  다시 보내줍니다.
 
-Steps 1, 2, and 6 are the same from one application to another,
-so the Python standard library has a module called `BaseHTTPServer`
-that does those for us.
-We just have to take care of steps 3-5,
-which we do in the little program below:
+1, 2, 6단계는 애플리케이션마다 동일하므로,
+Python 표준 라이브러리에는 `BaseHTTPServer`라는 모듈이 있어
+이를 대신 처리해줍니다.
+우리는 3-5단계만 처리하면 되는데,
+아래의 작은 프로그램에서 이를 수행합니다:
 
 ```python
 import BaseHTTPServer
@@ -246,69 +241,68 @@ if __name__ == '__main__':
     server.serve_forever()
 ```
 
-The library's `BaseHTTPRequestHandler` class
-takes care of parsing the incoming HTTP request
-and deciding what method it contains.
-If the method is GET,
-the class calls a method named `do_GET`.
-Our class `RequestHandler` overrides this method
-to dynamically generate a simple page:
-the text is stored in the class-level variable `Page`,
-which we send back to the client after sending
-a 200 response code,
-a `Content-Type` header telling the client to interpret our data as HTML,
-and the page's length.
-(The `end_headers` method call inserts the blank line
-that separates our headers from the page itself.)
+라이브러리의 `BaseHTTPRequestHandler` 클래스는
+들어오는 HTTP 요청을 파싱하고
+어떤 메서드를 포함하고 있는지 결정하는 역할을 합니다.
+메서드가 GET이면,
+클래스는 `do_GET`이라는 메서드를 호출합니다.
+우리의 `RequestHandler` 클래스는 이 메서드를 오버라이드하여
+간단한 페이지를 동적으로 생성합니다:
+텍스트는 클래스 수준 변수인 `Page`에 저장되며,
+200 응답 코드,
+클라이언트에게 우리 데이터를 HTML로 해석하라고 알려주는 `Content-Type` 헤더,
+그리고 페이지의 길이를 보낸 후에
+이를 클라이언트에게 다시 보냅니다.
+(`end_headers` 메서드 호출은 헤더와 페이지 자체를 구분하는
+빈 줄을 삽입합니다.)
 
-But `RequestHandler` isn't the whole story:
-we still need the last three lines to actually start a server running.
-The first of these lines defines the server's address as a tuple:
-the empty string means "run on the current machine",
-and 8080 is the port.
-We then create an instance of \newline `BaseHTTPServer.HTTPServer`
-with that address and the name of our request handler class as parameters,
-then ask it to run forever
-(which in practice means until we kill it with Control-C).
+하지만 `RequestHandler`가 전부는 아닙니다:
+실제로 서버를 시작하려면 마지막 세 줄이 여전히 필요합니다.
+이 줄들 중 첫 번째는 서버의 주소를 튜플로 정의합니다:
+빈 문자열은 "현재 머신에서 실행"을 의미하고,
+8080은 포트입니다.
+그다음 그 주소와 요청 핸들러 클래스의 이름을 매개변수로 하여
+`BaseHTTPServer.HTTPServer`의 인스턴스를 생성한 다음,
+영원히 실행하도록 요청합니다
+(실제로는 Control-C로 종료할 때까지를 의미합니다).
 
-If we run this program from the command line,
-it doesn't display anything:
+이 프로그램을 명령줄에서 실행하면,
+아무것도 표시되지 않습니다:
 
 ```bash
 $ python server.py
 ```
 
-If we then go to `http://localhost:8080` with our browser,
-though,
-we get this in our browser:
+하지만 브라우저로 `http://localhost:8080`에 접속하면,
+브라우저에서 다음과 같이 나타납니다:
 
 ```
 Hello, web!
 ```
 
-and this in our shell:
+그리고 셸에서는 다음과 같이 나타납니다:
 
 ```
 127.0.0.1 - - [24/Feb/2014 10:26:28] "GET / HTTP/1.1" 200 -
 127.0.0.1 - - [24/Feb/2014 10:26:28] "GET /favicon.ico HTTP/1.1" 200 -
 ```
 
-The first line is straightforward:
-since we didn't ask for a particular file,
-our browser has asked for '/' (the root directory of whatever the server is serving).
-The second line appears because
-our browser automatically sends a second request
-for an image file called `/favicon.ico`,
-which it will display as an icon in the address bar if it exists.
+첫 번째 줄은 간단합니다:
+특정 파일을 요청하지 않았으므로,
+브라우저는 '/' (서버가 제공하는 것의 루트 디렉터리)를 요청했습니다.
+두 번째 줄이 나타나는 이유는
+브라우저가 자동으로 `/favicon.ico`라는 이미지 파일에 대한
+두 번째 요청을 보내기 때문인데,
+이 파일이 존재하면 주소 표시줄에 아이콘으로 표시됩니다.
 
-## Displaying Values
+## 값 표시하기
 
-Let's modify our web server to display some of the values
-included in the HTTP request.
-(We'll do this pretty frequently when debugging,
-so we might as well get some practice.)
-To keep our code clean,
-we'll separate creating the page from sending it:
+HTTP 요청에 포함된 일부 값들을 표시하도록
+웹 서버를 수정해봅시다.
+(디버깅할 때 이를 꽤 자주 할 것이므로,
+연습해볼 만합니다.)
+코드를 깔끔하게 유지하기 위해,
+페이지 생성과 전송을 분리하겠습니다:
 
 ```python
 class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
@@ -326,7 +320,7 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         # ...fill in...
 ```
 
-`send_page` is pretty much what we had before:
+`send_page`는 이전에 가지고 있던 것과 거의 같습니다:
 
 ```python
     def send_page(self, page):
@@ -337,9 +331,9 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.wfile.write(page)
 ```
 
-The template for the page we want to display is
-just a string containing an HTML table
-with some formatting placeholders:
+표시하고 싶은 페이지의 템플릿은
+몇 가지 포맷팅 플레이스홀더가 있는
+HTML 테이블을 포함하는 단순한 문자열입니다:
 
 ```python
     Page = '''\
@@ -358,7 +352,7 @@ with some formatting placeholders:
 '''
 ```
 
-\noindent and the method that fills this in is:
+\noindent 그리고 이를 채우는 메서드는 다음과 같습니다:
 
 ```python
     def create_page(self):
@@ -373,14 +367,14 @@ with some formatting placeholders:
         return page
 ```
 
-The main body of the program is unchanged:
-as before,
-it creates an instance of the `HTTPServer` class
-with an address and this request handler as parameters,
-then serves requests forever.
-If we run it and send a request from a browser
-for `http://localhost:8080/something.html`,
-we get:
+프로그램의 메인 부분은 변경되지 않았습니다:
+이전과 같이,
+주소와 이 요청 핸들러를 매개변수로 하여
+`HTTPServer` 클래스의 인스턴스를 생성한 다음,
+영원히 요청을 처리합니다.
+브라우저에서 `http://localhost:8080/something.html`에 대한
+요청을 실행하고 보내면,
+다음과 같이 나타납니다:
 
 ```
   Date and time  Mon, 24 Feb 2014 17:17:12 GMT
@@ -390,19 +384,19 @@ we get:
   Path           /something.html
 ```
 
-Notice that we do *not* get a 404 error,
-even though the page `something.html` doesn't exist as a file on disk.
-That's because a web server is just a program,
-and can do whatever it wants when it gets a request:
-send back the file named in the previous request,
-serve up a Wikipedia page chosen at random,
-or whatever else we program it to.
+`something.html` 페이지가 디스크의 파일로 존재하지 않음에도 불구하고
+404 오류가 *발생하지 않는다*는 점에 주목하세요.
+이는 웹 서버가 단순한 프로그램이고,
+요청을 받았을 때 원하는 무엇이든 할 수 있기 때문입니다:
+이전 요청에서 명명된 파일을 다시 보내거나,
+무작위로 선택된 위키피디아 페이지를 제공하거나,
+또는 우리가 프로그래밍한 다른 무엇이든 할 수 있습니다.
 
-## Serving Static Pages
+## 정적 페이지 제공하기
 
-The obvious next step is to start serving pages from the disk
-instead of generating them on the fly.
-We'll start by rewriting `do_GET`:
+다음 단계는 즉석에서 생성하는 대신
+디스크에서 페이지를 제공하기 시작하는 것입니다.
+`do_GET`을 다시 작성하는 것부터 시작하겠습니다:
 
 ```python
     def do_GET(self):
@@ -428,23 +422,22 @@ We'll start by rewriting `do_GET`:
             self.handle_error(msg)
 ```
 
-This method assumes that it's allowed to serve any files in or below
-the directory that the web server is running in
-(which it gets using `os.getcwd`).
-It combines this with the path provided in the URL
-(which the library automatically puts in `self.path`,
-and which always starts with a leading '/')
-to get the path to the file the user wants.
+이 메서드는 웹 서버가 실행되고 있는 디렉터리나
+그 하위 디렉터리의 모든 파일을 제공할 수 있다고 가정합니다
+(`os.getcwd`를 사용하여 얻습니다).
+이를 URL에서 제공된 경로와 결합하여
+(라이브러리가 자동으로 `self.path`에 넣어주며,
+항상 앞에 '/'가 있습니다)
+사용자가 원하는 파일의 경로를 얻습니다.
 
-If that doesn't exist,
-or if it isn't a file,
-the method reports an error by raising and catching an exception.
-If the path matches a file,
-on the other hand,
-it calls a helper method named `handle_file`
-to read and return the contents.
-This method just reads the file
-and uses our existing `send_content` to send it back to the client:
+그것이 존재하지 않거나,
+파일이 아닌 경우,
+메서드는 예외를 발생시키고 잡아서 오류를 보고합니다.
+반면에 경로가 파일과 일치하면,
+내용을 읽고 반환하기 위해
+`handle_file`이라는 도우미 메서드를 호출합니다.
+이 메서드는 단순히 파일을 읽고
+기존의 `send_content`를 사용하여 클라이언트에게 다시 보냅니다:
 
 ```python 
     def handle_file(self, full_path):
@@ -457,15 +450,17 @@ and uses our existing `send_content` to send it back to the client:
             self.handle_error(msg)
 ```
 
-Note that we open the file in binary mode&mdash;the 'b' in 'rb'&mdash;so that
-Python won't try to "help" us by altering byte sequences that look like a Windows line ending.
-Note also that reading the whole file into memory when serving it is a bad idea in real life,
-where the file might be several gigabytes of video data.
-Handling that situation is outside the scope of this chapter.
+파일을 바이너리 모드로 열었다는 점에 주목하세요&mdash;'rb'의 'b'&mdash;
+Python이 Windows 라인 엔딩처럼 보이는 바이트 시퀀스를 변경하여
+"도움"을 주려고 하지 않도록 하기 위해서입니다.
+또한 파일을 제공할 때 전체 파일을 메모리로 읽는 것은
+파일이 몇 기가바이트의 비디오 데이터일 수 있는 실제 상황에서는
+좋지 않은 아이디어라는 점도 주목하세요.
+이런 상황을 처리하는 것은 이 장의 범위를 벗어납니다.
 
-To finish off this class,
-we need to write the error handling method
-and the template for the error reporting page:
+이 클래스를 완성하기 위해,
+오류 처리 메서드와
+오류 보고 페이지의 템플릿을 작성해야 합니다:
 
 ```python 
     Error_Page = """\
@@ -482,16 +477,16 @@ and the template for the error reporting page:
         self.send_content(content)
 ```
 
-This program works,
-but only if we don't look too closely.
-The problem is that it always returns a status code of 200,
-even when the page being requested doesn't exist.
-Yes,
-the page sent back in that case contains an error message,
-but since our browser can't read English,
-it doesn't know that the request actually failed.
-In order to make that clear,
-we need to modify `handle_error` and `send_content` as follows:
+이 프로그램은 작동하지만,
+너무 자세히 보지 않을 때만 그렇습니다.
+문제는 요청된 페이지가 존재하지 않을 때에도
+항상 200 상태 코드를 반환한다는 것입니다.
+맞습니다,
+그런 경우에 다시 보내진 페이지에는 오류 메시지가 포함되어 있지만,
+브라우저는 영어를 읽을 수 없으므로,
+요청이 실제로 실패했다는 것을 알지 못합니다.
+이를 명확히 하기 위해,
+다음과 같이 `handle_error`와 `send_content`를 수정해야 합니다:
 
 ```python 
     # Handle unknown objects.
@@ -508,7 +503,7 @@ we need to modify `handle_error` and `send_content` as follows:
         self.wfile.write(content)
 ```
 
-Note that we don't raise `ServerException` when a file can't be found,
+파일을 찾을 수 없을 때 `ServerException`을 발생시키지 않는다는 점에 주목하세요,
 but generate an error page instead.
 A `ServerException` is meant to signal an internal error in the server code,
 i.e.,
@@ -521,21 +516,21 @@ sent us the URL of a file that doesn't exist. [^handleerror]
 
 [^handleerror]: We're going to use `handle_error` several times throughout this chapter, including several cases where the status code `404` isn't appropriate. As you read on, try to think of how you would extend this program so that the status response code can be supplied easily in each case.
 
-## Listing Directories
+## 디렉터리 목록 표시
 
-As our next step,
-we could teach the web server to display a listing of a directory's contents
-when the path in the URL is a directory rather than a file.
-We could even go one step further
-and have it look in that directory for an `index.html` file to display,
-and only show a listing of the directory's contents if that file is not present.
+다음 단계로,
+URL의 경로가 파일이 아닌 디렉터리일 때
+디렉터리의 내용 목록을 표시하도록 웹 서버를 가르칠 수 있습니다.
+한 뱸 더 나아가서
+그 디렉터리에서 표시할 `index.html` 파일을 찾아보고,
+그 파일이 없을 때만 디렉터리 내용의 목록을 보여주도록 할 수도 있습니다.
 
-But building these rules into `do_GET` would be a mistake,
-since the resulting method would be a long tangle of `if` statements
-controlling special behaviors.
-The right solution is to step back and solve the general problem,
-which is figuring out what to do with a URL.
-Here's a rewrite of the `do_GET` method:
+하지만 이러한 규칙들을 `do_GET`에 구축하는 것은 실수일 것입니다,
+결과적으로 메서드는 특수 동작을 제어하는
+긴 `if` 문들의 뒤엉킨 볏이 될 것이기 때문입니다.
+올바른 해결책은 한 및 물러서서 일반적인 문제를 해결하는 것인데,
+즉 URL로 무엇을 할지 파악하는 것입니다.
+다음은 `do_GET` 메서드의 다시 작성된 버전입니다:
 
 ```python
     def do_GET(self):
@@ -556,21 +551,19 @@ Here's a rewrite of the `do_GET` method:
             self.handle_error(msg)
 ```
 
-The first step is the same:
-figure out the full path to the thing being requested.
-After that,
-though,
-the code looks quite different.
-Instead of a bunch of inline tests,
-this version loops over a set of cases stored in a list.
-Each case is an object with two methods:
-`test`,
-which tells us whether it's able to handle the request,
-and `act`,
-which actually takes some action.
-As soon as we find the right case,
-we let it handle the request
-and break out of the loop.
+첫 번째 단계는 동일합니다:
+요청되는 것의 전체 경로를 파악합니다.
+그 다음은,
+하지만,
+코드가 상당히 다르게 보입니다.
+많은 인라인 테스트 대신,
+이 버전은 리스트에 저장된 케이스 집합을 루프로 돌며 처리합니다.
+각 케이스는 두 개의 메서드를 가진 객체입니다:
+요청을 처리할 수 있는지 알려주는 `test`,
+그리고 실제로 어떤 작업을 수행하는 `act`.
+올바른 케이스를 찾자마자,
+그것이 요청을 처리하도록 하고
+루프에서 빠져나옵니다.
 
 These three case classes reproduce the behavior of our previous server:
 
@@ -914,28 +907,26 @@ class case_existing_file(base_case):
         self.handle_file(handler, handler.full_path)
 ```
 
-## Discussion
+## 토론
 
-The differences between our original code
-and the refactored version
-reflect two important ideas.
-The first is to think of a class as a collection of related services.
-`RequestHandler` and `base_case` don't make decisions or take actions;
-they provide tools that other classes can use to do those things.
+원래 코드와 리팩터링된 버전 사이의 차이점은
+두 가지 중요한 아이디어를 반영합니다.
+첫 번째는 클래스를 관련된 서비스들의 집합으로 생각하는 것입니다.
+`RequestHandler`와 `base_case`는 결정을 내리거나 행동을 취하지 않습니다;
+다른 클래스들이 그런 일들을 할 수 있도록 도구를 제공합니다.
 
-The second is extensibility:
-people can add new functionality to our web server
-either by writing an external CGI program,
-or by adding a case handler class.
-The latter does require a one-line change to `RequestHandler`
-(to insert the case handler in the `Cases` list),
-but we could get rid of that by having the web server read a configuration file
-and load handler classes from that.
-In both cases,
-they can ignore most lower-level details,
-just as the authors of the `BaseHTTPRequestHandler` class
-have allowed us to ignore the details of handling socket connections
-and parsing HTTP requests.
+두 번째는 확장성입니다:
+사람들은 외부 CGI 프로그램을 작성하거나,
+케이스 핸들러 클래스를 추가함으로써
+우리 웹 서버에 새로운 기능을 추가할 수 있습니다.
+후자는 `RequestHandler`에 한 줄의 변경이 필요하긴 하지만
+(`Cases` 리스트에 케이스 핸들러를 삽입하기 위해),
+웹 서버가 설정 파일을 읽고 그것으로부터 핸들러 클래스들을 로드하도록 함으로써
+이를 제거할 수도 있습니다.
+두 경우 모두,
+`BaseHTTPRequestHandler` 클래스의 작성자들이
+소켓 연결 처리와 HTTP 요청 파싱의 세부사항을 무시할 수 있게 해준 것처럼,
+그들은 대부분의 낮은 수준의 세부사항들을 무시할 수 있습니다.
 
-These ideas are generally useful; 
-see if you can find ways to use them in your own projects. 
+이러한 아이디어들은 일반적으로 유용합니다;
+여러분의 프로젝트에서 이를 사용할 방법을 찾아보세요. 
