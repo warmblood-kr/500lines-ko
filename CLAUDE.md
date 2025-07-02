@@ -174,19 +174,39 @@ LANGUAGE=ko python3 build.py web-server --epub
 ## 🎯 Next Session Goals
 
 ### Immediate Tasks (Next 1-2 Sessions)
-1. **Start web-server translation** - Most foundational chapter
-2. **Test complete build pipeline** - Ensure Korean fonts work in PDF
-3. **Establish translation rhythm** - Small, consistent progress
+1. **Begin next priority chapter** - Interpreter or template-engine
+2. **Apply improved translation strategy** - Use chunk-based approach with verification
+3. **Create GitHub issue** - For detailed translation strategy discussion
 
 ### Medium-term Goals (Next Month)
-1. **Complete 3-5 high-priority chapters**
-2. **Refine build system** - Fix any Korean-specific issues
-3. **Documentation improvements** - Based on translation experience
+1. **Complete 3-5 high-priority chapters** using refined approach
+2. **Refine build system** - Fix Korean-specific issues  
+3. **Quality review process** - Based on web-server translation experience
 
 ### Long-term Vision (3-6 Months)
-1. **Complete all 22 chapters**
-2. **Quality review process** - Technical accuracy validation
+1. **Complete all 22 chapters** with consistent quality
+2. **Community review process** - Technical accuracy validation
 3. **Community engagement** - Share with Korean developer community
+
+## 📚 Translation Strategy
+
+### Key Lessons from Web-Server Chapter
+**Issue**: Some English paragraphs were missed during initial translation due to:
+- Linear approach interrupted by tool switching (AIDER timeouts)
+- Large file size (940+ lines) making progress tracking difficult
+- No systematic verification process
+
+### Improved Translation Process
+1. **Chunk-Based Translation**: Work in 50-100 line sections with immediate verification
+2. **Systematic Verification**: Always run completion check before declaring done
+3. **Progress Tracking**: Maintain explicit section checklist during translation
+4. **Final Verification**: `grep -n "^[A-Z][a-z].*\.$" file.markdown` to find remaining English
+
+### Quality Standards
+- **Style Guide**: Established through web-server chapter (see PR #3)
+- **Verification Required**: Zero untranslated English paragraphs in final version
+- **Tool Consistency**: Stick with one primary tool per session when possible
+- **Code Preservation**: All examples and technical content unchanged
 
 ---
 
