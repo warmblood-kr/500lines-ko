@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh auth:*)",
+      "Bash(gh issue list:*)",
+      "Bash(gh issue view:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh workflow list:*)",
+      "Bash(gh workflow view:*)",
+      "Bash(ls:*)",
+      "Bash(curl:*)",
+      "Bash(mkdir:*)",
+      "Bash(which:*)",
+      "Bash(grep:*)"
+      "Bash(uv run make:*)"
+    ]
+  }
+}
