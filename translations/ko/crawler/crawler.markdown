@@ -1,27 +1,27 @@
-title: A Web Crawler With asyncio Coroutines
+title: asyncio 코루틴을 사용한 웹 크롤러
 author: A. Jesse Jiryu Davis and Guido van Rossum
 <markdown>
-_A. Jesse Jiryu Davis is a staff engineer at MongoDB in New York. He wrote Motor, the async MongoDB Python driver, and he is the lead developer of the MongoDB C Driver and a member of the PyMongo team. He contributes to asyncio and Tornado. He writes at [http://emptysqua.re](http://emptysqua.re)._
+_A. Jesse Jiryu Davis는 뉴욕에 위치한 MongoDB의 스태프 엔지니어입니다. 그는 비동기 MongoDB Python 드라이버인 Motor를 작성했으며, MongoDB C 드라이버의 리드 개발자이자 PyMongo 팀의 멤버입니다. 그는 asyncio와 Tornado에 기여하고 있습니다. 그의 글은 [http://emptysqua.re](http://emptysqua.re)에서 볼 수 있습니다._
 
-_Guido van Rossum is the creator of Python, one of the major programming languages on and off the web. The Python community refers to him as the BDFL (Benevolent Dictator For Life), a title straight from a Monty Python skit.  Guido's home on the web is [http://www.python.org/~guido/](http://www.python.org/~guido/)._
+_Guido van Rossum은 웹과 그 너머에서 주요한 프로그래밍 언어 중 하나인 Python의 창시자입니다. Python 커뮤니티는 그를 BDFL(자비로운 종신 독재자, Benevolent Dictator For Life)이라고 부르는데, 이는 몬티 파이선 스케치에서 따온 제목입니다. Guido의 웹상 홈은 [http://www.python.org/~guido/](http://www.python.org/~guido/)입니다._
 </markdown>
-## Introduction
+## 개요
 
-Classical computer science emphasizes efficient algorithms that complete computations as quickly as possible. But many networked programs spend their time not computing, but holding open many connections that are slow, or have infrequent events. These programs present a very different challenge: to wait for a huge number of network events efficiently. A contemporary approach to this problem is asynchronous I/O, or "async".
+고전적인 컴퓨터 과학은 계산을 가능한 한 빠르게 완료하는 효율적인 알고리즘을 강조합니다. 하지만 많은 네트워크 프로그램들은 계산에 시간을 보내는 것이 아니라, 느리거나 이벤트가 빈번하지 않은 수많은 연결을 열어두는 데 시간을 보냅니다. 이러한 프로그램들은 매우 다른 도전을 제시합니다: 바로 엄청나게 많은 네트워크 이벤트를 효율적으로 기다리는 것입니다. 이 문제에 대한 현대적인 접근법이 비동기 I/O, 즉 "async"입니다.
 
-This chapter presents a simple web crawler. The crawler is an archetypal async application because it waits for many responses, but does little computation. The more pages it can fetch at once, the sooner it completes. If it devotes a thread to each in-flight request, then as the number of concurrent requests rises it will run out of memory or other thread-related resource before it runs out of sockets. It avoids the need for threads by using asynchronous I/O.
+이 장에서는 간단한 웹 크롤러를 소개합니다. 크롤러는 많은 응답을 기다리지만 계산은 거의 하지 않기 때문에 전형적인 비동기 애플리케이션입니다. 한 번에 가져올 수 있는 페이지가 많을수록 더 빨리 완료됩니다. 진행 중인 각 요청에 스레드를 할당한다면, 동시 요청 수가 증가할수록 소켓이 부족해지기 전에 메모리나 다른 스레드 관련 리소스가 먼저 부족해질 것입니다. 비동기 I/O를 사용하여 스레드의 필요성을 피할 수 있습니다.
 
-We present the example in three stages. First, we show an async event loop and sketch a crawler that uses the event loop with callbacks: it is very efficient, but extending it to more complex problems would lead to unmanageable spaghetti code. Second, therefore, we show that Python coroutines are both efficient and extensible. We implement simple coroutines in Python using generator functions. In the third stage, we use the full-featured coroutines from Python's standard "asyncio" library[^16], and coordinate them using an async queue.
+우리는 이 예제를 세 단계로 제시합니다. 첫째, 비동기 이벤트 루프를 보여주고 콜백과 함께 이벤트 루프를 사용하는 크롤러를 스케치합니다: 매우 효율적이지만 더 복잡한 문제로 확장하면 관리할 수 없는 스파게티 코드가 됩니다. 둘째, 따라서 Python 코루틴이 효율적이면서도 확장 가능하다는 것을 보여줍니다. 제너레이터 함수를 사용하여 Python에서 간단한 코루틴을 구현합니다. 세 번째 단계에서는 Python의 표준 "asyncio" 라이브러리[^16]의 완전한 기능을 갖춘 코루틴을 사용하고, 비동기 큐를 사용하여 이들을 조정합니다.
 
-## The Task
+## 작업
 
-A web crawler finds and downloads all pages on a website, perhaps to archive or index them. Beginning with a root URL, it fetches each page, parses it for links to unseen pages, and adds these to a queue. It stops when it fetches a page with no unseen links and the queue is empty.
+웹 크롤러는 웹사이트의 모든 페이지를 찾아서 다운로드하며, 아마도 이를 아카이브하거나 인덱싱합니다. 루트 URL부터 시작하여 각 페이지를 가져오고, 아직 보지 않은 페이지들로의 링크를 파싱하여 이를 큐에 추가합니다. 아직 보지 않은 링크가 없는 페이지를 가져오고 큐가 비게 되면 멈춥니다.
 
-We can hasten this process by downloading many pages concurrently. As the crawler finds new links, it launches simultaneous fetch operations for the new pages on separate sockets. It parses responses as they arrive, adding new links to the queue. There may come some point of diminishing returns where too much concurrency degrades performance, so we cap the number of concurrent requests, and leave the remaining links in the queue until some in-flight requests complete.
+많은 페이지를 동시에 다운로드하여 이 프로세스를 가속화할 수 있습니다. 크롤러가 새 링크를 찾으면, 별도의 소켓에서 새 페이지에 대한 동시 가져오기 작업을 시작합니다. 응답이 도착하면 이를 파싱하여 새 링크를 큐에 추가합니다. 너무 많은 동시성이 성능을 저하시키는 수익 감소 지점이 있을 수 있으므로, 동시 요청 수에 제한을 두고, 진행 중인 일부 요청이 완료될 때까지 나머지 링크는 큐에 남겨둡니다.
 
-## The Traditional Approach
+## 전통적인 접근법
 
-How do we make the crawler concurrent? Traditionally we would create a thread pool. Each thread would be in charge of downloading one page at a time over a socket. For example, to download a page from `xkcd.com`:
+어떻게 크롤러를 동시적으로 만들 수 있을까요? 전통적으로는 스레드 풀을 생성할 것입니다. 각 스레드는 소켓을 통해 한 번에 하나의 페이지를 다운로드하는 역할을 담당합니다. 예를 들어, `xkcd.com`에서 페이지를 다운로드하려면:
 
 ```python
 def fetch(url):
@@ -34,27 +34,25 @@ def fetch(url):
     while chunk:
         response += chunk
         chunk = sock.recv(4096)
-    
+
     # Page is now downloaded.
     links = parse_links(response)
     q.add(links)
 ```
 
-By default, socket operations are *blocking*: when the thread calls a method like `connect` or `recv`, it pauses until the operation completes.[^15] Consequently to download many pages at once, we need many threads. A sophisticated application amortizes the cost of thread-creation by keeping idle threads in a thread pool, then checking them out to reuse them for subsequent tasks; it does the same with sockets in a connection pool.
+기본적으로 소켓 연산은 *블로킹*입니다: 스레드가 `connect`나 `recv` 같은 메서드를 호출하면, 연산이 완료될 때까지 일시 중지됩니다.[^15] 따라서 많은 페이지를 한 번에 다운로드하려면 많은 스레드가 필요합니다. 정교한 애플리케이션은 유휴 스레드를 스레드 풀에 유지한 다음 후속 작업에 재사용하기 위해 체크아웃하여 스레드 생성 비용을 상각합니다. 연결 풀에서 소켓에 대해서도 동일하게 수행합니다.
 
-And yet, threads are expensive, and operating systems enforce a variety of hard caps on the number of threads a process, user, or machine may have. On Jesse's system, a Python thread costs around 50k of memory, and starting tens of thousands of threads causes failures. If we scale up to tens of thousands of simultaneous operations on concurrent sockets, we run out of threads before we run out of sockets. Per-thread overhead or system limits on threads are the bottleneck.
+그러나 스레드는 비싸고, 운영 체제는 프로세스, 사용자 또는 머신이 가질 수 있는 스레드 수에 다양한 하드 캡을 적용합니다. Jesse의 시스템에서 Python 스레드는 약 50k의 메모리를 소비하며, 수만 개의 스레드를 시작하면 실패를 야기합니다. 동시 소켓에서 수만 개의 동시 연산으로 확장하면, 소켓이 부족해지기 전에 스레드가 먼저 부족해집니다. 스레드별 오버헤드나 스레드에 대한 시스템 제한이 병목점입니다.
 
-In his influential article "The C10K problem"[^8], Dan Kegel outlines the limitations of multithreading for I/O concurrency. He begins,
+영향력 있는 기사 "The C10K problem"[^8]에서 Dan Kegel은 I/O 동시성에 대한 멀티스레딩의 한계를 설명합니다. 그는 다음과 같이 시작합니다,
 
-> It's time for web servers to handle ten thousand clients simultaneously, don't you think? After all, the web is a big place now.
+> 웹 서버가 동시에 1만 개의 클라이언트를 처리할 시간이 되었다고 생각하지 않나요? 결국, 웹은 이제 큰 공간이니까요.
 
-Kegel coined the term "C10K" in 1999. Ten thousand connections sounds dainty now, but the problem has changed only in size, not in kind. Back then, using a thread per connection for C10K was impractical. Now the cap is orders of magnitude higher. Indeed, our toy web crawler would work just fine with threads. Yet for very large scale applications, with hundreds of thousands of connections, the cap remains: there is a limit beyond which most systems can still create sockets, but have run out of threads. How can we overcome this?
+Kegel은 1999년에 "C10K"라는 용어를 만들었습니다. 1만 개의 연결은 이제 소규모로 들리지만, 문제는 종류가 아니라 규모만 바뀌었습니다. 그 당시 C10K에 대해 연결당 스레드를 사용하는 것은 비실용적이었습니다. 이제 한계는 훨씬 더 높습니다. 실제로 우리의 장난감 웹 크롤러는 스레드로도 잘 작동할 것입니다. 하지만 수십만 개의 연결을 가진 매우 대규모 애플리케이션의 경우, 한계가 여전히 남아 있습니다: 대부분의 시스템이 여전히 소켓을 생성할 수 있지만 스레드가 부족해지는 한계가 있습니다. 이를 어떻게 극복할 수 있을까요?
 
 ## Async
 
-Asynchronous I/O frameworks do concurrent operations on a single thread using
-*non-blocking* sockets. In our async crawler, we set the socket non-blocking
-before we begin to connect to the server:
+비동기 I/O 프레임워크는 *논블로킹* 소켓을 사용하여 단일 스레드에서 동시 연산을 수행합니다. 우리의 비동기 크롤러에서는 서버에 연결을 시작하기 전에 소켓을 논블로킹으로 설정합니다:
 
 ```python
 sock = socket.socket()
@@ -65,9 +63,9 @@ except BlockingIOError:
     pass
 ```
 
-Irritatingly, a non-blocking socket throws an exception from `connect`, even when it is working normally. This exception replicates the irritating behavior of the underlying C function, which sets `errno` to `EINPROGRESS` to tell you it has begun.
+짜증스럽게도, 논블로킹 소켓은 정상적으로 작동하고 있을 때조차 `connect`에서 예외를 발생시킵니다. 이 예외는 기반 C 함수의 짜증스러운 동작을 복제하는데, 이 함수는 시작되었음을 알리기 위해 `errno`를 `EINPROGRESS`로 설정합니다.
 
-Now our crawler needs a way to know when the connection is established, so it can send the HTTP request. We could simply keep trying in a tight loop:
+이제 우리 크롤러는 연결이 설정된 시점을 알 수 있는 방법이 필요합니다. 그래야 HTTP 요청을 보낼 수 있습니다. 간단히 타이트 루프에서 계속 시도할 수 있습니다:
 
 ```python
 request = 'GET {} HTTP/1.0\r\nHost: xkcd.com\r\n\r\n'.format(url)
@@ -83,9 +81,9 @@ while True:
 print('sent')
 ```
 
-This method not only wastes electricity, but it cannot efficiently await events on *multiple* sockets. In ancient times, BSD Unix's solution to this problem was `select`, a C function that waits for an event to occur on a non-blocking socket or a small array of them. Nowadays the demand for Internet applications with huge numbers of connections has led to replacements like `poll`, then `kqueue` on BSD and `epoll` on Linux. These APIs are similar to `select`, but perform well with very large numbers of connections.
+이 방법은 전력을 낭비할 뿐만 아니라, *여러* 소켓의 이벤트를 효율적으로 기다릴 수 없습니다. 고대에 BSD Unix의 이 문제에 대한 해결책은 `select`였는데, 이는 논블로킹 소켓이나 소켓의 작은 배열에서 이벤트가 발생하기를 기다리는 C 함수였습니다. 요즘에는 엄청나게 많은 연결을 가진 인터넷 애플리케이션에 대한 요구로 인해 `poll`, 그다음 BSD의 `kqueue`와 Linux의 `epoll` 같은 대체재가 등장했습니다. 이러한 API들은 `select`와 유사하지만 매우 많은 수의 연결에서 잘 작동합니다.
 
-Python 3.4's `DefaultSelector` uses the best `select`-like function available on your system. To register for notifications about network I/O, we create a non-blocking socket and register it with the default selector:
+Python 3.4의 `DefaultSelector`는 시스템에서 사용 가능한 최고의 `select` 계열 함수를 사용합니다. 네트워크 I/O에 대한 알림을 등록하기 위해, 논블로킹 소켓을 만들고 기본 선택기에 등록합니다:
 
 ```python
 from selectors import DefaultSelector, EVENT_WRITE
@@ -106,9 +104,9 @@ def connected():
 selector.register(sock.fileno(), EVENT_WRITE, connected)
 ```
 
-We disregard the spurious error and call `selector.register`, passing in the socket's file descriptor and a constant that expresses what event we are waiting for. To be notified when the connection is established, we pass `EVENT_WRITE`: that is, we want to know when the socket is "writable". We also pass a Python function, `connected`, to run when that event occurs. Such a function is known as a *callback*.
+의미 없는 오류를 무시하고 `selector.register`를 호출하여, 소켓의 파일 디스크립터와 기다리고 있는 이벤트를 표현하는 상수를 전달합니다. 연결이 설정되었을 때 알림을 받기 위해 `EVENT_WRITE`를 전달합니다: 즉, 소켓이 언제 "쓰기 가능한지" 알고 싶습니다. 또한 해당 이벤트가 발생했을 때 실행할 Python 함수 `connected`를 전달합니다. 이러한 함수를 *콜백*이라고 합니다.
 
-We process I/O notifications as the selector receives them, in a loop:
+선택기가 I/O 알림을 수신하면 루프에서 처리합니다:
 
 ```python
 def loop():
@@ -119,32 +117,32 @@ def loop():
             callback()
 ```
 
-The `connected` callback is stored as `event_key.data`, which we retrieve and execute once the non-blocking socket is connected.
+`connected` 콜백은 `event_key.data`로 저장되며, 논블로킹 소켓이 연결되면 이를 검색하고 실행합니다.
 
-Unlike in our fast-spinning loop above, the call to `select` here pauses, awaiting the next I/O events. Then the loop runs callbacks that are waiting for these events. Operations that have not completed remain pending until some future tick of the event loop.
+위의 빠르게 회전하는 루프와 달리, 여기서 `select` 호출은 다음 I/O 이벤트를 기다리며 일시 중지됩니다. 그러면 루프는 이러한 이벤트를 기다리고 있는 콜백들을 실행합니다. 완료되지 않은 연산들은 이벤트 루프의 향후 틱까지 대기 상태로 남아 있습니다.
 
-What have we demonstrated already? We showed how to begin an operation and execute a callback when the operation is ready. An async *framework* builds on the two features we have shown&mdash;non-blocking sockets and the event loop&mdash;to run concurrent operations on a single thread.
+우리가 이미 무엇을 보여주었을까요? 연산을 시작하고 연산이 준비되면 콜백을 실행하는 방법을 보여주었습니다. 비동기 *프레임워크*는 우리가 보여준 두 가지 기능&mdash;논블로킹 소켓과 이벤트 루프&mdash;을 기반으로 구축되어 단일 스레드에서 동시 연산을 실행합니다.
 
-We have achieved "concurrency" here, but not what is traditionally called "parallelism". That is, we built a tiny system that does overlapping I/O. It is capable of beginning new operations while others are in flight. It does not actually utilize multiple cores to execute computation in parallel. But then, this system is designed for I/O-bound problems, not CPU-bound ones.[^14]
+우리는 여기서 "동시성(concurrency)"을 달성했지만, 전통적으로 "병렬성(parallelism)"이라고 불리는 것은 아닙니다. 즉, 우리는 겹치는 I/O를 수행하는 작은 시스템을 구축했습니다. 다른 연산들이 진행 중인 동안 새로운 연산을 시작할 수 있습니다. 실제로는 병렬로 계산을 실행하기 위해 여러 코어를 활용하지는 않습니다. 하지만 이 시스템은 CPU 바운드 문제가 아닌 I/O 바운드 문제를 위해 설계되었습니다.[^14]
 
-So our event loop is efficient at concurrent I/O because it does not devote thread resources to each connection. But before we proceed, it is important to correct a common misapprehension that async is *faster* than multithreading. Often it is not&mdash;indeed, in Python, an event loop like ours is moderately slower than multithreading at serving a small number of very active connections. In a runtime without a global interpreter lock, threads would perform even better on such a workload. What asynchronous I/O is right for, is applications with many slow or sleepy connections with infrequent events.[^11]<latex>[^bayer]</latex>
+따라서 우리의 이벤트 루프는 각 연결에 스레드 리소스를 할당하지 않기 때문에 동시 I/O에서 효율적입니다. 하지만 계속하기 전에, async가 멀티스레딩보다 *빠르다*는 일반적인 오해를 바로잡는 것이 중요합니다. 종종 그렇지 않습니다&mdash;실제로 Python에서는 우리와 같은 이벤트 루프가 소수의 매우 활성적인 연결을 처리할 때 멀티스레딩보다 약간 느립니다. 전역 인터프리터 락이 없는 런타임에서는 스레드가 이러한 워크로드에서 훨씬 더 나은 성능을 보일 것입니다. 비동기 I/O가 적합한 것은 빈번하지 않은 이벤트를 가진 많은 느리거나 비활성적인 연결을 가진 애플리케이션입니다.[^11]<latex>[^bayer]</latex>
 
-## Programming With Callbacks
+## 콜백을 사용한 프로그래밍
 
-With the runty async framework we have built so far, how can we build a web crawler? Even a simple URL-fetcher is painful to write.
+지금까지 구축한 작은 비동기 프레임워크로 어떻게 웹 크롤러를 만들 수 있을까요? 간단한 URL 가져오기조차 작성하기 고통스럽습니다.
 
-We begin with global sets of the URLs we have yet to fetch, and the URLs we have seen:
+아직 가져오지 않은 URL들과 이미 본 URL들의 전역 집합으로 시작합니다:
 
 ```python
 urls_todo = set(['/'])
 seen_urls = set(['/'])
 ```
 
-The `seen_urls` set includes `urls_todo` plus completed URLs. The two sets are initialized with the root URL "/".
+`seen_urls` 집합은 `urls_todo`와 완료된 URL들을 포함합니다. 두 집합 모두 루트 URL "/"로 초기화됩니다.
 
-Fetching a page will require a series of callbacks. The `connected` callback fires when a socket is connected, and sends a GET request to the server. But then it must await a response, so it registers another callback. If, when that callback fires, it cannot read the full response yet, it registers again, and so on.
+페이지를 가져오려면 일련의 콜백들이 필요합니다. `connected` 콜백은 소켓이 연결될 때 실행되어 서버에 GET 요청을 보냅니다. 하지만 그 후 응답을 기다려야 하므로 또 다른 콜백을 등록합니다. 해당 콜백이 실행될 때 전체 응답을 아직 읽을 수 없다면, 다시 등록하는 식으로 계속됩니다.
 
-Let us collect these callbacks into a `Fetcher` object. It needs a URL, a socket object, and a place to accumulate the response bytes:
+이러한 콜백들을 `Fetcher` 객체로 모아봅시다. URL, 소켓 객체, 그리고 응답 바이트를 축적할 공간이 필요합니다:
 
 ```python
 class Fetcher:
@@ -154,7 +152,7 @@ class Fetcher:
         self.sock = None
 ```
 
-We begin by calling `Fetcher.fetch`:
+`Fetcher.fetch`를 호출하는 것으로 시작합니다:
 
 ```python
     # Method on Fetcher class.
@@ -165,14 +163,14 @@ We begin by calling `Fetcher.fetch`:
             self.sock.connect(('xkcd.com', 80))
         except BlockingIOError:
             pass
-            
+
         # Register next callback.
         selector.register(self.sock.fileno(),
                           EVENT_WRITE,
                           self.connected)
 ```
 
-The `fetch` method begins connecting a socket. But notice the method returns before the connection is established. It must return control to the event loop to wait for the connection. To understand why, imagine our whole application was structured so:
+`fetch` 메서드는 소켓 연결을 시작합니다. 하지만 연결이 설정되기 전에 메서드가 반환된다는 점에 주목하세요. 연결을 기다리기 위해 이벤트 루프에게 제어권을 넘겨야 합니다. 왜 그런지 이해하려면, 전체 애플리케이션이 다음과 같이 구조화되어 있다고 상상해보세요:
 
 ```python
 # Begin fetching http://xkcd.com/353/
@@ -186,9 +184,9 @@ while True:
         callback(event_key, event_mask)
 ```
 
-All event notifications are processed in the event loop when it calls `select`. Hence `fetch` must hand control to the event loop, so that the program knows when the socket has connected. Only then does the loop run the `connected` callback, which was registered at the end of `fetch` above.
+모든 이벤트 알림은 이벤트 루프가 `select`를 호출할 때 처리됩니다. 따라서 `fetch`는 프로그램이 소켓이 언제 연결되었는지 알 수 있도록 이벤트 루프에게 제어권을 넘겨야 합니다. 그래야만 루프가 위의 `fetch` 끝에서 등록된 `connected` 콜백을 실행합니다.
 
-Here is the implementation of `connected`:
+다음은 `connected`의 구현입니다:
 
 ```python
     # Method on Fetcher class.
@@ -197,14 +195,14 @@ Here is the implementation of `connected`:
         selector.unregister(key.fd)
         request = 'GET {} HTTP/1.0\r\nHost: xkcd.com\r\n\r\n'.format(self.url)
         self.sock.send(request.encode('ascii'))
-        
+
         # Register the next callback.
         selector.register(key.fd,
                           EVENT_READ,
                           self.read_response)
 ```
 
-The method sends a GET request. A real application would check the return value of `send` in case the whole message cannot be sent at once. But our request is small and our application unsophisticated. It blithely calls `send`, then waits for a response. Of course, it must register yet another callback and relinquish control to the event loop. The next and final callback, `read_response`, processes the server's reply:
+이 메서드는 GET 요청을 보냅니다. 실제 애플리케이션이라면 전체 메시지가 한 번에 보내지지 않을 경우를 대비해 `send`의 반환값을 확인할 것입니다. 하지만 우리의 요청은 작고 애플리케이션도 단순합니다. 태연하게 `send`를 호출한 다음 응답을 기다립니다. 물론, 또 다른 콜백을 등록하고 이벤트 루프에게 제어권을 넘겨야 합니다. 다음이자 마지막 콜백인 `read_response`는 서버의 응답을 처리합니다:
 
 ```python
     # Method on Fetcher class.
@@ -217,7 +215,7 @@ The method sends a GET request. A real application would check the return value 
         else:
             selector.unregister(key.fd)  # Done reading.
             links = self.parse_links()
-            
+
             # Python set-logic:
             for link in links.difference(seen_urls):
                 urls_todo.add(link)
@@ -229,13 +227,13 @@ The method sends a GET request. A real application would check the return value 
                 stopped = True
 ```
 
-The callback is executed each time the selector sees that the socket is "readable", which could mean two things: the socket has data or it is closed.
+이 콜백은 선택기가 소켓이 "읽기 가능하다"고 볼 때마다 실행되며, 이는 두 가지를 의미할 수 있습니다: 소켓에 데이터가 있거나 닫혔다는 것입니다.
 
-The callback asks for up to four kilobytes of data from the socket. If less is ready, `chunk` contains whatever data is available. If there is more, `chunk` is four kilobytes long and the socket remains readable, so the event loop runs this callback again on the next tick. When the response is complete, the server has closed the socket and `chunk` is empty.
+콜백은 소켓으로부터 최대 4킬로바이트의 데이터를 요청합니다. 준비된 데이터가 그보다 적다면, `chunk`는 사용 가능한 데이터만 포함합니다. 더 많다면, `chunk`는 4킬로바이트 길이이고 소켓은 읽기 가능한 상태로 남아있으므로, 이벤트 루프는 다음 틱에서 이 콜백을 다시 실행합니다. 응답이 완료되면, 서버가 소켓을 닫고 `chunk`는 비어있게 됩니다.
 
-The `parse_links` method, not shown, returns a set of URLs. We start a new fetcher for each new URL, with no concurrency cap. Note a nice feature of async programming with callbacks: we need no mutex around changes to shared data, such as when we add links to `seen_urls`. There is no preemptive multitasking, so we cannot be interrupted at arbitrary points in our code.
+표시되지 않은 `parse_links` 메서드는 URL들의 집합을 반환합니다. 동시성 제한 없이 각 새로운 URL에 대해 새 가져오기 도구를 시작합니다. 콜백을 사용한 비동기 프로그래밍의 좋은 특징을 주목하세요: `seen_urls`에 링크를 추가할 때와 같이 공유 데이터의 변경에 대해 뮤텍스가 필요하지 않습니다. 선점적 멀티태스킹이 없으므로 코드의 임의의 지점에서 중단될 수 없습니다.
 
-We add a global `stopped` variable and use it to control the loop:
+전역 `stopped` 변수를 추가하고 이를 사용해 루프를 제어합니다:
 
 ```python
 stopped = False
@@ -248,11 +246,11 @@ def loop():
             callback()
 ```
 
-Once all pages are downloaded the fetcher stops the global event loop and the program exits.
+모든 페이지가 다운로드되면 가져오기 도구가 전역 이벤트 루프를 중지하고 프로그램이 종료됩니다.
 
-This example makes async's problem plain: spaghetti code. We need some way to express a series of computations and I/O operations, and schedule multiple such series of operations to run concurrently. But without threads, a series of operations cannot be collected into a single function: whenever a function begins an I/O operation, it explicitly saves whatever state will be needed in the future, then returns. You are responsible for thinking about and writing this state-saving code.
+이 예제는 비동기의 문제를 명확히 보여줍니다: 스파게티 코드입니다. 일련의 계산과 I/O 연산을 표현하고, 이러한 연산 시리즈 여러 개를 동시에 실행하도록 스케줄링하는 방법이 필요합니다. 하지만 스레드 없이는 일련의 연산들을 단일 함수로 모을 수 없습니다: 함수가 I/O 연산을 시작할 때마다, 미래에 필요한 상태를 명시적으로 저장한 다음 반환해야 합니다. 이러한 상태 저장 코드를 생각하고 작성하는 것은 여러분의 책임입니다.
 
-Let us explain what we mean by that. Consider how simply we fetched a URL on a thread with a conventional blocking socket:
+이것이 무엇을 의미하는지 설명해보겠습니다. 기존의 블로킹 소켓을 사용해 스레드에서 URL을 얼마나 간단하게 가져왔는지 생각해보세요:
 
 ```python
 # Blocking version.
