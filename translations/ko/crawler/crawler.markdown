@@ -270,11 +270,11 @@ def fetch(url):
     q.add(links)
 ```
 
-What state does this function remember between one socket operation and the next? It has the socket, a URL, and the accumulating `response`.  A function that runs on a thread uses basic features of the programming language to store this temporary state in local variables, on its stack. The function also has a "continuation"&mdash;that is, the code it plans to execute after I/O completes. The runtime remembers the continuation by storing the thread's instruction pointer. You need not think about restoring these local variables and the continuation after I/O. It is built in to the language.
+이 함수는 하나의 소켓 연산과 다음 연산 사이에 어떤 상태를 기억할까요? 소켓, URL, 그리고 누적되는 `response`를 가지고 있습니다. 스레드에서 실행되는 함수는 프로그래밍 언어의 기본 기능을 사용하여 이러한 임시 상태를 스택의 로컬 변수에 저장합니다. 함수는 또한 "연속성(continuation)"을 가지고 있습니다&mdash;즉, I/O가 완료된 후 실행할 계획인 코드입니다. 런타임은 스레드의 명령어 포인터를 저장함으로써 연속성을 기억합니다. I/O 후에 이러한 로컬 변수와 연속성을 복원하는 것에 대해 생각할 필요가 없습니다. 이는 언어에 내장되어 있습니다.
 
-But with a callback-based async framework, these language features are no help. While waiting for I/O, a function must save its state explicitly, because the function returns and loses its stack frame before I/O completes. In lieu of local variables, our callback-based example stores `sock` and `response` as attributes of `self`, the Fetcher instance. In lieu of the instruction pointer, it stores its continuation by registering the callbacks `connected` and `read_response`. As the application's features grow, so does the complexity of the state we manually save across callbacks. Such onerous bookkeeping makes the coder prone to migraines.
+하지만 콜백 기반 비동기 프레임워크에서는 이러한 언어 기능들이 도움이 되지 않습니다. I/O를 기다리는 동안, 함수는 명시적으로 상태를 저장해야 합니다. 왜냐하면 I/O가 완료되기 전에 함수가 반환되어 스택 프레임을 잃기 때문입니다. 로컬 변수 대신, 우리의 콜백 기반 예제는 Fetcher 인스턴스인 `self`의 속성으로 `sock`과 `response`를 저장합니다. 명령어 포인터 대신, `connected`와 `read_response` 콜백을 등록하여 연속성을 저장합니다. 애플리케이션의 기능이 증가할수록, 콜백 간에 수동으로 저장해야 하는 상태의 복잡성도 증가합니다. 이러한 번거로운 부기 작업은 코더를 편두통에 취약하게 만듭니다.
 
-Even worse, what happens if a callback throws an exception, before it schedules the next callback in the chain? Say we did a poor job on the `parse_links` method and it throws an exception parsing some HTML:
+더 나쁜 것은, 콜백이 체인의 다음 콜백을 스케줄링하기 전에 예외를 발생시키면 어떻게 될까요? `parse_links` 메서드를 제대로 작성하지 못해서 HTML을 파싱하는 중에 예외를 발생시킨다고 해봅시다:
 
 ```
 Traceback (most recent call last):
@@ -289,13 +289,13 @@ Traceback (most recent call last):
 Exception: parse error
 ```
 
-The stack trace shows only that the event loop was running a callback. We do not remember what led to the error. The chain is broken on both ends: we forgot where we were going and whence we came. This loss of context is called "stack ripping", and in many cases it confounds the investigator. Stack ripping also prevents us from installing an exception handler for a chain of callbacks, the way a "try / except" block wraps a function call and its tree of descendents.[^7]
+스택 트레이스는 이벤트 루프가 콜백을 실행하고 있었다는 것만 보여줍니다. 우리는 오류로 이어진 것이 무엇인지 기억하지 못합니다. 체인이 양쪽 끝에서 끊어졌습니다: 우리가 어디로 가고 있었는지, 어디서 왔는지를 잊어버렸습니다. 이러한 컨텍스트 손실을 "스택 찢기(stack ripping)"라고 하며, 많은 경우에 조사자를 혼란스럽게 만듭니다. 스택 찢기는 또한 "try / except" 블록이 함수 호출과 그 하위 트리를 감싸는 방식처럼 콜백 체인에 대한 예외 핸들러를 설치하는 것을 방해합니다.[^7]
 
-So, even apart from the long debate about the relative efficiencies of multithreading and async, there is this other debate regarding which is more error-prone: threads are susceptible to data races if you make a mistake synchronizing them, but callbacks are stubborn to debug due to stack ripping. 
+따라서 멀티스레딩과 비동기의 상대적 효율성에 대한 긴 논쟁과는 별개로, 어느 것이 더 오류가 발생하기 쉬운지에 대한 또 다른 논쟁이 있습니다: 스레드는 동기화를 실수하면 데이터 레이스에 취약하지만, 콜백은 스택 찢기로 인해 디버그하기 까다롭습니다. 
 
 ## Coroutines
 
-We entice you with a promise. It is possible to write asynchronous code that combines the efficiency of callbacks with the classic good looks of multithreaded programming. This combination is achieved with a pattern called "coroutines". Using Python 3.4's standard asyncio library, and a package called "aiohttp", fetching a URL in a coroutine is very direct[^10]:
+우리는 약속으로 여러분을 유혹합니다. 콜백의 효율성과 멀티스레드 프로그래밍의 고전적인 아름다움을 결합한 비동기 코드를 작성하는 것이 가능합니다. 이러한 조합은 "코루틴(coroutines)"이라고 하는 패턴으로 달성됩니다. Python 3.4의 표준 asyncio 라이브러리와 "aiohttp"라는 패키지를 사용하면, 코루틴에서 URL을 가져오는 것이 매우 직접적입니다[^10]:
 
 ```python
     @asyncio.coroutine
@@ -304,17 +304,17 @@ We entice you with a promise. It is possible to write asynchronous code that com
         body = yield from response.read()
 ```
 
-It is also scalable. Compared to the 50k of memory per thread and the operating system's hard limits on threads, a Python coroutine takes barely 3k of memory on Jesse's system. Python can easily start hundreds of thousands of coroutines.
+또한 확장 가능합니다. 스레드당 50k의 메모리와 스레드에 대한 운영 체제의 하드 제한과 비교하여, Python 코루틴은 Jesse의 시스템에서 겨우 3k의 메모리만 사용합니다. Python은 수십만 개의 코루틴을 쉽게 시작할 수 있습니다.
 
-The concept of a coroutine, dating to the elder days of computer science, is simple: it is a subroutine that can be paused and resumed. Whereas threads are preemptively multitasked by the operating system, coroutines multitask cooperatively: they choose when to pause, and which coroutine to run next.
+컴퓨터 과학의 초창기부터 시작된 코루틴의 개념은 간단합니다: 일시 중지되고 재개될 수 있는 서브루틴입니다. 스레드는 운영 체제에 의해 선점적으로 멀티태스킹되는 반면, 코루틴은 협력적으로 멀티태스킹합니다: 언제 일시 중지할지, 다음에 실행할 코루틴을 선택합니다.
 
-There are many implementations of coroutines; even in Python there are several. The coroutines in the standard "asyncio" library in Python 3.4 are built upon generators, a Future class, and the "yield from" statement. Starting in Python 3.5, coroutines are a native feature of the language itself[^17]; however, understanding coroutines as they were first implemented in Python 3.4, using pre-existing language facilities, is the foundation to tackle Python 3.5's native coroutines.
+코루틴에는 많은 구현이 있으며, Python에서도 여러 가지가 있습니다. Python 3.4의 표준 "asyncio" 라이브러리의 코루틴은 제너레이터, Future 클래스, "yield from" 문을 기반으로 구축됩니다. Python 3.5부터 코루틴은 언어 자체의 네이티브 기능이 되었습니다[^17]; 하지만 기존 언어 기능을 사용하여 Python 3.4에서 처음 구현된 코루틴을 이해하는 것이 Python 3.5의 네이티브 코루틴을 다루는 기반입니다.
 
-To explain Python 3.4's generator-based coroutines, we will engage in an exposition of generators and how they are used as coroutines in asyncio, and trust you will enjoy reading it as much as we enjoyed writing it. Once we have explained generator-based coroutines, we shall use them in our async web crawler.
+Python 3.4의 제너레이터 기반 코루틴을 설명하기 위해, 제너레이터와 asyncio에서 코루틴으로 사용되는 방법에 대한 설명을 하겠습니다. 우리가 즐겁게 작성한 만큼 여러분도 즐겁게 읽기를 바랍니다. 제너레이터 기반 코루틴을 설명한 후에는, 비동기 웹 크롤러에서 이를 사용하겠습니다.
 
-## How Python Generators Work
+## Python 제너레이터의 작동 방식
 
-Before you grasp Python generators, you have to understand how regular Python functions work. Normally, when a Python function calls a subroutine, the subroutine retains control until it returns, or throws an exception. Then control returns to the caller:
+Python 제너레이터를 이해하기 전에, 일반적인 Python 함수가 어떻게 작동하는지 이해해야 합니다. 일반적으로 Python 함수가 서브루틴을 호출하면, 서브루틴은 반환되거나 예외를 발생시킬 때까지 제어권을 유지합니다. 그러면 제어권이 호출자에게 돌아갑니다:
 
 ```python
 >>> def foo():
@@ -324,7 +324,7 @@ Before you grasp Python generators, you have to understand how regular Python fu
 ...     pass
 ```
 
-The standard Python interpreter is written in C. The C function that executes a Python function is called, mellifluously, `PyEval_EvalFrameEx`. It takes a Python stack frame object and evaluates Python bytecode in the context of the frame. Here is the bytecode for `foo`:
+표준 Python 인터프리터는 C로 작성되었습니다. Python 함수를 실행하는 C 함수는 아름답게도 `PyEval_EvalFrameEx`라고 불립니다. 이 함수는 Python 스택 프레임 객체를 받아서 프레임의 컨텍스트에서 Python 바이트코드를 평가합니다. 다음은 `foo`의 바이트코드입니다:
 
 ```python
 >>> import dis
@@ -336,11 +336,11 @@ The standard Python interpreter is written in C. The C function that executes a 
              10 RETURN_VALUE
 ```
 
-The `foo` function loads `bar` onto its stack and calls it, then pops its return value from the stack, loads `None` onto the stack, and returns `None`.
+`foo` 함수는 `bar`를 스택에 로드하고 호출한 다음, 스택에서 반환값을 팝하고, `None`을 스택에 로드한 후 `None`을 반환합니다.
 
-When `PyEval_EvalFrameEx` encounters the `CALL_FUNCTION` bytecode, it creates a new Python stack frame and recurses: that is, it calls `PyEval_EvalFrameEx` recursively with the new frame, which is used to execute `bar`.
+`PyEval_EvalFrameEx`가 `CALL_FUNCTION` 바이트코드를 만나면, 새로운 Python 스택 프레임을 생성하고 재귀합니다: 즉, `bar`를 실행하는 데 사용되는 새 프레임으로 `PyEval_EvalFrameEx`를 재귀적으로 호출합니다.
 
-It is crucial to understand that Python stack frames are allocated in heap memory! The Python interpreter is a normal C program, so its stack frames are normal stack frames. But the *Python* stack frames it manipulates are on the heap. Among other surprises, this means a Python stack frame can outlive its function call. To see this interactively, save the current frame from within `bar`:
+Python 스택 프레임이 힙 메모리에 할당된다는 것을 이해하는 것이 중요합니다! Python 인터프리터는 일반적인 C 프로그램이므로, 그 스택 프레임은 일반적인 스택 프레임입니다. 하지만 인터프리터가 조작하는 *Python* 스택 프레임은 힙에 있습니다. 다른 놀라운 점들 중에서, 이것은 Python 스택 프레임이 함수 호출보다 오래 살 수 있다는 것을 의미합니다. 이를 대화형으로 보려면, `bar` 내에서 현재 프레임을 저장해보세요:
 
 ```python
 >>> import inspect
@@ -364,9 +364,9 @@ It is crucial to understand that Python stack frames are allocated in heap memor
 
 \aosafigure[240pt]{crawler-images/function-calls.png}{Function Calls}{500l.crawler.functioncalls}
 
-The stage is now set for Python generators, which use the same building blocks&mdash;code objects and stack frames&mdash;to marvelous effect.
+이제 Python 제너레이터를 위한 무대가 준비되었습니다. 제너레이터는 동일한 구성 요소&mdash;코드 객체와 스택 프레임&mdash;을 사용하여 놀라운 효과를 만들어냅니다.
 
-This is a generator function:
+다음은 제너레이터 함수입니다:
 
 ```python
 >>> def gen_fn():
@@ -378,7 +378,7 @@ This is a generator function:
 ...     
 ```
 
-When Python compiles `gen_fn` to bytecode, it sees the `yield` statement and knows that `gen_fn` is a generator function, not a regular one. It sets a flag to remember this fact:
+Python이 `gen_fn`을 바이트코드로 컴파일할 때, `yield` 문을 보고 `gen_fn`이 일반 함수가 아닌 제너레이터 함수임을 알게 됩니다. 이 사실을 기억하기 위해 플래그를 설정합니다:
 
 ```python
 >>> # The generator flag is bit position 5.
@@ -387,7 +387,7 @@ When Python compiles `gen_fn` to bytecode, it sees the `yield` statement and kno
 True
 ```
 
-When you call a generator function, Python sees the generator flag, and it does not actually run the function. Instead, it creates a generator:
+제너레이터 함수를 호출하면, Python은 제너레이터 플래그를 보고 실제로 함수를 실행하지 않습니다. 대신 제너레이터를 생성합니다:
 
 ```python
 >>> gen = gen_fn()
@@ -395,32 +395,32 @@ When you call a generator function, Python sees the generator flag, and it does 
 <class 'generator'>
 ```
 
-A Python generator encapsulates a stack frame plus a reference to some code, the body of `gen_fn`:
+Python 제너레이터는 스택 프레임과 코드에 대한 참조(즉, `gen_fn`의 본문)를 캡슐화합니다:
 
 ```python
 >>> gen.gi_code.co_name
 'gen_fn'
 ```
 
-All generators from calls to `gen_fn` point to this same code. But each has its own stack frame. This stack frame is not on any actual stack, it sits in heap memory waiting to be used:
+`gen_fn` 호출로부터 생성된 모든 제너레이터는 동일한 코드를 가리킵니다. 하지만 각각은 자체 스택 프레임을 가집니다. 이 스택 프레임은 실제 스택에 있지 않고, 사용을 기다리며 힙 메모리에 위치합니다:
 
 \aosafigure[240pt]{crawler-images/generator.png}{Generators}{500l.crawler.generators}
 
-The frame has a "last instruction" pointer, the instruction it executed most recently. In the beginning, the last instruction pointer is -1, meaning the generator has not begun:
+프레임은 "마지막 명령어" 포인터를 가지며, 이는 가장 최근에 실행한 명령어입니다. 처음에는 마지막 명령어 포인터가 -1로, 제너레이터가 아직 시작되지 않았음을 의미합니다:
 
 ```python
 >>> gen.gi_frame.f_lasti
 -1
 ```
 
-When we call `send`, the generator reaches its first `yield`, and pauses. The return value of `send` is 1, since that is what `gen` passes to the `yield` expression:
+`send`를 호출하면, 제너레이터는 첫 번째 `yield`에 도달하고 일시 중지됩니다. `send`의 반환값은 1인데, 이는 `gen`이 `yield` 표현식에 전달하는 값이기 때문입니다:
 
 ```python
 >>> gen.send(None)
 1
 ```
 
-The generator's instruction pointer is now 3 bytecodes from the start, part way through the 56 bytes of compiled Python:
+제너레이터의 명령어 포인터는 이제 시작점에서 3 바이트코드 떨어진 곳에 있으며, 컴파일된 Python의 56바이트 중간 지점에 있습니다:
 
 ```python
 >>> gen.gi_frame.f_lasti
@@ -429,9 +429,9 @@ The generator's instruction pointer is now 3 bytecodes from the start, part way 
 56
 ```
 
-The generator can be resumed at any time, from any function, because its stack frame is not actually on the stack: it is on the heap. Its position in the call hierarchy is not fixed, and it need not obey the first-in, last-out order of execution that regular functions do. It is liberated, floating free like a cloud.
+제너레이터는 언제든지, 어떤 함수에서든 재개될 수 있습니다. 왜냐하면 스택 프레임이 실제로 스택에 있지 않고 힙에 있기 때문입니다. 호출 계층에서의 위치가 고정되지 않으며, 일반 함수가 따라야 하는 선입후출(first-in, last-out) 실행 순서를 따를 필요가 없습니다. 구름처럼 자유롭게 떠다니며 해방되어 있습니다.
 
-We can send the value "hello" into the generator and it becomes the result of the `yield` expression, and the generator continues until it yields 2:
+제너레이터에 "hello" 값을 보내면 이것이 `yield` 표현식의 결과가 되고, 제너레이터는 2를 yield할 때까지 계속됩니다:
 
 ```python
 >>> gen.send('hello')
@@ -439,16 +439,16 @@ result of yield: hello
 2
 ```
 
-Its stack frame now contains the local variable `result`:
+이제 스택 프레임에는 로컬 변수 `result`가 포함되어 있습니다:
 
 ```python
 >>> gen.gi_frame.f_locals
 {'result': 'hello'}
 ```
 
-Other generators created from `gen_fn` will have their own stack frames and local variables.
+`gen_fn`에서 생성된 다른 제너레이터들은 자체 스택 프레임과 로컬 변수를 가집니다.
 
-When we call `send` again, the generator continues from its second `yield`, and finishes by raising the special `StopIteration` exception:
+`send`를 다시 호출하면, 제너레이터는 두 번째 `yield`부터 계속되고, 특별한 `StopIteration` 예외를 발생시키며 완료됩니다:
 
 ```python
 >>> gen.send('goodbye')
@@ -458,13 +458,13 @@ Traceback (most recent call last):
 StopIteration: done
 ```
 
-The exception has a value, which is the return value of the generator: the string `"done"`.
+예외는 값을 가지며, 이는 제너레이터의 반환값입니다: 문자열 `"done"`입니다.
 
 ## Building Coroutines With Generators
 
-So a generator can pause, and it can be resumed with a value, and it has a return value. Sounds like a good primitive upon which to build an async programming model, without spaghetti callbacks! We want to build a "coroutine": a routine that is cooperatively scheduled with other routines in the program. Our coroutines will be a simplified version of those in Python's standard "asyncio" library. As in asyncio, we will use generators, futures, and the "yield from" statement.
+따라서 제너레이터는 일시 중지될 수 있고, 값과 함께 재개될 수 있으며, 반환값을 가집니다. 스파게티 콜백 없이 비동기 프로그래밍 모델을 구축할 수 있는 좋은 기본 요소처럼 들립니다! 우리는 "코루틴"을 만들고자 합니다: 프로그램의 다른 루틴들과 협력적으로 스케줄링되는 루틴입니다. 우리의 코루틴은 Python의 표준 "asyncio" 라이브러리에 있는 것들의 단순화된 버전이 될 것입니다. asyncio에서와 마찬가지로, 제너레이터, 퓨처, "yield from" 문을 사용할 것입니다.
 
-First we need a way to represent some future result that a coroutine is waiting for. A stripped-down version:
+먼저 코루틴이 기다리고 있는 미래 결과를 나타내는 방법이 필요합니다. 단순화된 버전입니다:
 
 ```python
 class Future:
@@ -481,9 +481,9 @@ class Future:
             fn(self)
 ```
 
-A future is initially "pending". It is "resolved" by a call to `set_result`.[^12]
+퓨처는 처음에 "대기(pending)" 상태입니다. `set_result` 호출에 의해 "해결(resolved)"됩니다.[^12]
 
-Let us adapt our fetcher to use futures and coroutines. We wrote `fetch` with a callback:
+퓨처와 코루틴을 사용하도록 가져오기 도구를 적응시켜봅시다. 우리는 콜백으로 `fetch`를 작성했습니다:
 
 ```python
 class Fetcher:
@@ -503,7 +503,7 @@ class Fetcher:
         # And so on....
 ```
 
-The `fetch` method begins connecting a socket, then registers the callback, `connected`, to be executed when the socket is ready. Now we can combine these two steps into one coroutine:
+`fetch` 메서드는 소켓 연결을 시작한 다음, 소켓이 준비되었을 때 실행될 콜백 `connected`를 등록합니다. 이제 이 두 단계를 하나의 코루틴으로 결합할 수 있습니다:
 
 ```python
     def fetch(self):
@@ -527,9 +527,9 @@ The `fetch` method begins connecting a socket, then registers the callback, `con
         print('connected!')
 ```
 
-Now `fetch` is a generator function, rather than a regular one, because it contains a `yield` statement. We create a pending future, then yield it to pause `fetch` until the socket is ready. The inner function `on_connected` resolves the future.
+이제 `fetch`는 `yield` 문을 포함하고 있기 때문에 일반 함수가 아닌 제너레이터 함수입니다. 대기 중인 퓨처를 생성한 다음, 소켓이 준비될 때까지 `fetch`를 일시 중지하기 위해 이를 yield합니다. 내부 함수 `on_connected`가 퓨처를 해결합니다.
 
-But when the future resolves, what resumes the generator? We need a coroutine *driver*. Let us call it "task":
+하지만 퓨처가 해결되면, 무엇이 제너레이터를 재개할까요? 코루틴 *드라이버*가 필요합니다. 이를 "작업(task)"이라고 부릅시다:
 
 ```python
 class Task:
@@ -554,11 +554,11 @@ Task(fetcher.fetch())
 loop()
 ```
 
-The task starts the `fetch` generator by sending `None` into it. Then `fetch` runs until it yields a future, which the task captures as `next_future`. When the socket is connected, the event loop runs the callback `on_connected`, which resolves the future, which calls `step`, which resumes `fetch`.
+작업은 `None`을 보내 `fetch` 제너레이터를 시작합니다. 그러면 `fetch`는 퓨처를 yield할 때까지 실행되고, 작업은 이를 `next_future`로 캡처합니다. 소켓이 연결되면, 이벤트 루프가 콜백 `on_connected`를 실행하고, 이는 퓨처를 해결하며, 이는 `step`을 호출하여 `fetch`를 재개합니다.
 
-## Factoring Coroutines With `yield from`
+## `yield from`으로 코루틴 분해하기
 
-Once the socket is connected, we send the HTTP GET request and read the server response. These steps need no longer be scattered among callbacks; we gather them into the same generator function:
+소켓이 연결되면, HTTP GET 요청을 보내고 서버 응답을 읽습니다. 이러한 단계들은 더 이상 콜백들 사이에 흩어질 필요가 없습니다; 같은 제너레이터 함수로 모을 수 있습니다:
 
 ```python
     def fetch(self):
@@ -583,9 +583,9 @@ Once the socket is connected, we send the HTTP GET request and read the server r
                 break
 ```
 
-This code, which reads a whole message from a socket, seems generally useful. How can we factor it from `fetch` into a subroutine? Now Python 3's celebrated `yield from` takes the stage. It lets one generator *delegate* to another.
+소켓에서 전체 메시지를 읽는 이 코드는 일반적으로 유용해 보입니다. 이를 `fetch`에서 서브루틴으로 어떻게 분해할 수 있을까요? 이제 Python 3의 유명한 `yield from`이 등장합니다. 이는 하나의 제너레이터가 다른 제너레이터에게 *위임*할 수 있게 해줍니다.
 
-To see how, let us return to our simple generator example:
+이를 보기 위해, 간단한 제너레이터 예제로 돌아가봅시다:
 
 ```python
 >>> def gen_fn():
@@ -594,10 +594,10 @@ To see how, let us return to our simple generator example:
 ...     result2 = yield 2
 ...     print('result of 2nd yield: {}'.format(result2))
 ...     return 'done'
-...     
+...
 ```
 
-To call this generator from another generator, delegate to it with `yield from`:
+다른 제너레이터에서 이 제너레이터를 호출하려면, `yield from`으로 위임합니다:
 
 ```python
 >>> # Generator function:
@@ -612,7 +612,7 @@ To call this generator from another generator, delegate to it with `yield from`:
 >>> caller = caller_fn()
 ```
 
-The `caller` generator acts as if it were `gen`, the generator it is delegating to:
+`caller` 제너레이터는 위임하고 있는 제너레이터인 `gen`처럼 동작합니다:
 
 ```python
 >>> caller.send(None)
@@ -632,15 +632,15 @@ Traceback (most recent call last):
 StopIteration
 ```
 
-While `caller` yields from `gen`, `caller` does not advance. Notice that its instruction pointer remains at 15, the site of its `yield from` statement, even while the inner generator `gen` advances from one `yield` statement to the next.[^13] From our perspective outside `caller`, we cannot tell if the values it yields are from `caller` or from the generator it delegates to. And from inside `gen`, we cannot tell if values are sent in from `caller` or from outside it. The `yield from` statement is a frictionless channel, through which values flow in and out of `gen` until `gen` completes.
+`caller`가 `gen`으로부터 yield하는 동안, `caller`는 전진하지 않습니다. 내부 제너레이터 `gen`이 하나의 `yield` 문에서 다음 문으로 전진하는 동안에도, 명령어 포인터는 `yield from` 문의 위치인 15에 그대로 남아 있음을 주목하세요.[^13] `caller` 외부의 관점에서는, yield되는 값이 `caller`에서 온 것인지 위임받은 제너레이터에서 온 것인지 구별할 수 없습니다. 그리고 `gen` 내부에서는, 값이 `caller`에서 보내진 것인지 외부에서 보내진 것인지 구별할 수 없습니다. `yield from` 문은 마찰 없는 채널로, `gen`이 완료될 때까지 값들이 `gen` 안팎으로 흐르게 합니다.
 
-A coroutine can delegate work to a sub-coroutine with `yield from` and receive the result of the work. Notice, above, that `caller` printed "return value of yield-from: done". When `gen` completed, its return value became the value of the `yield from` statement in `caller`:
+코루틴은 `yield from`으로 서브 코루틴에게 작업을 위임하고 작업의 결과를 받을 수 있습니다. 위에서 `caller`가 "return value of yield-from: done"을 출력했음을 주목하세요. `gen`이 완료되었을 때, 그 반환값이 `caller`의 `yield from` 문의 값이 되었습니다:
 
 ```python
     rv = yield from gen
 ```
 
-Earlier, when we criticized callback-based async programming, our most strident complaint was about "stack ripping": when a callback throws an exception, the stack trace is typically useless. It only shows that the event loop was running the callback, not *why*. How do coroutines fare?
+앞서 콜백 기반 비동기 프로그래밍을 비판했을 때, 가장 강력한 불만은 "스택 찢기"에 관한 것이었습니다: 콜백이 예외를 발생시킬 때 스택 트레이스는 일반적으로 쓸모가 없습니다. 이벤트 루프가 콜백을 실행하고 있었다는 것만 보여줄 뿐, *왜* 그랬는지는 알 수 없습니다. 코루틴은 어떨까요?
 
 ```python
 >>> def gen_fn():
@@ -654,7 +654,7 @@ Traceback (most recent call last):
 Exception: my error
 ```
 
-This is much more useful! The stack trace shows `caller_fn` was delegating to `gen_fn` when it threw the error. Even more comforting, we can wrap the call to a sub-coroutine in an exception handler, the same is with normal subroutines:
+이는 훨씬 더 유용합니다! 스택 트레이스는 오류를 발생시킬 때 `caller_fn`이 `gen_fn`에게 위임하고 있었음을 보여줍니다. 더욱 안심이 되는 것은, 일반 서브루틴과 마찬가지로 서브 코루틴 호출을 예외 핸들러로 감쌀 수 있다는 것입니다:
 
 ```python
 >>> def gen_fn():
@@ -674,7 +674,7 @@ This is much more useful! The stack trace shows `caller_fn` was delegating to `g
 caught uh oh
 ```
 
-So we factor logic with sub-coroutines just like with regular subroutines. Let us factor some useful sub-coroutines from our fetcher. We write a `read` coroutine to receive one chunk:
+따라서 우리는 일반적인 서브루틴과 마찬가지로 서브 코루틴으로 로직을 분해할 수 있습니다. 가져오기 도구에서 유용한 서브 코루틴들을 분해해봅시다. 하나의 청크를 받기 위한 `read` 코루틴을 작성합니다:
 
 ```python
 def read(sock):
@@ -689,7 +689,7 @@ def read(sock):
     return chunk
 ```
 
-We build on `read` with a `read_all` coroutine that receives a whole message:
+`read`를 기반으로 전체 메시지를 받는 `read_all` 코루틴을 구축합니다:
 
 ```python
 def read_all(sock):
@@ -703,9 +703,9 @@ def read_all(sock):
     return b''.join(response)
 ```
 
-If you squint the right way, the `yield from` statements disappear and these look like conventional functions doing blocking I/O. But in fact, `read` and `read_all` are coroutines. Yielding from `read` pauses `read_all` until the I/O completes. While `read_all` is paused, asyncio's event loop does other work and awaits other I/O events; `read_all` is resumed with the result of `read` on the next loop tick once its event is ready.
+적절히 눈을 가늘게 뜨면 `yield from` 문들이 사라지고 이들이 블로킹 I/O를 수행하는 기존의 함수들처럼 보입니다. 하지만 실제로는 `read`와 `read_all`은 코루틴입니다. `read`로부터 yield하면 I/O가 완료될 때까지 `read_all`을 일시 중지시킵니다. `read_all`이 일시 중지되어 있는 동안, asyncio의 이벤트 루프는 다른 작업을 수행하고 다른 I/O 이벤트를 기다립니다; 해당 이벤트가 준비되면 다음 루프 틱에서 `read`의 결과와 함께 `read_all`이 재개됩니다.
 
-At the stack's root, `fetch` calls `read_all`:
+스택의 루트에서 `fetch`는 `read_all`을 호출합니다:
 
 ```python
 class Fetcher:
@@ -715,20 +715,20 @@ class Fetcher:
         self.response = yield from read_all(sock)
 ```
 
-Miraculously, the Task class needs no modification. It drives the outer `fetch` coroutine just the same as before:
+놀랍게도, Task 클래스는 수정이 필요하지 않습니다. 이전과 마찬가지로 외부 `fetch` 코루틴을 동일하게 구동합니다:
 
 ```python
 Task(fetcher.fetch())
 loop()
 ```
 
-When `read` yields a future, the task receives it through the channel of `yield from` statements, precisely as if the future were yielded directly from `fetch`. When the loop resolves a future, the task sends its result into `fetch`, and the value is received by `read`, exactly as if the task were driving `read` directly:
+`read`가 퓨처를 yield할 때, 작업은 `yield from` 문들의 채널을 통해 이를 받습니다. 마치 퓨처가 `fetch`에서 직접 yield된 것처럼 정확히 동작합니다. 루프가 퓨처를 해결하면, 작업은 그 결과를 `fetch`에 보내고, 그 값은 `read`에 의해 받아집니다. 마치 작업이 `read`를 직접 구동하는 것처럼 정확히 동작합니다:
 
 \aosafigure[240pt]{crawler-images/yield-from.png}{Yield From}{500l.crawler.yieldfrom}
 
-To perfect our coroutine implementation, we polish out one mar: our code uses `yield` when it waits for a future, but `yield from` when it delegates to a sub-coroutine. It would be more refined if we used `yield from` whenever a coroutine pauses. Then a coroutine need not concern itself with what type of thing it awaits.
+코루틴 구현을 완벽하게 하기 위해, 하나의 흠을 다듬어봅시다: 우리 코드는 퓨처를 기다릴 때 `yield`를 사용하지만, 서브 코루틴에게 위임할 때는 `yield from`을 사용합니다. 코루틴이 일시 중지될 때마다 `yield from`을 사용한다면 더 세련될 것입니다. 그러면 코루틴은 기다리는 것의 유형에 대해 신경 쓸 필요가 없습니다.
 
-We take advantage of the deep correspondence in Python between generators and iterators. Advancing a generator is, to the caller, the same as advancing an iterator. So we make our Future class iterable by implementing a special method:
+Python에서 제너레이터와 이터레이터 간의 깊은 대응성을 활용합니다. 호출자에게는 제너레이터를 전진시키는 것이 이터레이터를 전진시키는 것과 같습니다. 따라서 특별한 메서드를 구현하여 Future 클래스를 이터러블로 만듭니다:
 
 ```python
     # Method on Future class.
@@ -738,27 +738,27 @@ We take advantage of the deep correspondence in Python between generators and it
         return self.result
 ```
 
-The future's `__iter__` method is a coroutine that yields the future itself. Now when we replace code like this:
+퓨처의 `__iter__` 메서드는 퓨처 자체를 yield하는 코루틴입니다. 이제 다음과 같은 코드를:
 
 ```python
 # f is a Future.
 yield f
 ```
 
-...with this:
+...다음과 같이 바꾸면:
 
 ```python
 # f is a Future.
 yield from f
 ```
 
-...the outcome is the same! The driving Task receives the future from its call to `send`, and when the future is resolved it sends the new result back into the coroutine.
+...결과는 동일합니다! 구동하는 Task는 `send` 호출로부터 퓨처를 받고, 퓨처가 해결되면 새로운 결과를 코루틴에 다시 보냅니다.
 
-What is the advantage of using `yield from` everywhere? Why is that better than waiting for futures with `yield` and delegating to sub-coroutines with `yield from`? It is better because now, a method can freely change its implementation without affecting the caller: it might be a normal method that returns a future that will *resolve* to a value, or it might be a coroutine that contains `yield from` statements and *returns* a value. In either case, the caller need only `yield from` the method in order to wait for the result.
+모든 곳에서 `yield from`을 사용하는 장점은 무엇일까요? 퓨처를 기다릴 때 `yield`를 사용하고 서브 코루틴에게 위임할 때 `yield from`을 사용하는 것보다 왜 더 나을까요? 이제 메서드가 호출자에게 영향을 주지 않고 자유롭게 구현을 변경할 수 있기 때문에 더 좋습니다: 값으로 *해결*될 퓨처를 반환하는 일반 메서드일 수도 있고, `yield from` 문을 포함하여 값을 *반환*하는 코루틴일 수도 있습니다. 어느 경우든, 호출자는 결과를 기다리기 위해 메서드를 `yield from`하기만 하면 됩니다.
 
-Gentle reader, we have reached the end of our enjoyable exposition of coroutines in asyncio. We peered into the machinery of generators, and sketched an implementation of futures and tasks. We outlined how asyncio attains the best of both worlds: concurrent I/O that is more efficient than threads and more legible than callbacks. Of course, the real asyncio is much more sophisticated than our sketch. The real framework addresses zero-copy I/O, fair scheduling, exception handling, and an abundance of other features.
+친애하는 독자 여러분, asyncio의 코루틴에 대한 즐거운 설명의 끝에 도달했습니다. 우리는 제너레이터의 내부 메커니즘을 살펴보고, 퓨처와 작업의 구현을 스케치했습니다. asyncio가 어떻게 두 세계의 장점을 모두 얻는지 개요를 설명했습니다: 스레드보다 효율적이고 콜백보다 읽기 쉬운 동시 I/O입니다. 물론, 실제 asyncio는 우리의 스케치보다 훨씬 더 정교합니다. 실제 프레임워크는 제로 카피 I/O, 공정한 스케줄링, 예외 처리, 그리고 풍부한 다른 기능들을 다룹니다.
 
-To an asyncio user, coding with coroutines is much simpler than you saw here. In the code above we implemented coroutines from first principles, so you saw callbacks, tasks, and futures. You even saw non-blocking sockets and the call to ``select``. But when it comes time to build an application with asyncio, none of this appears in your code. As we promised, you can now sleekly fetch a URL:
+asyncio 사용자에게는 코루틴으로 코딩하는 것이 여기서 본 것보다 훨씬 간단합니다. 위의 코드에서 우리는 코루틴을 원리부터 구현했기 때문에, 콜백, 작업, 퓨처를 보았습니다. 논블로킹 소켓과 `select` 호출까지 보았습니다. 하지만 실제로 asyncio로 애플리케이션을 구축할 때는, 이 중 어느 것도 여러분의 코드에 나타나지 않습니다. 약속했던 대로, 이제 URL을 우아하게 가져올 수 있습니다:
 
 ```python
     @asyncio.coroutine
@@ -767,17 +767,17 @@ To an asyncio user, coding with coroutines is much simpler than you saw here. In
         body = yield from response.read()
 ```
 
-Satisfied with this exposition, we return to our original assignment: to write an async web crawler, using asyncio.
+이 설명에 만족하며, 원래 과제로 돌아갑니다: asyncio를 사용하여 비동기 웹 크롤러를 작성하는 것입니다.
 
-## Coordinating Coroutines
+## 코루틴 조정하기
 
-We began by describing how we want our crawler to work. Now it is time to implement it with asyncio coroutines.
+우리는 크롤러가 어떻게 작동하기를 원하는지 설명하는 것으로 시작했습니다. 이제 asyncio 코루틴으로 이를 구현할 시간입니다.
 
-Our crawler will fetch the first page, parse its links, and add them to a queue. After this it fans out across the website, fetching pages concurrently. But to limit load on the client and server, we want some maximum number of workers to run, and no more. Whenever a worker finishes fetching a page, it should immediately pull the next link from the queue. We will pass through periods when there is not enough work to go around, so some workers must pause. But when a worker hits a page rich with new links, then the queue suddenly grows and any paused workers should wake and get cracking. Finally, our program must quit once its work is done.
+우리 크롤러는 첫 번째 페이지를 가져와서 링크를 파싱하고 큐에 추가할 것입니다. 그 후 웹사이트 전체에 퍼져서 페이지들을 동시에 가져옵니다. 하지만 클라이언트와 서버의 부하를 제한하기 위해, 실행할 워커의 최대 개수를 원하며, 그 이상은 안 됩니다. 워커가 페이지 가져오기를 완료할 때마다, 큐에서 다음 링크를 즉시 가져와야 합니다. 할 일이 부족한 기간을 거쳐갈 것이므로, 일부 워커들은 일시 중지해야 합니다. 하지만 워커가 새로운 링크가 풍부한 페이지를 만나면, 큐가 갑자기 커지고 일시 중지된 모든 워커들이 깨어나서 작업을 시작해야 합니다. 마지막으로, 우리 프로그램은 작업이 완료되면 종료해야 합니다.
 
-Imagine if the workers were threads. How would we express the crawler's algorithm? We could use a synchronized queue[^5] from the Python standard library. Each time an item is put in the queue, the queue increments its count of "tasks". Worker threads call `task_done` after completing work on an item. The main thread blocks on `Queue.join` until each item put in the queue is matched by a `task_done` call, then it exits.
+워커들이 스레드라고 상상해보세요. 크롤러의 알고리즘을 어떻게 표현할까요? Python 표준 라이브러리의 동기화된 큐[^5]를 사용할 수 있습니다. 큐에 항목이 들어갈 때마다, 큐는 "작업" 카운트를 증가시킵니다. 워커 스레드들은 항목에 대한 작업을 완료한 후 `task_done`을 호출합니다. 메인 스레드는 큐에 넣은 각 항목이 `task_done` 호출과 일치할 때까지 `Queue.join`에서 블록하다가, 그 후 종료합니다.
 
-Coroutines use the exact same pattern with an asyncio queue! First we import it[^6]:
+코루틴은 asyncio 큐와 정확히 동일한 패턴을 사용합니다! 먼저 이를 임포트합니다[^6]:
 
 ```python
 try:
@@ -788,7 +788,7 @@ except ImportError:
     from asyncio import Queue
 ```
 
-We collect the workers' shared state in a crawler class, and write the main logic in its `crawl` method. We start `crawl` on a coroutine and run asyncio's event loop until `crawl` finishes:
+워커들의 공유 상태를 크롤러 클래스에 수집하고, `crawl` 메서드에 주요 로직을 작성합니다. `crawl`을 코루틴에서 시작하고 `crawl`이 완료될 때까지 asyncio의 이벤트 루프를 실행합니다:
 
 ```python
 loop = asyncio.get_event_loop()
@@ -799,7 +799,7 @@ crawler = crawling.Crawler('http://xkcd.com',
 loop.run_until_complete(crawler.crawl())
 ```
 
-The crawler begins with a root URL and `max_redirect`, the number of redirects it is willing to follow to fetch any one URL. It puts the pair `(URL, max_redirect)` in the queue. (For the reason why, stay tuned.)
+크롤러는 루트 URL과 `max_redirect`로 시작합니다. `max_redirect`는 어떤 하나의 URL을 가져오기 위해 따라갈 의향이 있는 리디렉션 횟수입니다. 큐에 `(URL, max_redirect)` 쌍을 넣습니다. (왜 그런지는 계속 지켜보세요.)
 
 ```python
 class Crawler:
@@ -817,13 +817,13 @@ class Crawler:
         self.q.put((root_url, self.max_redirect))
 ```
 
-The number of unfinished tasks in the queue is now one. Back in our main script, we launch the event loop and the `crawl` method:
+큐의 미완성 작업 수는 이제 하나입니다. 메인 스크립트로 돌아가서, 이벤트 루프와 `crawl` 메서드를 시작합니다:
 
 ```python
 loop.run_until_complete(crawler.crawl())
 ```
 
-The `crawl` coroutine kicks off the workers. It is like a main thread: it blocks on `join` until all tasks are finished, while the workers run in the background.
+`crawl` 코루틴은 워커들을 시작시킵니다. 메인 스레드와 같습니다: 워커들이 백그라운드에서 실행되는 동안 모든 작업이 완료될 때까지 `join`에서 블록됩니다.
 
 ```python
     @asyncio.coroutine
@@ -838,15 +838,15 @@ The `crawl` coroutine kicks off the workers. It is like a main thread: it blocks
             w.cancel()
 ```
 
-If the workers were threads we might not wish to start them all at once. To avoid creating expensive threads until it is certain they are necessary, a thread pool typically grows on demand. But coroutines are cheap, so we simply start the maximum number allowed.
+워커들이 스레드였다면 모두 한 번에 시작하고 싶지 않을 수도 있습니다. 필요하다고 확실해질 때까지 비싼 스레드들을 생성하는 것을 피하기 위해, 스레드 풀은 일반적으로 요구에 따라 증가합니다. 하지만 코루틴은 저렴하므로, 허용된 최대 개수를 단순히 시작합니다.
 
-It is interesting to note how we shut down the crawler. When the `join` future resolves, the worker tasks are alive but suspended: they wait for more URLs but none come. So, the main coroutine cancels them before exiting. Otherwise, as the Python interpreter shuts down and calls all objects' destructors, living tasks cry out:
+크롤러를 종료하는 방법을 주목하는 것은 흥미롭습니다. `join` 퓨처가 해결되면, 워커 작업들은 살아있지만 일시 중지됩니다: 더 많은 URL을 기다리지만 아무것도 오지 않습니다. 따라서 메인 코루틴이 종료하기 전에 이들을 취소합니다. 그렇지 않으면, Python 인터프리터가 종료되고 모든 객체의 소멸자를 호출할 때, 살아있는 작업들이 외칩니다:
 
 ```
 ERROR:asyncio:Task was destroyed but it is pending!
 ```
 
-And how does `cancel` work? Generators have a feature we have not yet shown you. You can throw an exception into a generator from outside:
+그리고 `cancel`은 어떻게 작동할까요? 제너레이터에는 아직 보여주지 않은 기능이 있습니다. 외부에서 제너레이터에 예외를 던질 수 있습니다:
 
 ```python
 >>> gen = gen_fn()
@@ -859,7 +859,7 @@ Traceback (most recent call last):
 Exception: error
 ```
 
-The generator is resumed by `throw`, but it is now raising an exception. If no code in the generator's call stack catches it, the exception bubbles back up to the top. So to cancel a task's coroutine:
+제너레이터는 `throw`에 의해 재개되지만, 이제 예외를 발생시키고 있습니다. 제너레이터의 호출 스택에 있는 어떤 코드도 이를 잡지 않으면, 예외가 맨 위로 버블링됩니다. 따라서 작업의 코루틴을 취소하려면:
 
 ```python
     # Method of Task class.
@@ -867,7 +867,7 @@ The generator is resumed by `throw`, but it is now raising an exception. If no c
         self.coro.throw(CancelledError)
 ```
 
-Wherever the generator is paused, at some `yield from` statement, it resumes and throws an exception. We handle cancellation in the task's `step` method:
+제너레이터가 일시 중지된 곳이 어디든, 어떤 `yield from` 문에서든, 재개되어 예외를 던집니다. 작업의 `step` 메서드에서 취소를 처리합니다:
 
 ```python
     # Method of Task class.
@@ -883,15 +883,15 @@ Wherever the generator is paused, at some `yield from` statement, it resumes and
         next_future.add_done_callback(self.step)
 ```
 
-Now the task knows it is cancelled, so when it is destroyed it does not rage against the dying of the light.
+이제 작업은 취소되었음을 알므로, 소멸될 때 빛의 죽음에 맞서 격노하지 않습니다.
 
-Once `crawl` has canceled the workers, it exits. The event loop sees that the coroutine is complete (we shall see how later), and it too exits:
+`crawl`이 워커들을 취소한 후, 종료합니다. 이벤트 루프는 코루틴이 완료되었음을 보고(나중에 어떻게 하는지 보겠습니다), 마찬가지로 종료합니다:
 
 ```python
 loop.run_until_complete(crawler.crawl())
 ```
 
-The `crawl` method comprises all that our main coroutine must do. It is the worker coroutines that get URLs from the queue, fetch them, and parse them for new links. Each worker runs the `work` coroutine independently:
+`crawl` 메서드는 메인 코루틴이 해야 할 모든 것을 포함합니다. 큐에서 URL을 가져와서 페치하고 새 링크를 파싱하는 것은 워커 코루틴들입니다. 각 워커는 `work` 코루틴을 독립적으로 실행합니다:
 
 ```python
     @asyncio.coroutine
@@ -904,43 +904,40 @@ The `crawl` method comprises all that our main coroutine must do. It is the work
             self.q.task_done()
 ```
 
-Python sees that this code contains `yield from` statements, and compiles it into a generator function. So in `crawl`, when the main coroutine calls `self.work` ten times, it does not actually execute this method: it only creates ten generator objects with references to this code. It wraps each in a Task. The Task receives each future the generator yields, and drives the generator by calling `send` with each future's result when the future resolves. Because the generators have their own stack frames, they run independently, with separate local variables and instruction pointers.
+Python은 이 코드가 `yield from` 문을 포함하는 것을 보고, 제너레이터 함수로 컴파일합니다. 따라서 `crawl`에서 메인 코루틴이 `self.work`를 열 번 호출할 때, 실제로 이 메서드를 실행하지 않습니다: 이 코드에 대한 참조를 가진 열 개의 제너레이터 객체만 생성합니다. 각각을 Task로 감쌉니다. Task는 제너레이터가 yield하는 각 퓨처를 받고, 퓨처가 해결될 때 각 퓨처의 결과와 함께 `send`를 호출하여 제너레이터를 구동합니다. 제너레이터들은 각자의 스택 프레임을 가지므로, 별도의 로컬 변수와 명령어 포인터로 독립적으로 실행됩니다.
 
-The worker coordinates with its fellows via the queue. It waits for new URLs with:
+워커는 큐를 통해 동료들과 조정합니다. 다음으로 새 URL을 기다립니다:
 
 ```python
     url, max_redirect = yield from self.q.get()
 ```
 
-The queue's `get` method is itself a coroutine: it pauses until someone puts an item in the queue, then resumes and returns the item.
+큐의 `get` 메서드 자체가 코루틴입니다: 누군가가 큐에 항목을 넣을 때까지 일시 중지하다가, 재개되어 항목을 반환합니다.
 
-Incidentally, this is where the worker will be paused at the end of the crawl, when the main coroutine cancels it. From the coroutine's perspective, its last trip around the loop ends when `yield from` raises a `CancelledError`.
+참고로, 이것이 크롤링의 끝에서 메인 코루틴이 워커를 취소할 때 워커가 일시 중지되는 곳입니다. 코루틴의 관점에서, 루프를 도는 마지막 여행은 `yield from`이 `CancelledError`를 발생시킬 때 끝납니다.
 
-When a worker fetches a page it parses the links and puts new ones in the queue, then calls `task_done` to decrement the counter. Eventually, a worker fetches a page whose URLs have all been fetched already, and there is also no work left in the queue. Thus this worker's call to `task_done` decrements the counter to zero. Then `crawl`, which is waiting for the queue's `join` method, is unpaused and finishes.
+워커가 페이지를 가져오면 링크를 파싱하고 새로운 것들을 큐에 넣은 다음, 카운터를 감소시키기 위해 `task_done`을 호출합니다. 결국, 워커는 URL이 모두 이미 가져와진 페이지를 가져오게 되고, 큐에도 남은 작업이 없습니다. 따라서 이 워커의 `task_done` 호출이 카운터를 0으로 감소시킵니다. 그러면 큐의 `join` 메서드를 기다리고 있던 `crawl`이 일시 중지 해제되고 완료됩니다.
 
-We promised to explain why the items in the queue are pairs, like:
+큐의 항목이 다음과 같은 쌍인 이유를 설명하겠다고 약속했습니다:
 
 ```python
 # URL to fetch, and the number of redirects left.
 ('http://xkcd.com/353', 10)
 ```
 
-New URLs have ten redirects remaining. Fetching this particular URL results in a redirect to a new location with a trailing slash. We decrement the number of redirects remaining, and put the next location in the queue:
+새 URL은 10개의 리디렉션이 남아있습니다. 이 특정 URL을 가져오면 끝에 슬래시가 있는 새 위치로 리디렉션됩니다. 남은 리디렉션 수를 감소시키고, 다음 위치를 큐에 넣습니다:
 
 ```python
 # URL with a trailing slash. Nine redirects left.
 ('http://xkcd.com/353/', 9)
 ```
 
-The `aiohttp` package we use would follow redirects by default and give us the final response. We tell it not to, however, and handle redirects in the crawler, so it can coalesce redirect paths that lead to the same destination: if we have already seen this URL, it is in ``self.seen_urls`` and we have already started on this path from a different entry point:
+우리가 사용하는 `aiohttp` 패키지는 기본적으로 리디렉션을 따라가서 최종 응답을 줄 것입니다. 하지만 우리는 그렇게 하지 않도록 설정하고, 크롤러에서 리디렉션을 처리합니다. 그래서 같은 목적지로 이어지는 리디렉션 경로들을 통합할 수 있습니다: 이 URL을 이미 보았다면, `self.seen_urls`에 있고 다른 진입점에서 이미 이 경로를 시작했다는 뜻입니다:
 
 \aosafigure[240pt]{crawler-images/redirects.png}{Redirects}{500l.crawler.redirects}
 
-The crawler fetches "foo" and sees it redirects to "baz", so it adds "baz" to
-the queue and to ``seen_urls``. If the next page it fetches is "bar", which
-also redirects to "baz", the fetcher does not enqueue "baz" again. If the
-response is a page, rather than a redirect, `fetch` parses it for links and
-puts new ones in the queue.
+크롤러가 "foo"를 가져와서 "baz"로 리디렉션되는 것을 보면, "baz"를 큐와 `seen_urls`에 추가합니다. 다음으로 가져온 페이지가 "bar"이고, 이것도 "baz"로 리디렉션된다면, 가져오기 도구는 "baz"를 다시 큐에 넣지 않습니다. 응답이 리디렉션이 아닌 페이지라면, `fetch`는 링크를 파싱하고
+새로운 것들을 큐에 넣습니다.
 
 ```python
     @asyncio.coroutine
@@ -973,17 +970,17 @@ puts new ones in the queue.
             yield from response.release()
 ```
 
-If this were multithreaded code, it would be lousy with race conditions. For example, the worker checks if a link is in `seen_urls`, and if not the worker puts it in the queue and adds it to `seen_urls`. If it were interrupted between the two operations, then another worker might parse the same link from a different page, also observe that it is not in `seen_urls`, and also add it to the queue. Now that same link is in the queue twice, leading (at best) to duplicated work and wrong statistics.
+이것이 멀티스레드 코드였다면, 레이스 컨디션으로 엉망이 될 것입니다. 예를 들어, 워커가 링크가 `seen_urls`에 있는지 확인하고, 없으면 워커가 이를 큐에 넣고 `seen_urls`에 추가합니다. 두 연산 사이에 중단된다면, 다른 워커가 다른 페이지에서 같은 링크를 파싱하고, 마찬가지로 `seen_urls`에 없다는 것을 관찰하고, 또한 큐에 추가할 수도 있습니다. 이제 같은 링크가 큐에 두 번 있게 되어 (최선의 경우) 중복 작업과 잘못된 통계를 초래합니다.
 
-However, a coroutine is only vulnerable to interruption at `yield from` statements. This is a key difference that makes coroutine code far less prone to races than multithreaded code: multithreaded code must enter a critical section explicitly, by grabbing a lock, otherwise it is interruptible. A Python coroutine is uninterruptible by default, and only cedes control when it explicitly yields.
+하지만 코루틴은 `yield from` 문에서만 중단에 취약합니다. 이는 코루틴 코드가 멀티스레드 코드보다 레이스에 훨씬 덜 취약하게 만드는 핵심 차이점입니다: 멀티스레드 코드는 락을 잡아서 명시적으로 임계 섹션에 들어가야 하며, 그렇지 않으면 중단 가능합니다. Python 코루틴은 기본적으로 중단되지 않으며, 명시적으로 yield할 때만 제어권을 양보합니다.
 
-We no longer need a fetcher class like we had in the callback-based program. That class was a workaround for a deficiency of callbacks: they need some place to store state while waiting for I/O, since their local variables are not preserved across calls. But the `fetch` coroutine can store its state in local variables like a regular function does, so there is no more need for a class.
+콜백 기반 프로그램에서 가졌던 것과 같은 페처 클래스는 더 이상 필요하지 않습니다. 그 클래스는 콜백의 결함에 대한 해결책이었습니다: I/O를 기다리는 동안 상태를 저장할 곳이 필요한데, 로컬 변수는 호출 간에 보존되지 않기 때문입니다. 하지만 `fetch` 코루틴은 일반 함수와 같이 로컬 변수에 상태를 저장할 수 있으므로, 더 이상 클래스가 필요하지 않습니다.
 
-When `fetch` finishes processing the server response it returns to the caller, `work`. The `work` method calls `task_done` on the queue and then gets the next URL from the queue to be fetched.
+`fetch`가 서버 응답 처리를 완료하면 호출자인 `work`에게 반환됩니다. `work` 메서드는 큐에서 `task_done`을 호출하고 가져올 다음 URL을 큐에서 가져옵니다.
 
-When `fetch` puts new links in the queue it increments the count of unfinished tasks and keeps the main coroutine, which is waiting for `q.join`, paused. If, however, there are no unseen links and this was the last URL in the queue, then when `work` calls `task_done` the count of unfinished tasks falls to zero. That event unpauses `join` and the main coroutine completes.
+`fetch`가 큐에 새 링크를 넣으면 미완성 작업 수가 증가하고 `q.join`을 기다리고 있는 메인 코루틴을 일시 중지 상태로 유지합니다. 하지만 보지 않은 링크가 없고 이것이 큐의 마지막 URL이었다면, `work`가 `task_done`을 호출할 때 미완성 작업 수가 0으로 떨어집니다. 이 이벤트는 `join`의 일시 중지를 해제하고 메인 코루틴을 완료합니다.
 
-The queue code that coordinates the workers and the main coroutine is like this[^9]:
+워커들과 메인 코루틴을 조정하는 큐 코드는 다음과 같습니다[^9]:
 
 ```python
 class Queue:
@@ -1007,15 +1004,15 @@ class Queue:
             yield from self._join_future
 ```
 
-The main coroutine, `crawl`, yields from `join`. So when the last worker decrements the count of unfinished tasks to zero, it signals `crawl` to resume, and finish.
+메인 코루틴 `crawl`은 `join`으로부터 yield합니다. 따라서 마지막 워커가 미완성 작업 수를 0으로 감소시키면, `crawl`에게 재개하고 완료하라는 신호를 보냅니다.
 
-The ride is almost over. Our program began with the call to `crawl`:
+여행이 거의 끝났습니다. 우리 프로그램은 `crawl` 호출로 시작되었습니다:
 
 ```python
 loop.run_until_complete(self.crawler.crawl())
 ```
 
-How does the program end? Since `crawl` is a generator function, calling it returns a generator. To drive the generator, asyncio wraps it in a task:
+프로그램은 어떻게 끝날까요? `crawl`은 제너레이터 함수이므로, 이를 호출하면 제너레이터를 반환합니다. 제너레이터를 구동하기 위해, asyncio는 이를 작업으로 감쌉니다:
 
 ```python
 class EventLoop:
@@ -1035,16 +1032,16 @@ def stop_callback(future):
     raise StopError
 ```
 
-When the task completes, it raises `StopError `, which the loop uses as a signal that it has arrived at normal completion.
+작업이 완료되면, `StopError`를 발생시키며, 루프는 이를 정상 완료에 도달했다는 신호로 사용합니다.
 
-But what's this? The task has methods called `add_done_callback` and `result`? You might think that a task resembles a future. Your instinct is correct. We must admit a detail about the Task class we hid from you: a task is a future.
+그런데 이게 뭐죠? 작업에 `add_done_callback`과 `result`라는 메서드가 있네요? 작업이 퓨처와 비슷하다고 생각할 수도 있습니다. 여러분의 직감이 맞습니다. Task 클래스에 대해 숨긴 세부사항을 인정해야 합니다: 작업은 퓨처입니다.
 
 ```python
 class Task(Future):
     """A coroutine wrapped in a Future."""
 ```
 
-Normally a future is resolved by someone else calling `set_result` on it. But a task resolves *itself* when its coroutine stops. Remember from our earlier exploration of Python generators that when a generator returns, it throws the special `StopIteration` exception:
+일반적으로 퓨처는 다른 누군가가 `set_result`를 호출하여 해결됩니다. 하지만 작업은 코루틴이 중지될 때 *스스로* 해결됩니다. Python 제너레이터에 대한 초기 탐구에서 기억하세요. 제너레이터가 반환될 때, 특별한 `StopIteration` 예외를 던집니다:
 
 ```python
     # Method of class Task.
@@ -1064,7 +1061,7 @@ Normally a future is resolved by someone else calling `set_result` on it. But a 
         next_future.add_done_callback(self.step)
 ```
 
-So when the event loop calls `task.add_done_callback(stop_callback)`, it prepares to be stopped by the task. Here is `run_until_complete` again:
+따라서 이벤트 루프가 `task.add_done_callback(stop_callback)`을 호출할 때, 작업에 의해 중지될 준비를 합니다. 다시 `run_until_complete`입니다:
 
 ```python
     # Method of event loop.
@@ -1077,21 +1074,21 @@ So when the event loop calls `task.add_done_callback(stop_callback)`, it prepare
             pass
 ```
 
-When the task catches `StopIteration` and resolves itself, the callback raises `StopError` from within the loop. The loop stops and the call stack is unwound to `run_until_complete`. Our program is finished.
+작업이 `StopIteration`을 잡고 스스로를 해결하면, 콜백이 루프 내에서 `StopError`를 발생시킵니다. 루프가 멈추고 호출 스택이 `run_until_complete`까지 풀립니다. 우리 프로그램이 완료되었습니다.
 
-## Conclusion
+## 결론
 
-Increasingly often, modern programs are I/O-bound instead of CPU-bound. For such programs, Python threads are the worst of both worlds: the global interpreter lock prevents them from actually executing computations in parallel, and preemptive switching makes them prone to races. Async is often the right pattern. But as callback-based async code grows, it tends to become a dishevelled mess. Coroutines are a tidy alternative. They factor naturally into subroutines, with sane exception handling and stack traces.
+현대 프로그램들은 점점 더 CPU 바운드가 아닌 I/O 바운드가 되고 있습니다. 이러한 프로그램들에게 Python 스레드는 두 세계의 최악입니다: 전역 인터프리터 락이 실제로 병렬로 계산을 실행하는 것을 방해하고, 선점적 전환이 레이스에 취약하게 만듭니다. 비동기가 종종 올바른 패턴입니다. 하지만 콜백 기반 비동기 코드가 증가하면서, 지저분한 혼란이 되는 경향이 있습니다. 코루틴은 깔끔한 대안입니다. 합리적인 예외 처리와 스택 트레이스와 함께 자연스럽게 서브루틴으로 분해됩니다.
 
-If we squint so that the `yield from` statements blur, a coroutine looks like a thread doing traditional blocking I/O. We can even coordinate coroutines with classic patterns from multi-threaded programming. There is no need for reinvention. Thus, compared to callbacks, coroutines are an inviting idiom to the coder experienced with multithreading.
+`yield from` 문들이 흐릿해지도록 눈을 가늘게 뜨면, 코루틴은 전통적인 블로킹 I/O를 수행하는 스레드처럼 보입니다. 멀티스레드 프로그래밍의 고전적인 패턴으로 코루틴을 조정할 수도 있습니다. 재발명할 필요가 없습니다. 따라서 콜백과 비교하여, 코루틴은 멀티스레딩에 경험이 있는 코더에게 매력적인 관용구입니다.
 
-But when we open our eyes and focus on the `yield from` statements, we see they mark points when the coroutine cedes control and allows others to run. Unlike threads, coroutines display where our code can be interrupted and where it cannot. In his illuminating essay "Unyielding"[^4], Glyph Lefkowitz writes, "Threads make local reasoning difficult, and local reasoning is perhaps the most important thing in software development." Explicitly yielding, however, makes it possible to "understand the behavior (and thereby, the correctness) of a routine by examining the routine itself rather than examining the entire system."
+하지만 눈을 열고 `yield from` 문에 집중하면, 이들이 코루틴이 제어권을 양보하고 다른 것들이 실행되도록 허용하는 지점을 표시하는 것을 볼 수 있습니다. 스레드와 달리, 코루틴은 우리 코드가 중단될 수 있는 곳과 그렇지 않은 곳을 보여줍니다. 통찰력 있는 에세이 "Unyielding"[^4]에서 Glyph Lefkowitz는 "스레드는 지역적 추론을 어렵게 만들고, 지역적 추론은 아마도 소프트웨어 개발에서 가장 중요한 것입니다"라고 씁니다. 하지만 명시적으로 양보하는 것은 "전체 시스템을 검토하는 것이 아니라 루틴 자체를 검토하여 루틴의 동작(따라서 정확성)을 이해하는" 것을 가능하게 합니다.
 
-This chapter was written during a renaissance in the history of Python and async. Generator-based coroutines, whose devising you have just learned, were released in the "asyncio" module with Python 3.4 in March 2014. In September 2015, Python 3.5 was released with coroutines built in to the language itself. These native coroutinesare declared with the new syntax "async def", and instead of "yield from", they use the new "await" keyword to delegate to a coroutine or wait for a Future.
+이 장은 Python과 비동기 역사의 르네상스 시기에 작성되었습니다. 방금 고안 과정을 배운 제너레이터 기반 코루틴은 2014년 3월 Python 3.4의 "asyncio" 모듈로 릴리스되었습니다. 2015년 9월에 Python 3.5가 코루틴이 언어 자체에 내장되어 릴리스되었습니다. 이러한 네이티브 코루틴은 새로운 구문 "async def"로 선언되며, "yield from" 대신 새로운 "await" 키워드를 사용하여 코루틴에게 위임하거나 Future를 기다립니다.
 
-Despite these advances, the core ideas remain. Python's new native coroutines will be syntactically distinct from generators but work very similarly; indeed, they will share an implementation within the Python interpreter. Task, Future, and the event loop will continue to play their roles in asyncio.
+이러한 발전에도 불구하고, 핵심 아이디어는 남아있습니다. Python의 새로운 네이티브 코루틴은 제너레이터와 구문적으로 구별되지만 매우 유사하게 작동합니다; 실제로 Python 인터프리터 내에서 구현을 공유할 것입니다. Task, Future, 그리고 이벤트 루프는 asyncio에서 계속해서 역할을 할 것입니다.
 
-Now that you know how asyncio coroutines work, you can largely forget the details. The machinery is tucked behind a dapper interface. But your grasp of the fundamentals empowers you to code correctly and efficiently in modern async environments.
+이제 asyncio 코루틴이 어떻게 작동하는지 알았으니, 세부사항은 대부분 잊어버릴 수 있습니다. 메커니즘은 깔끔한 인터페이스 뒤에 숨겨져 있습니다. 하지만 기본 원리에 대한 여러분의 이해는 현대 비동기 환경에서 올바르고 효율적으로 코딩할 수 있는 힘을 줍니다.
 
 [^4]: [https://glyph.twistedmatrix.com/2014/02/unyielding.html](https://glyph.twistedmatrix.com/2014/02/unyielding.html)
 
