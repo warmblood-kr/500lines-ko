@@ -1,119 +1,109 @@
-title: A Rejection Sampler
+title: 기각 샘플러
 author: Jessica B. Hamrick
 <markdown>
-_Jess is a Ph.D. student at UC Berkeley where she studies human cognition by combining probabilistic models from machine learning with behavioral experiments from cognitive science. In her spare time, Jess is a core contributor to IPython and Jupyter. She also holds a B.S. and M.Eng. in Computer Science from MIT._
+_Jess는 UC 버클리의 박사과정 학생으로, 머신러닝의 확률 모델과 인지과학의 행동 실험을 결합하여 인간의 인지 과정을 연구하고 있습니다. 여가 시간에는 IPython과 Jupyter의 핵심 기여자로 활동하고 있습니다. MIT에서 컴퓨터과학 학사 및 석사 학위를 받았습니다._
 </markdown>
-## Introduction
+## 소개
 
-Frequently, in computer science and engineering, we run into problems
-that can't be solved using an equation. These problems usually involve
-complex systems, noisy inputs, or both. Here are just a few examples
-of real-world problems that do not have exact, analytic solutions:
+컴퓨터과학과 공학에서는 방정식으로 해결할 수 없는 문제에
+자주 마주치게 됩니다. 이런 문제들은 보통 복잡한 시스템이나
+노이즈가 있는 입력, 또는 이 둘 모두를 포함하고 있습니다.
+정확한 분석적 해결책이 존재하지 않는 실세계 문제들의 몇 가지
+예시를 살펴보겠습니다:
 
-1. You have built a computer model of an airplane, and want to
-   determine how well the airplane will hold up under different
-   weather conditions.
+1. 비행기의 컴퓨터 모델을 만들었고, 다양한 기상 조건에서
+   비행기가 얼마나 잘 견딜 수 있는지 결정하고 싶은 경우.
 
-2. You want to determine whether chemical runoff from a proposed
-   factory will affect the water supply of nearby residents, based on
-   a model of groundwater diffusion.
+2. 제안된 공장에서 나오는 화학 물질 유출이
+   지하수 확산 모델을 기반으로 근처 주민들의 급수에
+   영향을 미칠지 판단하고 싶은 경우.
 
-3. You have a robot which captures noisy images from its camera, and
-   want to recover the three-dimensional structure of the object that
-   those images depict.
+3. 카메라로부터 노이즈가 있는 이미지를 촬영하는 로봇이 있고,
+   그 이미지들이 묘사하는 객체의 3차원 구조를
+   복원하고 싶은 경우.
 
-4. You want to compute how likely you are to win at chess if you take
-   a particular move.
+4. 체스에서 특정 수를 둘 때 승리할 가능성이 얼마나 되는지
+   계산하고 싶은 경우.
 
-Even though these types of problems cannot be solved exactly, we can
-often achieve an approximate solution to them using techniques known
-as *Monte Carlo sampling* methods. In Monte Carlo methods, the key
-idea is to take many *samples*, which will then allow you to estimate
-the solution.[^note]
+이런 유형의 문제들은 정확하게 해결할 수는 없지만,
+*몬테카를로 샘플링* 기법이라고 알려진 방법들을 사용하여
+근사해를 구할 수 있는 경우가 많습니다. 몬테카를로 방법에서
+핵심 아이디어는 많은 *샘플*을 취하는 것으로, 이를 통해
+해답을 추정할 수 있게 됩니다.[^note]
 
-[^note]: This chapter assumes some familiarity with statistics and
-probability theory.
+[^note]: 이 장에서는 통계학과 확률론에 대한 어느 정도의
+친숙함을 가정합니다.
 
 
-### What is Sampling?
+### 샘플링이란 무엇인가?
 
-The term *sampling* means generating random values from some
-probability distribution. For example, the value you get from rolling
-a six-sided die is a sample. The card you draw from the top of the
-deck after it has been shuffled is a sample. The location where the
-dart hits the board is also a sample. The only difference between
-these various samples is that they are generated from different
-*probability distributions*. In the case of the die, the distribution
-places equal weight across six values. In the case of the card, the
-distribution places equal weight across 52 values. In the case of the
-dart board, the distribution places weight across a circular area
-(though it might not be uniformly distributed, depending on your skill
-as a dart player).
+*샘플링*이라는 용어는 어떤 확률 분포로부터 무작위 값들을
+생성하는 것을 의미합니다. 예를 들어, 6면 주사위를 굴려서 얻는
+값은 샘플입니다. 섞인 카드 더미의 맨 위에서 뽑는 카드는
+샘플입니다. 다트가 보드에 맞는 위치 역시 샘플입니다. 이런
+다양한 샘플들 사이의 유일한 차이점은 서로 다른 *확률 분포*에서
+생성된다는 것입니다. 주사위의 경우, 분포는 6개의 값에 동일한
+가중치를 부여합니다. 카드의 경우, 분포는 52개의 값에 동일한
+가중치를 부여합니다. 다트 보드의 경우, 분포는 원형 영역에
+가중치를 부여합니다(다트 실력에 따라 균등하게 분포되지 않을 수도
+있지만요).
 
-There are two ways we usually want to use samples. The first is just
-to generate a random value to be used later: for example, randomly
-drawing cards in a computer game of poker. The second way that samples
-are used is for estimation. For example, if you suspected that your
-friend was playing with loaded dice, you might want to roll the dice
-many times to see if some numbers came up more often than you would
-expect. Or, you might just want to characterize the range of
-possibilities, as in the airplane example above. Weather is a fairly
-chaotic system, meaning that it is impossible to compute *exactly*
-whether the airplane will survive a particular weather
-situation. Instead, you could simulate the behavior of the airplane
-under many different weather conditions, multiple times, which would
-allow you to see under which conditions the airplane is most likely to
-fail.
+보통 샘플을 사용하고 싶은 방식은 두 가지가 있습니다. 첫 번째는
+단순히 나중에 사용할 무작위 값을 생성하는 것입니다. 예를 들어,
+컴퓨터 포커 게임에서 무작위로 카드를 뽑는 것이 그렇습니다. 두
+번째로 샘플이 사용되는 방식은 추정을 위한 것입니다. 예를 들어,
+친구가 속임수 주사위를 사용한다고 의심된다면, 주사위를 여러 번
+굴려서 어떤 숫자가 예상보다 더 자주 나오는지 보고 싶을 것입니다.
+또는 위의 비행기 예시에서처럼 가능성의 범위를 특성화하고 싶을
+수도 있습니다. 날씨는 상당히 혼돈적인 시스템으로, 비행기가 특정
+기상 상황에서 살아남을지를 *정확히* 계산하는 것은 불가능합니다.
+대신, 다양한 기상 조건에서 비행기의 행동을 여러 번
+시뮬레이션함으로써 어떤 조건에서 비행기가 실패할 가능성이 가장
+높은지 알 수 있게 됩니다.
 
-### Programming with Samples and Probabilities
+### 샘플과 확률을 이용한 프로그래밍
 
-As with most applications in computer science, you can make design
-decisions when programming with samples and probabilities that will
-influence the overall cleanliness, coherence, and correctness of your
-code. In this chapter, we will go through a simple example of how to
-sample random items in a computer game. In particular, we will focus
-on the design decisions which are specific to working with
-probabilities, including functions both for sampling and for
-evaluating probabilities, working with logarithms, allowing
-reproducibility, and separating the process of generating samples from
-the specific application.
+컴퓨터과학의 대부분의 응용 분야와 마찬가지로, 샘플과 확률을
+이용해 프로그래밍할 때 코드의 전반적인 깔끔함, 일관성, 정확성에
+영향을 미치는 설계 결정을 내릴 수 있습니다. 이 장에서는 컴퓨터
+게임에서 무작위 아이템을 샘플링하는 간단한 예시를 살펴볼
+것입니다. 특히, 확률 작업에 특화된 설계 결정들에 초점을 맞출
+것인데, 여기에는 샘플링과 확률 평가를 위한 함수들, 로그를 이용한
+작업, 재현성 허용, 그리고 샘플 생성 과정을 특정 응용 분야로부터
+분리하는 것이 포함됩니다.
 
-#### A Brief Aside About Notation
+#### 표기법에 대한 간단한 부연설명
 
-We will use mathematical notation like $p(x)$ to indicate that $p$ is the
-*probability density function* (PDF) or *probability mass function* (PMF) over
-values $x$ of a random variable. A PDF is a *continuous* function $p(x)$ such
-that $\int_{-\infty}^\infty p(x)\ \mathrm{d}x=1$, whereas a PMF is a *discrete*
-function $p(x)$ such that $\sum_{x\in \mathbb{Z}} p(x)=1$, where $\mathbb{Z}$
-is the set of all integers.
+$p(x)$와 같은 수학적 표기법을 사용하여 $p$가 무작위 변수의 값
+$x$에 대한 *확률 밀도 함수*(PDF) 또는 *확률 질량 함수*(PMF)임을
+나타낼 것입니다. PDF는 $\int_{-\infty}^\infty p(x)\ \mathrm{d}x=1$을
+만족하는 *연속* 함수 $p(x)$인 반면, PMF는 $\sum_{x\in \mathbb{Z}} p(x)=1$을
+만족하는 *이산* 함수 $p(x)$입니다. 여기서 $\mathbb{Z}$는 모든
+정수의 집합입니다.
 
-The probability distribution in the case of the dart
-board would be a continuous PDF, while the probability distribution in
-the case of a die would be a discrete PMF. In both cases, $p(x) \geq
-0$ for all $x$; i.e., the probabilities have to be non-negative.
- 
-There are two things that we might want to do with a probability
-distribution. Given a value (or location) $x$, we might want to
-*evaluate* what the probability density (or mass) is at that
-location. In mathematical notation, we would write this as $p(x)$ (the
-probability density at the value $x$).
+다트 보드의 경우 확률 분포는 연속 PDF가 될 것이고, 주사위의
+경우 확률 분포는 이산 PMF가 될 것입니다. 두 경우 모두 모든
+$x$에 대해 $p(x) \geq 0$입니다. 즉, 확률은 음이 아닌 값이어야
+합니다.
 
-Given the PDF or PMF, we might also want to *sample* a value $x$ in a
-manner proportional to the distribution (such that we are more likely
-to get a sample at places where the probability is higher). In
-mathematical notation, we write this as $x\sim p$, to indicate
-that $x$ is sampled proportional to $p$.
+확률 분포로 하고 싶은 일은 두 가지가 있습니다. 값(또는 위치)
+$x$가 주어졌을 때, 그 위치에서의 확률 밀도(또는 질량)가 얼마인지
+*평가*하고 싶을 수 있습니다. 수학적 표기법으로는 이를 $p(x)$
+(값 $x$에서의 확률 밀도)로 쓸 것입니다.
 
-## Sampling Magical Items
+PDF 또는 PMF가 주어졌을 때, 분포에 비례하는 방식으로 값 $x$를
+*샘플링*하고 싶을 수도 있습니다(확률이 더 높은 곳에서 샘플을 얻을
+가능성이 더 높도록). 수학적 표기법으로는 $x$가 $p$에 비례하여
+샘플링됨을 나타내기 위해 $x\sim p$로 씁니다.
 
-As a simple example to demonstrate the various design decisions
-involved with programming with probabilities, let's imagine we're
-writing a roleplaying game (RPG). We would like a method of generating
-bonus stats for the magical items that are randomly dropped by
-monsters. We might decide that the maximum bonus we want an item to
-confer is +5, and that higher bonuses are less likely than lower
-bonuses. If $B$ is a random variable over the values of the bonus,
-then:
+## 마법 아이템 샘플링
+
+확률을 이용한 프로그래밍의 다양한 설계 결정들을 보여주는 간단한
+예시로, 롤플레잉 게임(RPG)을 작성한다고 상상해 봅시다. 몬스터가
+무작위로 드롭하는 마법 아이템의 보너스 스탯을 생성하는 방법이
+필요합니다. 아이템이 제공하고자 하는 최대 보너스를 +5로 정하고,
+높은 보너스일수록 낮은 보너스보다 확률이 낮다고 결정할 수
+있습니다. $B$를 보너스 값에 대한 무작위 변수라고 하면:
 
 $$
 p(B=\mathrm{+1}) = 0.55\\
@@ -123,80 +113,67 @@ p(B=\mathrm{+4}) = 0.06\\
 p(B=\mathrm{+5}) = 0.02
 $$
 
-We can also specify that there are six stats (dexterity, constitution,
-strength, intelligence, wisdom, and charisma) that our bonus should be
-distributed between. So, an item with a +5 bonus could have those
-points distributed across different stats (e.g., +2 wisdom and +3
-intelligence) or concentrated within a single stat (e.g., +5
-charisma).
+또한 보너스가 분산되어야 하는 6개의 스탯(민첩, 체질, 힘, 지능,
+지혜, 매력)이 있다고 명시할 수 있습니다. 따라서 +5 보너스를 가진
+아이템은 그 포인트들이 여러 스탯에 분산될 수도 있고(예: 지혜 +2,
+지능 +3), 하나의 스탯에 집중될 수도 있습니다(예: 매력 +5).
 
-How would we randomly sample from this distribution? The easiest way is probably
-to first sample the overall item bonus, then sample the way the
-bonus is distributed across the stats. Conveniently, the probability
-distributions of the bonus and the way that it is distributed are both
-instances of the *multinomial distribution*.
+이 분포에서 어떻게 무작위로 샘플링할까요? 가장 쉬운 방법은 아마
+먼저 전체 아이템 보너스를 샘플링한 다음, 보너스가 스탯들에
+분산되는 방식을 샘플링하는 것일 것입니다. 다행히도, 보너스의 확률
+분포와 그것이 분산되는 방식 모두 *다항 분포*의 사례입니다.
 
-## The Multinomial Distribution
+## 다항 분포
 
-The multinomial distribution is used when you have several possible
-outcomes, and you want to characterize the probability of each of
-those outcomes occurring.  The classic example used to explain the
-multinomial distribution is the *ball and urn*. The idea is
-that you have an urn with different colored balls in it (for example,
-30% red, 20% blue, and 50% green). You pull out a ball, record its
-color, put it back in the urn, and then repeat this multiple times. In
-this case, an *outcome* corresponds to drawing a ball of a particular
-color, and the probability of each outcome corresponds to the
-proportion of balls of that color (e.g., for the outcome of drawing a
-blue ball, the probability is $p(\mathrm{blue})=0.20$). The
-multinomial distribution is then used to describe the possible
-combinations of outcomes when multiple balls are drawn (e.g., two
-green and one blue).
+다항 분포는 여러 가능한 결과가 있고, 각 결과가 발생할 확률을
+특성화하고 싶을 때 사용됩니다. 다항 분포를 설명하는 데 사용되는
+고전적인 예시는 *공과 항아리*입니다. 아이디어는 다양한 색의 공이
+들어있는 항아리가 있다는 것입니다(예를 들어, 빨간색 30%, 파란색
+20%, 녹색 50%). 공을 하나 빼서 색을 기록하고, 다시 항아리에
+넣은 다음, 이를 여러 번 반복합니다. 이 경우, *결과*는 특정 색의
+공을 뽑는 것에 해당하고, 각 결과의 확률은 그 색의 공의
+비율에 해당합니다(예: 파란 공을 뽑는 결과의 경우, 확률은
+$p(\mathrm{blue})=0.20$입니다). 그러면 다항 분포는 여러 공을 뽑을 때
+가능한 결과의 조합들을 설명하는 데 사용됩니다(예: 녹색 둘과
+파란색 하나).
 
-The code in this section is located in the file `multinomial.py`.
+이 섹션의 코드는 `multinomial.py` 파일에 있습니다.
 
-### The `MultinomialDistribution` Class
+### `MultinomialDistribution` 클래스
 
-In general, there are two use cases for a distribution: we might want
-to *sample* from that distribution, and we might want to *evaluate the
-probability* of a sample (or samples) under that distribution's PMF or
-PDF. While the actual computations needed to perform these two
-functions are fairly different, they rely on a common piece of
-information: what the *parameters* of the distribution are. In the
-case of the multinomial distribution, the parameters are the event
-probabilities, $p$ (which correspond to the proportions of the
-different colored balls in the urn example above).
+일반적으로, 분포에는 두 가지 사용 사례가 있습니다: 그 분포로부터
+*샘플링*하고 싶을 수도 있고, 그 분포의 PMF나 PDF 하에서 샘플(또는
+샘플들)의 *확률을 평가*하고 싶을 수도 있습니다. 이 두 함수를
+수행하는 데 필요한 실제 계산은 상당히 다르지만, 공통된 정보 조각에
+의존합니다: 분포의 *매개변수*가 무엇인지입니다. 다항 분포의
+경우, 매개변수는 사건 확률들 $p$입니다(위의 항아리 예시에서
+다양한 색 공들의 비율에 해당합니다).
 
-The simplest solution would be to simply create two functions that
-both take the same parameters, but are otherwise independent. However,
-I will usually opt to use a class for representing my
-distributions. There are several advantages to doing so:
+가장 간단한 해결책은 동일한 매개변수를 받지만 서로 독립적인 두
+함수를 만드는 것일 것입니다. 하지만 저는 보통 분포를 표현하기
+위해 클래스를 사용하는 것을 선택합니다. 그렇게 하는 데에는 여러
+장점이 있습니다:
 
-1. You only need to pass in the parameters once, when creating the
-   class.
-2. There are additional attributes we might want to know about a
-   distribution: the mean, variance, derivative, etc. Once we have
-   even a handful of functions that operate on a common object, it is
-   even more convenient to use a class rather than passing the same
-   parameters to many different functions.
-3. It is usually a good idea to check that the parameter values are
-   valid (for example, in the case of the multinomial distribution,
-   the vector $p$ of event probabilities should sum to 1). It is much
-   more efficient to do this check once, in the constructor of the
-   class, rather than every time one of the functions is called.
-4. Sometimes computing the PMF or PDF involves computing constant
-   values (given the parameters). With a class, we can pre-compute
-   these constants in the constructor, rather than having to compute
-   them every time the PMF or PDF function is called.
+1. 클래스를 생성할 때 매개변수를 한 번만 전달하면 됩니다.
+2. 분포에 대해 알고 싶어할 수 있는 추가 속성들이 있습니다: 평균,
+   분산, 도함수 등. 공통 객체에서 작동하는 함수가 몇 개라도 있게
+   되면, 동일한 매개변수를 여러 다른 함수에 전달하는 것보다 클래스를
+   사용하는 것이 훨씬 더 편리합니다.
+3. 매개변수 값들이 유효한지 확인하는 것이 보통 좋은 생각입니다
+   (예를 들어, 다항 분포의 경우 사건 확률들의 벡터 $p$는 1의 합을
+   가져야 합니다). 함수가 호출될 때마다 이 확인을 하는 것보다
+   클래스의 생성자에서 한 번 하는 것이 훨씬 더 효율적입니다.
+4. 때때로 PMF나 PDF를 계산하는 것은 (매개변수가 주어진) 상수 값들을
+   계산하는 것을 포함합니다. 클래스를 사용하면, PMF나 PDF 함수가
+   호출될 때마다 계산해야 하는 것보다 생성자에서 이런 상수들을
+   미리 계산할 수 있습니다.
 
-In practice, this is how many statistics packages work, including
-SciPy's own distributions, which are located in the `scipy.stats`
-module. While we are using other SciPy functions, however, we are
-not using their probability distributions, both for the sake of
-illustration, and because there is currently no multinomial
-distribution in SciPy.
+실제로, 이것은 `scipy.stats` 모듈에 위치한 SciPy 자체의 분포들을
+포함해 많은 통계 패키지들이 작동하는 방식입니다. 하지만 우리는
+다른 SciPy 함수들을 사용하고 있지만, 설명을 위해서 그리고 SciPy에
+현재 다항 분포가 없기 때문에 그들의 확률 분포는 사용하지 않습니다.
 
-Here is the constructor code for the class:
+클래스의 생성자 코드는 다음과 같습니다:
 
 ```python
 import numpy as np
@@ -204,139 +181,133 @@ import numpy as np
 class MultinomialDistribution(object):
 
     def __init__(self, p, rso=np.random):
-        """Initialize the multinomial random variable.
+        """다항 무작위 변수를 초기화합니다.
 
         Parameters
         ----------
         p: numpy array of length `k`
-            The event probabilities
+            사건 확률들
         rso: numpy RandomState object (default: None)
-            The random number generator
+            무작위 숫자 생성기
 
         """
 
-        # Check that the probabilities sum to 1. If they don't, then
-        # something is wrong! We use `np.isclose` rather than checking
-        # for exact equality because in many cases, we won't have
-        # exact equality due to floating-point error.
+        # 확률들이 1의 합을 갖는지 확인합니다. 그렇지 않다면
+        # 뭔가 잘못되었습니다! 많은 경우에 부동소수점 오류로 인해
+        # 정확한 같음을 갖지 않을 것이므로 정확한 같음을 확인하기보다는
+        # `np.isclose`를 사용합니다.
         if not np.isclose(np.sum(p), 1.0):
-            raise ValueError("event probabilities do not sum to 1")
+            raise ValueError("사건 확률들이 1의 합을 갖지 않습니다")
 
-        # Store the parameters that were passed in
+        # 전달된 매개변수들을 저장합니다
         self.p = p
         self.rso = rso
 
-        # Precompute log probabilities, for use by the log-PMF, for
-        # each element of `self.p` (the function `np.log` operates
-        # elementwise over NumPy arrays, as well as on scalars.)
+        # log-PMF에서 사용할 로그 확률들을 미리 계산합니다.
+        # `self.p`의 각 요소에 대해 (`np.log` 함수는 NumPy 배열에 대해
+        # 요소별로, 그리고 스칼라에 대해서도 작동합니다.)
         self.logp = np.log(self.p)
 ```
 
-The class takes as arguments the event probabilities, $p$, and a
-variable called `rso`. First, the constructor checks that the
-parameters are valid; i.e., that `p` sums to 1. Then it stores
-the arguments that were passed in, and uses the event probabilities to
-compute the event *log* probabilities. (We'll go into why this is
-necessary in a bit). The `rso` object is what we'll use later to
-produce random numbers. (We'll talk more about what it is a bit later
-as well).
+이 클래스는 사건 확률들 $p$와 `rso`라고 불리는 변수를 인자로
+받습니다. 먼저, 생성자는 매개변수들이 유효한지 확인합니다. 즉,
+`p`가 1의 합을 갖는지 확인합니다. 그 다음 전달받은 인자들을
+저장하고, 사건 확률들을 사용해서 사건 *로그* 확률들을 계산합니다.
+(이것이 왜 필요한지는 조금 후에 다룰 것입니다). `rso` 객체는
+나중에 무작위 숫자를 생성하는 데 사용할 것입니다. (이것이 무엇인지
+조금 후에 더 이야기할 것입니다).
 
-Before we get into the rest of the class, let's go over
-two points related to the constructor.
+클래스의 나머지 부분을 다루기 전에, 생성자와 관련된 두 가지
+사항을 살펴봅시다.
 
-#### Descriptive versus Mathematic Variable Names
+#### 설명적 변수명 대 수학적 변수명
 
-Usually, programmers are encouraged to use descriptive variable names:
-for example, it would be considered better practice to use the names
-`independent_variable` and `dependent_variable` rather than `x` and
-`y`. A standard rule of thumb is to never use variable names that are
-only one or two characters.  However, you'll notice that in the
-constructor to our `MultinomialDistribution` class, we use the
-variable name of `p`, which is in violation of typical naming
-conventions.
+보통 프로그래머들은 설명적인 변수명을 사용하도록 권장받습니다:
+예를 들어, `x`와 `y`보다는 `independent_variable`과
+`dependent_variable`이라는 이름을 사용하는 것이 더 나은 관례로
+여겨집니다. 표준적인 경험 법칙은 한두 글자만으로 된 변수명을
+절대 사용하지 않는 것입니다. 하지만 우리의
+`MultinomialDistribution` 클래스의 생성자에서 `p`라는 변수명을
+사용한다는 것을 알아차릴 것인데, 이는 일반적인 명명 규칙을
+위반하는 것입니다.
 
-While I agree that such naming conventions should apply in almost
-every domain, there is one exception: math. The difficulty with coding
-up mathematical equations is that those equations usually have
-variable names which are just a single letter: $x$, $y$, $\alpha$,
-etc. So, if you were translating them directly into code, the easiest
-variable names would be `x`, `y`, and `alpha`. Obviously, these are
-not the most informative variable names (the name `x` does not convey
-much information), but having more descriptive variable names can also
-make it harder to switch between the the code and the
-equation.
+그런 명명 규칙이 거의 모든 영역에 적용되어야 한다는 점에
+동의하지만, 한 가지 예외가 있습니다: 수학입니다. 수학적 방정식을
+코딩할 때의 어려움은 그 방정식들이 보통 한 글자로만 된 변수명을
+갖는다는 것입니다: $x$, $y$, $\alpha$ 등. 따라서 이들을 코드로
+직접 변환한다면, 가장 쉬운 변수명은 `x`, `y`, `alpha`일 것입니다.
+분명히 이들은 가장 유익한 변수명은 아니지만(`x`라는 이름은 많은
+정보를 전달하지 않습니다), 더 설명적인 변수명을 갖는 것 또한
+코드와 방정식 사이를 전환하는 것을 더 어렵게 만들 수 있습니다.
 
-I think that when you are writing code that
-directly implements an equation, the same variable names should
-be used as those in the equation. This makes it easy to see which
-parts of the code are implementing which pieces of the equation. This,
-of course, can make the code harder to understand in isolation, so it
-is especially important that the comments then do a good job of explaining
-what the goal of the various computations are. If the equation is
-listed in an academic paper, the comments should reference the
-equation number so it can be easily looked up.
+방정식을 직접 구현하는 코드를 작성할 때는 방정식에서와 동일한
+변수명을 사용해야 한다고 생각합니다. 이렇게 하면 코드의 어떤
+부분이 방정식의 어떤 조각을 구현하는지 쉽게 알 수 있습니다.
+물론 이는 코드를 독립적으로 이해하기 어렵게 만들 수 있으므로,
+주석이 다양한 계산의 목표를 잘 설명하는 것이 특히 중요합니다.
+방정식이 학술 논문에 나와 있다면, 주석에서 쉽게 찾아볼 수 있도록
+방정식 번호를 참조해야 합니다.
 
-#### Importing NumPy
+#### NumPy 임포트하기
 
-You may have noticed that we imported the `numpy` module as `np`. This
-is standard practice in the world of numerical computing, because
-NumPy provides a huge number of useful functions, many of which might
-be used even in a single file. In the simple examples from this
-chapter, we only use eleven NumPy functions, but the
-number can be much higher: it is not uncommon for me to use around forty
-different NumPy functions throughout a project!
+`numpy` 모듈을 `np`로 임포트했다는 것을 알아차렸을 것입니다.
+이는 수치 계산 세계에서의 표준 관례인데, NumPy가 엄청나게 많은
+유용한 함수들을 제공하기 때문이며, 이 중 많은 것들이 하나의
+파일에서도 사용될 수 있습니다. 이 장의 간단한 예시들에서는
+11개의 NumPy 함수만 사용하지만, 숫자는 훨씬 더 높을 수 있습니다:
+프로젝트 전체에서 40개 정도의 서로 다른 NumPy 함수를 사용하는
+것이 저에게는 드물지 않습니다!
 
-There are a few options for importing NumPy. We could use `from
-numpy import *`, but that is generally poor style, because it makes it
-hard to determine where the functions came from. We could import the
-functions individually with `from numpy import array, log, ...`, but
-that gets clumsy fairly quickly. We could just use `import numpy`, but
-this often results in code being much more difficult to read. Both of
-the following examples are hard to read, but the one using `np` rather
-than `numpy` is significantly clearer:
+NumPy를 임포트하는 몇 가지 선택사항이 있습니다. `from numpy import *`를
+사용할 수도 있지만, 함수들이 어디서 왔는지 판단하기 어렵게
+만들기 때문에 일반적으로 좋지 않은 스타일입니다. `from numpy import array, log, ...`로
+함수들을 개별적으로 임포트할 수도 있지만, 이는 상당히 빨리
+번거로워집니다. 그냥 `import numpy`를 사용할 수도 있지만, 이는
+종종 코드를 읽기 훨씬 어렵게 만듭니다. 다음 두 예시 모두 읽기
+어렵지만, `numpy`보다 `np`를 사용하는 것이 훨씬 더 명확합니다:
 
 ```python
 >>> numpy.sqrt(numpy.sum(numpy.dot(numpy.array(a), numpy.array(b))))
 >>> np.sqrt(np.sum(np.dot(np.array(a), np.array(b))))
 ```
 
-### Sampling from a Multinomial Distribution
+### 다항 분포로부터 샘플링하기
 
-Taking a sample from a multinomial distribution is actually fairly
-straightforward, because NumPy provides us with a function that
-does it: `np.random.multinomial`[^multinomial].
+다항 분포에서 샘플을 취하는 것은 실제로 상당히 간단한데,
+NumPy가 이를 수행하는 함수 `np.random.multinomial`을
+제공해주기 때문입니다[^multinomial].
 
-[^multinomial]: NumPy includes functions to draw samples from many different types
-of distributions. For a full list, take a look at the
-random sampling module, `np.random`.
+[^multinomial]: NumPy는 많은 다양한 유형의 분포에서 샘플을 추출하는
+함수들을 포함하고 있습니다. 전체 목록은 무작위 샘플링 모듈
+`np.random`을 살펴보세요.
 
-Despite the fact that this function already exists, there are a few
-design decisions surrounding it that we can make.
+이 함수가 이미 존재한다는 사실에도 불구하고, 우리가 내릴 수
+있는 관련 설계 결정들이 몇 가지 있습니다.
 
-#### Seeding the Random Number Generator
+#### 무작위 숫자 생성기 시드 설정하기
 
-Even though we do want to draw a *random* sample, we sometimes want
-our results to be reproducible: even though the numbers seem random,
-if we were to run the program again, we might want it to use the
-*same* sequence of "random" numbers.
+*무작위* 샘플을 추출하고 싶지만, 때때로 우리의 결과가
+재현가능하기를 원합니다: 숫자들이 무작위로 보이지만, 프로그램을
+다시 실행한다면 *동일한* "무작위" 숫자들의 시퀀스를 사용하기를
+원할 수 있습니다.
 
-In order to allow for the generation of such "reproducibly random"
-numbers, we need to tell our sampling function *how* to generate the
-random numbers. We can accomplish this through use of a NumPy
-`RandomState` object, which is essentially a random number generator
-object that can be passed around. It has most of the same functions as
-`np.random`; the difference is that we get to control where the random
-numbers come from. We create it as follows:
+이런 "재현가능한 무작위" 숫자들의 생성을 가능하게 하기 위해서,
+샘플링 함수에게 무작위 숫자를 *어떻게* 생성할지 알려줘야 합니다.
+이는 NumPy `RandomState` 객체를 사용함으로써 달성할 수 있는데,
+이는 본질적으로 전달될 수 있는 무작위 숫자 생성기 객체입니다.
+이는 `np.random`과 대부분 동일한 함수들을 갖고 있습니다;
+차이점은 무작위 숫자가 어디서 오는지를 우리가 제어할 수 있다는
+것입니다. 다음과 같이 생성합니다:
 
 ```python
 >>> import numpy as np
 >>> rso = np.random.RandomState(230489)
 ```
 
-\noindent where the number passed to the `RandomState` constructor is the
-*seed* for the random number generator. As long as we instantiate it with the
-same seed, a `RandomState` object will produce the same "random" numbers in the
-same order, thus ensuring replicability:
+여기서 `RandomState` 생성자에 전달된 숫자는 무작위 숫자 생성기의
+*시드*입니다. 동일한 시드로 인스턴스화하는 한, `RandomState`
+객체는 동일한 순서로 동일한 "무작위" 숫자들을 생성할 것이며,
+따라서 재현성을 보장합니다:
 
 ```python
 >>> rso.rand()
@@ -352,141 +323,132 @@ same order, thus ensuring replicability:
 0.6190581888276206
 ```
 
-Earlier, we saw that the constructor took an argument called `rso`.
-This `rso` variable is a `RandomState` object that has already been
-initialized. I like to make the `RandomState` object an optional
-parameter: it is occasionally convenient to not be *forced* to use it,
-but I do want to have the *option* of using it (which, if I were to
-just use the `np.random` module, I would not be able to do).
+앞서 생성자가 `rso`라고 불리는 인자를 받는다고 보았습니다.
+이 `rso` 변수는 이미 초기화된 `RandomState` 객체입니다. 저는
+`RandomState` 객체를 선택적 매개변수로 만드는 것을 좋아합니다:
+때때로 강제로 사용하지 *않아도* 되는 것이 편리하지만, 사용할 수 있는
+*선택권*은 갖고 싶기 때문입니다(만약 단지 `np.random` 모듈을
+사용한다면 이런 선택권을 가질 수 없을 것입니다).
 
-So, if the `rso` variable is not given, then the constructor defaults
-to `np.random.multinomial`. Otherwise, it uses the multinomial
-sampler from the `RandomState` object itself[^rng].
+따라서 `rso` 변수가 주어지지 않으면, 생성자는 기본적으로
+`np.random.multinomial`을 사용합니다. 그렇지 않으면,
+`RandomState` 객체 자체의 다항 샘플러를 사용합니다[^rng].
 
-[^rng]: The functions in `np.random` actually do rely on a random
-number generator that we can control: NumPy's global random number
-generator. You can set the global seed with `np.seed`. There's a
-tradeoff to using the global generator vs. a local `RandomState`
-object. If you use the global generator, then you don't have to pass
-around a `RandomState` object everywhere. However, you also run the
-risk of depending on some third party code that also uses the global
-generator without your knowledge. If you use a local object, then it
-is easier to find out whether there is nondeterminism coming from
-somewhere other than your own code.
+[^rng]: `np.random`의 함수들은 실제로 우리가 제어할 수 있는 무작위
+숫자 생성기인 NumPy의 전역 무작위 숫자 생성기에 의존합니다.
+`np.seed`를 사용해서 전역 시드를 설정할 수 있습니다. 전역 생성기를
+사용하는 것과 지역 `RandomState` 객체를 사용하는 것 사이에는
+트레이드오프가 있습니다. 전역 생성기를 사용하면 `RandomState` 객체를
+모든 곳에 전달할 필요가 없습니다. 하지만 여러분이 모르는 사이에 전역
+생성기를 사용하는 제3자 코드에 의존할 위험성도 있습니다. 지역 객체를
+사용하면, 자신의 코드가 아닌 다른 곳에서 비결정성이 오는지 더 쉽게
+알아낼 수 있습니다.
 
-#### What's a Parameter?
+#### 매개변수란 무엇인가?
 
-Once we've decided whether to use `np.random.multinomial` or
-`rso.multinomial`, sampling is just a matter of calling the
-appropriate function. However, there is one other decision that we
-might consider: What counts as a parameter?
+`np.random.multinomial`이나 `rso.multinomial` 중 어느 것을
+사용할지 결정한 후에는, 샘플링은 단지 적절한 함수를 호출하는
+문제입니다. 하지만 우리가 고려할 수 있는 다른 결정이 하나 더
+있습니다: 무엇이 매개변수로 간주되는가?
 
-Earlier, I said that the outcome probabilities, $p$, were the
-parameters of the multinomial distribution. However, depending on who
-you ask, the number of events, $n$, can *also* be a parameter of the
-multinomial distribution. So, why didn't we include $n$ as an argument
-to the constructor?
+앞서 결과 확률들 $p$가 다항 분포의 매개변수라고 말했습니다.
+하지만 누구에게 물어보느냐에 따라, 사건의 수 $n$도 다항 분포의
+매개변수가 될 *수* 있습니다. 그렇다면 왜 $n$을 생성자의 인자로
+포함하지 않았을까요?
 
-This question, while relatively specific to the multinomial
-distribution, actually comes up fairly frequently when dealing with
-probability distributions, and the answer really depends on the use
-case. For a multinomial, can you make the assumption that the number
-of events is always the same? If so, then it might be better to pass
-in $n$ as an argument to the constructor. If not, then requiring $n$
-to be specified at object creation time could be very restrictive, and
-might even require you to create a new distribution object every time
-you need to draw a sample!
+이 질문은 다항 분포에 상대적으로 특화되어 있지만, 실제로
+확률 분포를 다룰 때 상당히 자주 나타나며, 답은 정말로 사용
+사례에 달려 있습니다. 다항 분포의 경우, 사건의 수가 항상
+동일하다고 가정할 수 있나요? 그렇다면 $n$을 생성자의 인자로
+전달하는 것이 더 나을 수 있습니다. 그렇지 않다면, 객체 생성
+시간에 $n$을 명시하도록 요구하는 것은 매우 제한적일 수 있고,
+샘플을 뽑을 때마다 새로운 분포 객체를 만들어야 할 수도 있습니다!
 
-I usually don't like to be that restricted by my code, and thus choose
-to have `n` be an argument to the `sample` function, rather than
-having it be an argument to the constructor. An alternate solution
-could be to have `n` be an argument to the constructor, but also
-include methods to allow for the value of `n` to be changed, without
-having to create an entirely new object. For our purposes, though,
-this solution is probably overkill, so we'll stick to just having it
-be an argument to `sample`:
+저는 보통 코드에 의해 그렇게 제한받는 것을 좋아하지 않으므로,
+생성자의 인자로 갖는 것보다는 `sample` 함수의 인자로 `n`을
+갖기로 선택합니다. 대안적 해결책은 `n`을 생성자의 인자로
+갖되, 완전히 새로운 객체를 만들지 않고도 `n`의 값을 변경할 수
+있도록 하는 메소드들을 포함하는 것일 수 있습니다. 하지만
+우리의 목적에는 이 해결책이 아마 과도할 것이므로, `sample`의
+인자로만 갖는 것을 고수하겠습니다:
 
 ```python
 def sample(self, n):
-    """Samples draws of `n` events from a multinomial distribution with
-    outcome probabilities `self.p`.
+    """결과 확률이 `self.p`인 다항 분포로부터 `n`개 사건의 뽑기를
+    샘플링합니다.
 
     Parameters
     ----------
     n: integer
-        The number of total events
+        전체 사건의 수
 
     Returns
     -------
     numpy array of length `k`
-        The sampled number of occurrences for each outcome
+        각 결과의 샘플링된 발생 횟수
 
     """
     x = self.rso.multinomial(n, self.p)
     return x
 ```
 
-### Evaluating the Multinomial PMF
+### 다항 PMF 평가하기
 
-Although we don't explicitly need to compute the probability of the
-magical items that we generate, it is almost always a good idea to
-write a function that can compute the distribution's probability mass
-function (PMF) or probability density function (PDF). Why?
+우리가 생성하는 마법 아이템들의 확률을 명시적으로 계산할 필요는
+없지만, 분포의 확률 질량 함수(PMF)나 확률 밀도 함수(PDF)를
+계산할 수 있는 함수를 작성하는 것은 거의 항상 좋은 생각입니다.
+왜일까요?
 
-One reason is that we can use it for testing: if we take many samples
-with our sampling function, then they should approximate the exact PDF
-or PMF. If after many samples the approximation is poor or obviously
-wrong, then we know there is a bug in our code somewhere.
+한 가지 이유는 테스트에 사용할 수 있기 때문입니다: 많은 샘플을
+샘플링 함수로 뽑는다면, 그들은 정확한 PDF나 PMF를 근사해야
+합니다. 많은 샘플을 뽑은 후에 근사가 나쁘거나 명백히 잘못되었다면,
+우리는 코드 어딘가에 버그가 있다는 것을 알 수 있습니다.
 
-Another reason to implement the PMF or PDF is that frequently, you
-will actually need it later down the line and simply don't realize it
-initially. For example, we might want to classify our randomly
-generated items as *common*, *uncommon*, and *rare*, depending on how
-likely they are to be generated. To determine this, we need to be able to
-compute the PMF.
+PMF나 PDF를 구현하는 또 다른 이유는 종종 나중에 실제로 필요하게
+될 것이지만 처음에는 단순히 그것을 깨닫지 못하기 때문입니다.
+예를 들어, 생성될 가능성에 따라 무작위로 생성된 아이템들을
+*일반적*, *희귀한*, 그리고 *매우 희귀한*으로 분류하고 싶을 수
+있습니다. 이를 판단하기 위해서는 PMF를 계산할 수 있어야 합니다.
 
-Finally, in many cases, your particular use case will dictate that you
-implement the PMF or PDF from the beginning, anyway.
+마지막으로, 많은 경우에 특정 사용 사례가 어쨌든 처음부터 PMF나
+PDF를 구현하도록 요구할 것입니다.
 
-#### The Multinomial PMF Equation
+#### 다항 PMF 방정식
 
-Formally, the multinomial distribution has the following equation:
+공식적으로, 다항 분포는 다음 방정식을 갖습니다:
 
 $$
 p(\mathbf{x}; \mathbf{p}) = \frac{(\sum_{i=1}^k x_i)!}{x_1!\cdots{}x_k!}p_1^{x_1}\cdots{}p_k^{x_k}
 $$
 
-\noindent where $\mathbf{x}=[x_1, \ldots{}, x_k]$ is a vector of length $k$
-specifying the number of times each event happened, and
-$\mathbf{p}=[p_1, \ldots{}, p_k]$ is a vector specifying the
-probability of each event occurring. As mentioned above, the event
-probabilities $\mathbf{p}$ are the *parameters* of the distribution.
+여기서 $\mathbf{x}=[x_1, \ldots{}, x_k]$는 각 사건이 몇 번 발생했는지를
+명시하는 길이 $k$의 벡터이고, $\mathbf{p}=[p_1, \ldots{}, p_k]$는
+각 사건이 발생할 확률을 명시하는 벡터입니다. 앞서 언급했듯이,
+사건 확률들 $\mathbf{p}$는 분포의 *매개변수*입니다.
 
-The factorials in the equation above can actually be expressed using a
-special function, $\Gamma$, called the *gamma function*. When we get
-to writing the code, it will be more convenient and efficient to use
-the gamma function rather than factorial, so we will rewrite the
-equation using $\Gamma$:
+위 방정식의 팩토리얼들은 실제로 *감마 함수*라고 불리는 특별한 함수
+$\Gamma$를 사용해서 표현할 수 있습니다. 코드를 작성할 때가 되면,
+팩토리얼보다는 감마 함수를 사용하는 것이 더 편리하고 효율적일
+것이므로, $\Gamma$를 사용해서 방정식을 다시 써보겠습니다:
 
 $$
 p(\mathbf{x}; \mathbf{p}) = \frac{\Gamma((\sum_{i=1}^k x_i)+1)}{\Gamma(x_1+1)\cdots{}\Gamma(x_k+1)}p_1^{x_1}\cdots{}p_k^{x_k}
 $$
 
-#### Working with Log Values
+#### 로그 값으로 작업하기
 
-Before getting into the actual code needed to implement the equation
-above, I want to emphasize one of the the most important design
-decisions when writing code with probabilities: working with
-log values. What this means is that rather than working directly with
-probabilities $p(x)$, we should be working with *log*-probabilities,
-$\log{p(x)}$. This is because probabilities can get very small very
-quickly, resulting in underflow errors.
+위 방정식을 구현하는 데 필요한 실제 코드를 다루기 전에, 확률을
+다루는 코드를 작성할 때 가장 중요한 설계 결정 중 하나를
+강조하고 싶습니다: 로그 값으로 작업하는 것입니다. 이것이 의미하는 바는
+확률 $p(x)$와 직접 작업하기보다는 *로그*-확률 $\log{p(x)}$와
+작업해야 한다는 것입니다. 확률은 매우 빠르게 매우 작아질 수 있어서
+언더플로 오류를 야기할 수 있기 때문입니다.
 
-To motivate this, consider that probabilities must range between 0 and
-1 (inclusive). NumPy has a useful function, `finfo`, that will tell us
-the limits of floating point values for our system. For example, on a
-64-bit machine, we see that the smallest usable positive number (given
-by `tiny`) is:
+이를 동기부여하기 위해, 확률은 0과 1 사이(포함)의 범위에 있어야
+한다고 고려해 봅시다. NumPy는 우리 시스템의 부동소수점 값의
+한계를 알려주는 유용한 함수인 `finfo`를 갖고 있습니다. 예를 들어,
+64비트 머신에서는 사용 가능한 가장 작은 양수(`tiny`로 주어지는)가
+다음과 같다는 것을 볼 수 있습니다:
 
 ```python
 >>> import numpy as np
@@ -494,53 +456,53 @@ by `tiny`) is:
 2.2250738585072014e-308
 ```
 
-While that may seem very small, it is not unusual to encounter
-probabilities of this magnitude, or even smaller. Moreover, it is a
-common operation to multiply probabilities, yet if we try to do this
-with very small probabilities, we encounter underflow problems:
+이것이 매우 작아 보일 수 있지만, 이 정도 크기나 심지어 더 작은
+확률을 만나는 것은 드물지 않습니다. 게다가 확률을 곱하는 것은
+일반적인 연산이지만, 매우 작은 확률들로 이를 시도하면 언더플로
+문제에 마주치게 됩니다:
 
 ```python
 >>> tiny = np.finfo(float).tiny
->>> # if we multiply numbers that are too small, we lose all precision
+>>> # 너무 작은 숫자들을 곱하면 모든 정밀도를 잃습니다
 >>> tiny * tiny
 0.0
 ```
 
-However, taking the log can help alleviate this issue because we can
-represent a much wider range of numbers with logarithms than we can
-normally. Officially, log values range from $-\infty$ to zero. In
-practice, they range from the `min` value returned by `finfo`,
-which is the smallest number that can be represented, to zero. The
-`min` value is *much* smaller than the log of the `tiny` value (which
-would be our lower bound if we did not work in log space):
+하지만 로그를 취하는 것은 이 문제를 완화하는 데 도움이 될 수 있는데,
+로그를 이용하면 일반적으로 할 수 있는 것보다 훨씬 더 넓은 범위의
+숫자를 표현할 수 있기 때문입니다. 공식적으로, 로그 값들은
+$-\infty$부터 0까지의 범위를 갖습니다. 실제로는 `finfo`가 반환하는
+`min` 값(표현할 수 있는 가장 작은 숫자)부터 0까지의 범위를 갖습니다.
+`min` 값은 `tiny` 값의 로그보다 *훨씬* 작습니다(로그 공간에서
+작업하지 않는다면 이것이 우리의 하한이 될 것입니다):
 
 ```python
->>> # this is our lower bound normally
+>>> # 일반적으로 이것이 우리의 하한입니다
 >>> np.log(tiny)
 -708.39641853226408
->>> # this is our lower bound when using logs
+>>> # 로그를 사용할 때 이것이 우리의 하한입니다
 >>> np.finfo(float).min
 -1.7976931348623157e+308
 ```
 
-So, by working with log values, we can greatly expand our range of
-representable numbers.  Moreover, we can perform multiplication with logs by
-using addition, because $\log(x\cdot{}y) = \log(x) + \log(y)$. Thus, if we do
-the multiplication above with logs, we do not have to worry (as much) about
-loss of precision due to underflow:
+따라서 로그 값으로 작업함으로써 표현 가능한 숫자의 범위를 크게
+확장할 수 있습니다. 게다가 $\log(x\cdot{}y) = \log(x) + \log(y)$이므로
+덧셈을 사용해서 로그로 곱셈을 수행할 수 있습니다. 따라서 위의 곱셈을
+로그로 수행한다면, 언더플로로 인한 정밀도 손실에 대해 (그만큼) 걱정할
+필요가 없습니다:
 
 ```python
->>> # the result of multiplying small probabilities
+>>> # 작은 확률들을 곱한 결과
 >>> np.log(tiny * tiny)
 -inf
->>> # the result of adding small log probabilities
+>>> # 작은 로그 확률들을 더한 결과
 >>> np.log(tiny) + np.log(tiny)
 -1416.7928370645282
 ```
 
-Of course, this solution is not a magic bullet. If we need to derive
-the number from the logarithm (for example, to add probabilities,
-rather than multiply them), then we are back to underflow:
+물론 이 해결책이 만능은 아닙니다. 로그로부터 숫자를 도출해야 한다면
+(예를 들어, 확률들을 곱하기보다는 더하기 위해서), 다시 언더플로
+문제에 직면하게 됩니다:
 
 ```python
 >>> tiny*tiny
@@ -549,133 +511,127 @@ rather than multiply them), then we are back to underflow:
 0.0
 ```
 
-Still, doing all our computations with logs can save a lot of
-headache. We might be forced to lose that precision if we need to go
-back to the original numbers, but we at least maintain *some* information about
-the probabilities&mdash;enough to compare them, for example&mdash;that would
-otherwise be lost.
+여전히, 모든 계산을 로그로 수행하는 것은 많은 골칫거리를 덜어줄 수
+있습니다. 원래 숫자로 돌아가야 한다면 그 정밀도를 잃을 수밖에 없을
+수도 있지만, 적어도 확률들에 대한 *어떤* 정보는—예를 들어 그들을
+비교할 만큼—유지할 수 있는데, 그렇지 않았다면 이 정보는 사라졌을
+것입니다.
 
-#### Writing the PMF Code
+#### PMF 코드 작성하기
 
-Now that we have seen the importance of working with logs, we can
-actually write our function to compute the log-PMF:
+이제 로그로 작업하는 것의 중요성을 보았으므로, 실제로 로그-PMF를
+계산하는 함수를 작성할 수 있습니다:
 
 ```python
 def log_pmf(self, x):
-    """Evaluates the log-probability mass function (log-PMF) of a
-    multinomial with outcome probabilities `self.p` for a draw `x`.
+    """다항 분포의 로그-확률 질량 함수(log-PMF)를 평가합니다.
+    결과 확률은 `self.p`이고 뽑기는 `x`입니다.
 
     Parameters
     ----------
     x: numpy array of length `k`
-        The number of occurrences of each outcome
+        각 결과의 발생 횟수
 
     Returns
     -------
-    The evaluated log-PMF for draw `x`
+    뽑기 `x`에 대해 평가된 log-PMF
 
     """
-    # Get the total number of events
+    # 전체 사건 수를 구합니다
     n = np.sum(x)
 
-    # equivalent to log(n!)
+    # log(n!)과 동등합니다
     log_n_factorial = gammaln(n + 1)
-    # equivalent to log(x1! * ... * xk!)
+    # log(x1! * ... * xk!)과 동등합니다
     sum_log_xi_factorial = np.sum(gammaln(x + 1))
 
-    # If one of the values of self.p is 0, then the corresponding
-    # value of self.logp will be -inf. If the corresponding value
-    # of x is 0, then multiplying them together will give nan, but
-    # we want it to just be 0.
+    # self.p 값 중 하나가 0이라면, 해당하는
+    # self.logp 값은 -inf가 될 것입니다. 해당하는
+    # x 값이 0이라면, 그들을 함께 곱하면 nan이 되지만
+    # 우리는 그것이 단지 0이 되기를 원합니다.
     log_pi_xi = self.logp * x
     log_pi_xi[x == 0] = 0
-    # equivalent to log(p1^x1 * ... * pk^xk)
+    # log(p1^x1 * ... * pk^xk)과 동등합니다
     sum_log_pi_xi = np.sum(log_pi_xi)
 
-    # Put it all together
+    # 모든 것을 종합합니다
     log_pmf = log_n_factorial - sum_log_xi_factorial + sum_log_pi_xi
     return log_pmf
 ```
 
-For the most part, this is a straightforward implementation of the
-equation above for the multinomial PMF. The `gammaln` function is from
-`scipy.special`, and computes the log-gamma function,
-$\log{\Gamma(x)}$. As mentioned above, it is more convenient to use
-the gamma function rather than a factorial function; this is because
-SciPy gives us a log-gamma function, but not a log-factorial function.
-We could have computed a log factorial ourselves, using something like:
+대부분, 이것은 다항 PMF에 대한 위 방정식의 직접적인 구현입니다.
+`gammaln` 함수는 `scipy.special`에서 나온 것으로, 로그-감마 함수
+$\log{\Gamma(x)}$를 계산합니다. 앞서 언급했듯이, 팩토리얼 함수보다는
+감마 함수를 사용하는 것이 더 편리합니다; 이는 SciPy가 로그-감마
+함수는 제공하지만 로그-팩토리얼 함수는 제공하지 않기 때문입니다.
+다음과 같은 것을 사용해서 로그 팩토리얼을 직접 계산할 수도 있었습니다:
 
 ```python
 log_n_factorial = np.sum(np.log(np.arange(1, n + 1)))
 sum_log_xi_factorial = np.sum([np.sum(np.log(np.arange(1, i + 1))) for i in x])
 ```
 
-but it is easier to understand, easier to code, and more
-computationally efficient if we use the gamma function already built
-in to SciPy.
+하지만 SciPy에 이미 내장된 감마 함수를 사용한다면 이해하기 더 쉽고,
+코딩하기 더 쉽고, 계산상으로도 더 효율적입니다.
 
-There is one edge case that we need to tackle: when one of
-our probabilities is zero. When $p_i=0$, then $\log{p_i}=-\infty$.
-This would be fine, except for the following behavior when infinity is
-multiplied by zero:
+다루어야 할 한 가지 극단적인 경우가 있습니다: 확률 중 하나가 0인
+경우입니다. $p_i=0$일 때, $\log{p_i}=-\infty$가 됩니다. 이것은
+괜찮을 것인데, 무한대를 0으로 곱했을 때의 다음 동작만 아니라면 말입니다:
 
 ```python
->>> # it's fine to multiply infinity by integers...
+>>> # 무한대를 정수로 곱하는 것은 괜찮습니다...
 >>> -np.inf * 2.0
 -inf
->>> # ...but things break when we try to multiply by zero
+>>> # ...하지만 0으로 곱하려고 하면 문제가 생깁니다
 >>> -np.inf * 0.0
 nan
 ```
 
-`nan` means "not a number", and it is almost always a pain to deal
-with, because most computations with `nan` result in another
-`nan`. So, if we don't handle the case where $p_i=0$ and $x_i=0$, we
-will end up with a `nan`. That will get summed with other numbers,
-producing another `nan`, which is just not useful. To handle this, we
-check specifically for the case when $x_i=0$, and set the resulting
-$x_i\cdot{}\log(p_i)$ also to zero.
+`nan`은 "숫자가 아님"을 의미하며, `nan`과의 대부분의 계산은
+또 다른 `nan`을 만들어내기 때문에 거의 항상 다루기 힘듭니다. 따라서
+$p_i=0$이고 $x_i=0$인 경우를 다루지 않으면 `nan`이 나오게 될
+것입니다. 그것이 다른 숫자들과 더해져서 또 다른 `nan`을 만들어내는데,
+이는 그냥 유용하지 않습니다. 이를 다루기 위해, $x_i=0$인 경우를
+특별히 확인하고 결과적인 $x_i\cdot{}\log(p_i)$도 0으로 설정합니다.
 
-Let's return for a moment to our discussion of using logs. Even if we
-really only need the PMF, and not the log-PMF, it is generally better
-to *first* compute it with logs, and then exponentiate it if we
-need to:
+로그 사용에 대한 논의로 잠시 돌아가봅시다. 정말로 log-PMF가 아닌
+PMF만 필요하다 하더라도, 일반적으로 *먼저* 로그로 계산한 다음
+필요하다면 지수를 취하는 것이 더 좋습니다:
 
 ```python
 def pmf(self, x):
-    """Evaluates the probability mass function (PMF) of a multinomial
-    with outcome probabilities `self.p` for a draw `x`.
+    """다항 분포의 확률 질량 함수(PMF)를 평가합니다.
+    결과 확률은 `self.p`이고 뽑기는 `x`입니다.
 
     Parameters
     ----------
     x: numpy array of length `k`
-        The number of occurrences of each outcome
+        각 결과의 발생 횟수
 
     Returns
     -------
-    The evaluated PMF for draw `x`
+    뽑기 `x`에 대해 평가된 PMF
 
     """
     pmf = np.exp(self.log_pmf(x))
     return pmf
 ```
 
-To further drive home the importance of working with logs,
-we can look at an example with just the multinomial:
+로그로 작업하는 것의 중요성을 더 강조하기 위해, 다항 분포만으로
+예시를 살펴볼 수 있습니다:
 
 ```python
 >>> dist = MultinomialDistribution(np.array([0.25, 0.25, 0.25, 0.25]))
->>> dist.log_pmf(np.array([1000, 0, 0, 0])
+>>> dist.log_pmf(np.array([1000, 0, 0, 0]))
 -1386.2943611198905
->>> dist.log_pmf(np.array([999, 0, 0, 0])
+>>> dist.log_pmf(np.array([999, 0, 0, 0]))
 -1384.9080667587707
 ```
 
-In this case, we get *extremely* small probabilities (which, you will
-notice, are much smaller than the `tiny` value we discussed
-above). This is because the fraction in the PMF is huge: 1000
-factorial can't even be computed due to overflow. But, the *log* of
-the factorial can be:
+이 경우, *극도로* 작은 확률을 얻게 됩니다(앞서 논의했던 `tiny` 값보다도
+훨씬 작다는 것을 알아차릴 것입니다). 이는 PMF의 분수가 엄청나게 크기
+때문입니다: 1000 팩토리얼은 오버플로 때문에 계산조차 할 수 없습니다.
+하지만 팩토리얼의 *로그*는 계산할 수 있습니다:
 
 ```python
 >>> from scipy.special import gamma, gammaln
@@ -685,129 +641,120 @@ inf
 5912.1281784881639
 ```
 
-If we had tried to compute just the PMF using the `gamma` function, we
-would have ended up with `gamma(1000 + 1) / gamma(1000 + 1)`, which
-results in a `nan` value (even though we can see that it
-should be 1). But, because we do the computation with logarithms, it's
-not an issue and we don't need to worry about it!
+`gamma` 함수를 사용해서 단지 PMF만 계산하려고 했다면,
+`gamma(1000 + 1) / gamma(1000 + 1)`이 되어서 `nan` 값을 얻게
+되었을 것입니다(1이 되어야 한다는 것을 볼 수 있음에도 불구하고).
+하지만 로그로 계산을 수행하기 때문에, 문제가 되지 않으며 걱정할
+필요가 없습니다!
 
-## Sampling Magical Items, Revisited
+## 마법 아이템 샘플링, 재검토
 
-Now that we have written our multinomial functions, we can put them to
-work to generate our magical items. To do this, we will
-create a class called `MagicItemDistribution`, located in the file
-`rpg.py`:
+이제 다항 함수들을 작성했으므로, 마법 아이템을 생성하는 데 이들을
+활용할 수 있습니다. 이를 위해 `rpg.py` 파일에 위치한
+`MagicItemDistribution`이라고 불리는 클래스를 생성할 것입니다:
 
 ```python
 class MagicItemDistribution(object):
 
-    # these are the names (and order) of the stats that all magical
-    # items will have
+    # 모든 마법 아이템이 가질 스탯들의 이름(및 순서)입니다
     stats_names = ("dexterity", "constitution", "strength",
                    "intelligence", "wisdom", "charisma")
 
     def __init__(self, bonus_probs, stats_probs, rso=np.random):
-        """Initialize a magic item distribution parameterized by `bonus_probs`
-        and `stats_probs`.
+        """bonus_probs`와 `stats_probs`에 의해 매개화된 마법 아이템 분포를 초기화합니다.
 
         Parameters
         ----------
         bonus_probs: numpy array of length m
-            The probabilities of the overall bonuses. Each index in
-            the array corresponds to the bonus of that amount (e.g.,
-            index 0 is +0, index 1 is +1, etc.)
+            전체 보너스들의 확률. 배열의 각 인덱스는 해당 크기의
+            보너스에 대응됩니다 (예: 인덱스 0은 +0, 인덱스 1은 +1 등)
 
         stats_probs: numpy array of length 6
-            The probabilities of how the overall bonus is distributed
-            among the different stats. `stats_probs[i]` corresponds to
-            the probability of giving a bonus point to the ith stat;
-            i.e., the value at `MagicItemDistribution.stats_names[i]`.
+            전체 보너스가 서로 다른 스탯들 사이에 분산되는 방식의 확률.
+            `stats_probs[i]`는 i번째 스탯에 보너스 포인트를 주는 확률에
+            대응됩니다; 즉, `MagicItemDistribution.stats_names[i]`의 값.
 
         rso: numpy RandomState object (default: np.random)
-            The random number generator
+            무작위 숫자 생성기
 
         """
-        # Create the multinomial distributions we'll be using
+        # 사용할 다항 분포들을 생성합니다
         self.bonus_dist = MultinomialDistribution(bonus_probs, rso=rso)
         self.stats_dist = MultinomialDistribution(stats_probs, rso=rso)
 ```
 
-The constructor to our `MagicItemDistribution` class takes parameters for
-the bonus probabilities, the stats probabilities, and the random
-number generator. Even though we specified above what we wanted the
-bonus probabilities to be, it is generally a good idea to encode
-parameters as arguments that are passed in. This leaves open the
-possibility of sampling items under different distributions. (For
-example, maybe the bonus probabilities would change as the player's
-level increases.) We encode the *names* of the stats as a class
-variable, `stats_names`, though this could just as easily be another
-parameter to the constructor.
+우리의 `MagicItemDistribution` 클래스의 생성자는 보너스 확률들,
+스탯 확률들, 그리고 무작위 숫자 생성기에 대한 매개변수를 받습니다.
+보너스 확률들이 무엇이 되기를 원하는지 위에서 명시했음에도 불구하고,
+매개변수를 전달되는 인자로 인코딩하는 것이 일반적으로 좋은 생각입니다.
+이는 서로 다른 분포 하에서 아이템을 샘플링할 수 있는 가능성을 열어둡니다.
+(예를 들어, 플레이어의 레벨이 증가함에 따라 보너스 확률들이 바뀔 수도
+있습니다.) 우리는 스탯들의 *이름*을 클래스 변수인 `stats_names`로
+인코딩하는데, 이것은 생성자의 또 다른 매개변수가 될 수도 있었습니다.
 
-As mentioned previously, there are two steps to sampling a magical
-item: first sampling the overall bonus, and then sampling the
-distribution of the bonus across the stats. As such, we code these
-steps as two methods: `_sample_bonus` and `_sample_stats`:
+앞서 언급했듯이, 마법 아이템을 샘플링하는 데는 두 단계가 있습니다:
+먼저 전체 보너스를 샘플링하고, 그 다음 스탯들에 걸친 보너스의 분포를
+샘플링하는 것입니다. 따라서 우리는 이러한 단계들을 두 메소드로
+코딩합니다: `_sample_bonus`와 `_sample_stats`:
 
 ```python
 def _sample_bonus(self):
-    """Sample a value of the overall bonus.
+    """전체 보너스의 값을 샘플링합니다.
 
     Returns
     -------
     integer
-        The overall bonus
+        전체 보너스
 
     """
-    # The bonus is essentially just a sample from a multinomial
-    # distribution with n=1; i.e., only one event occurs.
+    # 보너스는 본질적으로 n=1인 다항 분포로부터의 샘플입니다;
+    # 즉, 하나의 사건만 발생합니다.
     sample = self.bonus_dist.sample(1)
 
-    # `sample` is an array of zeros and a single one at the
-    # location corresponding to the bonus. We want to convert this
-    # one into the actual value of the bonus.
+    # `sample`은 보너스에 대응되는 위치에 하나의 1과
+    # 0들의 배열입니다. 우리는 이것을 실제 보너스 값으로
+    # 변환하고 싶습니다.
     bonus = np.argmax(sample)
     return bonus
 
 def _sample_stats(self):
-    """Sample the overall bonus and how it is distributed across the
-    different stats.
+    """전체 보너스와 그것이 서로 다른 스탯들에 걸쳐 분산되는 방식을
+    샘플링합니다.
 
     Returns
     -------
     numpy array of length 6
-        The number of bonus points for each stat
+        각 스탯에 대한 보너스 포인트 수
 
     """
-    # First we need to sample the overall bonus
+    # 먼저 전체 보너스를 샘플링해야 합니다
     bonus = self._sample_bonus()
 
-    # Then, we use a different multinomial distribution to sample
-    # how that bonus is distributed. The bonus corresponds to the
-    # number of events.
+    # 그 다음, 그 보너스가 어떻게 분산되는지 샘플링하기 위해
+    # 다른 다항 분포를 사용합니다. 보너스는 사건 수에 대응됩니다.
     stats = self.stats_dist.sample(bonus)
     return stats
 ```
 
-We *could* have made these a single method&mdash;especially since
-`_sample_stats` is the only function that depends on
-`_sample_bonus`&mdash;but I have chosen to keep them separate, both
-because it makes the sampling routine easier to understand, and
-because breaking it up into smaller pieces makes the code easier to
-test.
+이들을 하나의 메소드로 만들 *수도* 있었을 것입니다&mdash;특히
+`_sample_stats`가 `_sample_bonus`에 의존하는 유일한 함수이기 때문에&mdash;
+하지만 저는 샘플링 루틴을 이해하기 더 쉽게 만들고, 더 작은 조각들로
+분해하는 것이 코드를 테스트하기 더 쉽게 만들기 때문에 그들을 분리해서
+유지하기로 선택했습니다.
 
-You'll also notice that these methods are prefixed with an underscore,
-indicating that they're not really meant to be used outside the
-class. Instead, we provide the function `sample`:
+또한 이러한 메소드들이 밑줄로 시작한다는 것을 알아차릴 것인데,
+이는 그들이 클래스 외부에서 사용되도록 의도되지 않았음을 나타냅니다.
+대신, 우리는 `sample` 함수를 제공합니다:
 
 ```python
 def sample(self):
-    """Sample a random magical item.
+    """무작위 마법 아이템을 샘플링합니다.
 
     Returns
     -------
     dictionary
-        The keys are the names of the stats, and the values are
-        the bonus conferred to the corresponding stat.
+        키는 스탯들의 이름이고, 값은 해당 스탯에
+        부여된 보너스입니다.
 
     """
     stats = self._sample_stats()
@@ -815,126 +762,122 @@ def sample(self):
     return item_stats
 ```
 
-The `sample` function does essentially the same thing as
-`_sample_stats`, except that it returns a dictionary with the stats'
-names as keys. This provides a clean and understandable interface for
-sampling items&mdash;it is obvious which stats have how many bonus
-points&mdash;but it also keeps open the option of using just
-`_sample_stats` if one needs to take many samples and efficiency is
-required.
+`sample` 함수는 본질적으로 `_sample_stats`와 동일한 일을 하지만,
+스탯들의 이름을 키로 하는 딕셔너리를 반환한다는 점이 다릅니다.
+이는 아이템 샘플링을 위한 깔끔하고 이해하기 쉬운 인터페이스를
+제공합니다&mdash;어떤 스탯이 얼마나 많은 보너스 포인트를 갖는지가
+명백합니다&mdash;하지만 많은 샘플을 취해야 하고 효율성이 요구되는
+경우에는 단지 `_sample_stats`만 사용할 수 있는 선택권도 열어둡니다.
 
-We use a similar design for evaluating the probability of
-items. Again, we expose high-level methods `pmf` and `log_pmf` which
-take dictionaries of the form produced by `sample`:
+우리는 아이템의 확률을 평가하기 위해 유사한 설계를 사용합니다.
+다시, `sample`에 의해 생성되는 형태의 딕셔너리를 받는 상위 수준
+메소드 `pmf`와 `log_pmf`를 노출합니다:
 
 ```python
 def log_pmf(self, item):
-    """Compute the log probability of the given magical item.
+    """주어진 마법 아이템의 로그 확률을 계산합니다.
 
     Parameters
     ----------
     item: dictionary
-        The keys are the names of the stats, and the values are
-        the bonuses conferred to the corresponding stat.
+        키는 스탯들의 이름이고, 값은 해당 스탯에
+        부여된 보너스입니다.
 
     Returns
     -------
     float
-        The value corresponding to log(p(item))
+        log(p(item))에 대응되는 값
 
     """
-    # First pull out the bonus points for each stat, in the
-    # correct order, then pass that to _stats_log_pmf.
+    # 먼저 각 스탯에 대한 보너스 포인트들을 올바른 순서로
+    # 뽑아낸 다음, 그것을 _stats_log_pmf에 전달합니다.
     stats = np.array([item[stat] for stat in self.stats_names])
     log_pmf = self._stats_log_pmf(stats)
     return log_pmf
 
 def pmf(self, item):
-    """Compute the probability the given magical item.
+    """주어진 마법 아이템의 확률을 계산합니다.
 
     Parameters
     ----------
     item: dictionary
-        The keys are the names of the stats, and the values are
-        the bonus conferred to the corresponding stat.
+        키는 스탯들의 이름이고, 값은 해당 스탯에
+        부여된 보너스입니다.
 
     Returns
     -------
     float
-        The value corresponding to p(item)
+        p(item)에 대응되는 값
 
     """
     return np.exp(self.log_pmf(item))
 ```
 
-These methods rely on `_stats_log_pmf`, which computes the
-probability of the stats (but which takes an array rather than a
-dictionary):
+이러한 메소드들은 스탯들의 확률을 계산하는 `_stats_log_pmf`에
+의존합니다(하지만 딕셔너리가 아닌 배열을 받습니다):
 
 ```python
 def _stats_log_pmf(self, stats):
-    """Evaluate the log-PMF for the given distribution of bonus points
-    across the different stats.
+    """서로 다른 스탯들에 걸친 주어진 보너스 포인트 분포에 대한
+    log-PMF를 평가합니다.
 
     Parameters
     ----------
     stats: numpy array of length 6
-        The distribution of bonus points across the stats
+        스탯들에 걸친 보너스 포인트의 분포
 
     Returns
     -------
     float
-        The value corresponding to log(p(stats))
+        log(p(stats))에 대응되는 값
 
     """
-    # There are never any leftover bonus points, so the sum of the
-    # stats gives us the total bonus.
+    # 남은 보너스 포인트는 결코 없으므로, 스탯들의 합은
+    # 전체 보너스를 제공합니다.
     total_bonus = np.sum(stats)
 
-    # First calculate the probability of the total bonus
+    # 먼저 전체 보너스의 확률을 계산합니다
     logp_bonus = self._bonus_log_pmf(total_bonus)
 
-    # Then calculate the probability of the stats
+    # 그 다음 스탯들의 확률을 계산합니다
     logp_stats = self.stats_dist.log_pmf(stats)
 
-    # Then multiply them together (using addition, because we are
-    # working with logs)
+    # 그 다음 그들을 함께 곱합니다 (로그로 작업하고 있으므로
+    # 덧셈을 사용합니다)
     log_pmf = logp_bonus + logp_stats
     return log_pmf
 ```
 
-The method `_stats_log_pmf`, in turn, relies on `_bonus_log_pmf`,
-which computes the probability of the overall bonus:
+`_stats_log_pmf` 메소드는 차례로 전체 보너스의 확률을 계산하는
+`_bonus_log_pmf`에 의존합니다:
 
 ```python
 def _bonus_log_pmf(self, bonus):
-    """Evaluate the log-PMF for the given bonus.
+    """주어진 보너스에 대한 log-PMF를 평가합니다.
 
     Parameters
     ----------
     bonus: integer
-        The total bonus.
+        전체 보너스.
 
     Returns
     -------
     float
-        The value corresponding to log(p(bonus))
+        log(p(bonus))에 대응되는 값
 
     """
-    # Make sure the value that is passed in is within the
-    # appropriate bounds
+    # 전달된 값이 적절한 경계 내에 있는지 확인합니다
     if bonus < 0 or bonus >= len(self.bonus_dist.p):
         return -np.inf
 
-    # Convert the scalar bonus value into a vector of event
-    # occurrences
+    # 스칼라 보너스 값을 사건 발생들의 벡터로 변환합니다
     x = np.zeros(len(self.bonus_dist.p))
     x[bonus] = 1
 
     return self.bonus_dist.log_pmf(x)
 ```
 
-We can now create our distribution as follows:
+이제 다음과 같이 우리의 분포를 생성할 수 있습니다:
 
 ```python
 >>> import numpy as np
@@ -945,26 +888,26 @@ We can now create our distribution as follows:
 >>> item_dist = MagicItemDistribution(bonus_probs, stats_probs, rso=rso)
 ```
 
-Once created, we can use it to generate a few different items:
+생성한 후에는, 몇 개의 서로 다른 아이템을 생성하는 데 사용할 수 있습니다:
 
 ```
 >>> item_dist.sample()
-{'dexterity': 0, 'strength': 0, 'constitution': 0, 
+{'dexterity': 0, 'strength': 0, 'constitution': 0,
  'intelligence': 0, 'wisdom': 0, 'charisma': 1}
 >>> item_dist.sample()
-{'dexterity': 0, 'strength': 0, 'constitution': 1, 
+{'dexterity': 0, 'strength': 0, 'constitution': 1,
  'intelligence': 0, 'wisdom': 2, 'charisma': 0}
 >>> item_dist.sample()
-{'dexterity': 1, 'strength': 0, 'constitution': 1, 
+{'dexterity': 1, 'strength': 0, 'constitution': 1,
  'intelligence': 0, 'wisdom': 0, 'charisma': 0}
 ```
 
-And, if we want, we can evaluate the probability of a sampled item:
+그리고 원한다면, 샘플링된 아이템의 확률을 평가할 수 있습니다:
 
 ```
 >>> item = item_dist.sample()
 >>> item
-{'dexterity': 0, 'strength': 0, 'constitution': 0, 
+{'dexterity': 0, 'strength': 0, 'constitution': 0,
  'intelligence': 0, 'wisdom': 2, 'charisma': 0}
 >>> item_dist.log_pmf(item)
 -4.9698132995760007
@@ -972,73 +915,71 @@ And, if we want, we can evaluate the probability of a sampled item:
 0.0069444444444444441
 ```
 
-## Estimating Attack Damage
+## 공격 데미지 추정하기
 
-We've seen one application of sampling: generating
-random items that monsters drop. I mentioned earlier that sampling can
-also be used when you want to estimate something from the distribution
-as a whole, and there are certainly cases in which we could use our
-`MagicItemDistribution` to do this. For example, let's say that damage in
-our RPG works by rolling some number of D12s (twelve-sided dice). The
-player gets to roll one die by default, and then add dice according to
-their strength bonus. So, for example, if they have a +2 strength
-bonus, they can roll three dice. The damage dealt is then the sum of
-the dice.
+우리는 샘플링의 한 가지 응용을 보았습니다: 몬스터가 드롭하는 무작위
+아이템을 생성하는 것입니다. 앞서 샘플링이 분포 전체로부터 무언가를
+추정하고자 할 때도 사용할 수 있다고 언급했는데, 우리의
+`MagicItemDistribution`을 이를 위해 사용할 수 있는 경우들이 확실히
+있습니다. 예를 들어, 우리 RPG에서 데미지가 몇 개의 D12(12면 주사위)를
+굴리는 방식으로 작동한다고 해봅시다. 플레이어는 기본적으로 하나의
+주사위를 굴리고, 그 다음 힘 보너스에 따라 주사위를 추가합니다.
+따라서 예를 들어, +2 힘 보너스를 갖고 있다면 3개의 주사위를 굴릴 수
+있습니다. 그러면 가해지는 데미지는 주사위들의 합입니다.
 
-We might want to know how much damage a player might deal after
-finding some number of weapons; e.g., as a factor in setting the
-difficulty of monsters. Let's say that after collecting two items, we
-want the player to be able to defeat monsters within three hits in
-about 50% of the battles. How many hit points should the monster have?
+우리는 플레이어가 몇 개의 무기를 찾은 후에 얼마나 많은 데미지를 가할
+수 있는지 알고 싶을 수도 있습니다; 예를 들어, 몬스터의 난이도를 설정하는
+요인으로 말입니다. 두 개의 아이템을 수집한 후에, 플레이어가 전투의
+약 50%에서 3번의 공격 내에 몬스터를 물리칠 수 있기를 원한다고 해봅시다.
+몬스터는 얼마나 많은 히트 포인트를 가져야 할까요?
 
-One way to answer this question is through sampling. We can use the
-following scheme:
+이 질문에 답하는 한 가지 방법은 샘플링을 통하는 것입니다. 다음과 같은
+방법을 사용할 수 있습니다:
 
-1. Randomly pick a magic item.
-2. Based on the item's bonuses, compute the number of dice that will
-   be rolled when attacking.
-3. Based on the number of dice that will be rolled, generate a sample
-   for the damage inflicted over three hits.
-4. Repeat steps 1-3 many times. This will result in an approximation
-   to the distribution over damage.
+1. 무작위로 마법 아이템을 선택합니다.
+2. 아이템의 보너스를 기반으로, 공격할 때 굴릴 주사위의 수를
+   계산합니다.
+3. 굴릴 주사위의 수를 기반으로, 3번의 공격에 걸쳐 가해지는
+   데미지에 대한 샘플을 생성합니다.
+4. 1-3단계를 여러 번 반복합니다. 이는 데미지에 대한 분포의
+   근사를 만들어낼 것입니다.
 
-### Implementing a Distribution Over Damage
+### 데미지에 대한 분포 구현하기
 
-The class `DamageDistribution` (also in `rpg.py`) shows an
-implementation of this scheme:
+`DamageDistribution` 클래스(`rpg.py`에도 있습니다)는 이 방법의
+구현을 보여줍니다:
 
 ```python
 class DamageDistribution(object):
 
     def __init__(self, num_items, item_dist,
                  num_dice_sides=12, num_hits=1, rso=np.random):
-        """Initialize a distribution over attack damage. This object can
-        sample possible values for the attack damage dealt over
-        `num_hits` hits when the player has `num_items` items, and
-        where attack damage is computed by rolling dice with
-        `num_dice_sides` sides.
+        """공격 데미지에 대한 분포를 초기화합니다. 이 객체는
+        플레이어가 `num_items`개의 아이템을 갖고 있을 때
+        `num_hits`번의 공격에 걸쳐 가해지는 공격 데미지에 대한
+        가능한 값들을 샘플링할 수 있으며, 공격 데미지는
+        `num_dice_sides`개의 면을 가진 주사위를 굴려서 계산됩니다.
 
         Parameters
         ----------
         num_items: int
-            The number of items the player has.
+            플레이어가 가진 아이템의 수.
         item_dist: MagicItemDistribution object
-            The distribution over magic items.
+            마법 아이템들에 대한 분포.
         num_dice_sides: int (default: 12)
-            The number of sides on each die.
+            각 주사위의 면 수.
         num_hits: int (default: 1)
-            The number of hits across which we want to calculate damage.
+            데미지를 계산하고자 하는 공격 횟수.
         rso: numpy RandomState object (default: np.random)
-            The random number generator
+            무작위 숫자 생성기
 
         """
 
-        # This is an array of integers corresponding to the sides of a
-        # single die.
+        # 이것은 하나의 주사위의 면들에 대응되는 정수들의 배열입니다.
         self.dice_sides = np.arange(1, num_dice_sides + 1)
 
-        # Create a multinomial distribution corresponding to one of
-        # these dice.  Each side has equal probabilities.
+        # 이러한 주사위들 중 하나에 대응되는 다항 분포를 생성합니다.
+        # 각 면은 동일한 확률을 갖습니다.
         self.dice_dist = MultinomialDistribution(
             np.ones(num_dice_sides) / float(num_dice_sides), rso=rso)
 
@@ -1047,81 +988,78 @@ class DamageDistribution(object):
         self.item_dist = item_dist
 
     def sample(self):
-        """Sample the attack damage.
+        """공격 데미지를 샘플링합니다.
 
         Returns
         -------
         int
-            The sampled damage
+            샘플링된 데미지
 
         """
-        # First, we need to randomly generate items (the number of
-        # which was passed into the constructor).
+        # 먼저, 아이템들을 무작위로 생성해야 합니다 (그 수는
+        # 생성자에 전달되었습니다).
         items = [self.item_dist.sample() for i in xrange(self.num_items)]
 
-        # Based on the item stats (in particular, strength), compute
-        # the number of dice we get to roll.
+        # 아이템 스탯들(특히, 힘)을 기반으로, 굴릴 수 있는
+        # 주사위의 수를 계산합니다.
         num_dice = 1 + np.sum([item['strength'] for item in items])
 
-        # Roll the dice and compute the resulting damage.
+        # 주사위를 굴리고 결과적인 데미지를 계산합니다.
         dice_rolls = self.dice_dist.sample(self.num_hits * num_dice)
         damage = np.sum(self.dice_sides * dice_rolls)
         return damage
 ```
 
-The constructor takes as arguments the number of sides the dice have,
-how many hits we want to compute damage over, how many items the
-player has, a distribution over magic items (of type
-`MagicItemDistribution`) and a random state object. By default, we set
-`num_dice_sides` to 12 because, while it is technically a parameter,
-it is unlikely to change. Similarly, we set `num_hits` to 1 as a
-default because a more likely use case is that we just want to take
-one sample of the damage for a single hit.
+생성자는 주사위가 갖는 면의 수, 데미지를 계산하고자 하는 공격 횟수,
+플레이어가 가진 아이템의 수, 마법 아이템들에 대한 분포
+(`MagicItemDistribution` 유형의), 그리고 무작위 상태 객체를 인자로
+받습니다. 기본적으로, `num_dice_sides`를 12로 설정하는데, 기술적으로는
+매개변수이지만 변경될 가능성이 낮기 때문입니다. 마찬가지로, 더 가능성이
+높은 사용 사례는 단일 공격에 대한 데미지의 한 샘플만 취하는 것이기
+때문에 `num_hits`를 기본값으로 1로 설정합니다.
 
-We then implement the actual sampling logic in `sample`. (Note the
-structural similarity to `MagicItemDistribution`.)  First, we
-generate a set of possible magic items that the player has. Then, we
-look at the strength stat of those items, and from that compute the
-number of dice to roll. Finally, we roll the dice (again relying on
-our trusty multinomial functions) and compute the damage from that.
+그 다음 `sample`에서 실제 샘플링 로직을 구현합니다.
+(`MagicItemDistribution`과의 구조적 유사성을 주목하세요.) 먼저,
+플레이어가 가진 가능한 마법 아이템들의 집합을 생성합니다. 그 다음,
+그러한 아이템들의 힘 스탯을 살펴보고, 그것으로부터 굴릴 주사위의 수를
+계산합니다. 마지막으로, 주사위를 굴리고(다시 우리의 믿음직한 다항
+함수들에 의존해서) 그것으로부터 데미지를 계산합니다.
 
-#### What Happened to Evaluating Probabilities?
+#### 확률 평가는 어떻게 되었을까요?
 
-You may have noticed that we didn't include a `log_pmf` or `pmf`
-function in our `DamageDistribution`. This is because we actually do
-not know what the PMF should be! This would be the equation:
+우리의 `DamageDistribution`에 `log_pmf`나 `pmf` 함수를 포함하지
+않았다는 것을 알아차렸을 수도 있습니다. 이는 실제로 PMF가 무엇이어야
+하는지 모르기 때문입니다! 방정식은 다음과 같을 것입니다:
 
 $$
 \sum_{{item}_1, \ldots{}, {item}_m} p(\mathrm{damage} \vert \mathrm{item}_1,\ldots{},\mathrm{item}_m)p(\mathrm{item}_1)\cdots{}p(\mathrm{item}_m)
 $$
 
-What this equation says is that we would need to compute the
-probability of every possible damage amount, given every possible set
-of $m$ items. We actually *could* compute this through brute force,
-but it wouldn't be pretty. This is actually a perfect example of a
-case where we want to use sampling to approximate the solution to a
-problem that we can't compute exactly (or which would be very
-difficult to compute exactly). So, rather than having a method for the
-PMF, we'll show in the next section how we can approximate the
-distribution with many samples.
+이 방정식이 말하는 것은 가능한 모든 $m$개 아이템들의 집합이 주어졌을 때,
+모든 가능한 데미지 양의 확률을 계산해야 한다는 것입니다. 실제로
+무차별 대입을 통해 이를 계산할 *수는* 있지만, 보기 좋지는 않을 것입니다.
+이는 실제로 정확히 계산할 수 없는(또는 정확히 계산하기 매우 어려운)
+문제의 해결책을 근사하기 위해 샘플링을 사용하고자 하는 경우의 완벽한
+예시입니다. 따라서 PMF에 대한 메소드를 갖기보다는, 다음 섹션에서
+많은 샘플들로 분포를 근사할 수 있는 방법을 보여줄 것입니다.
 
-### Approximating the Distribution
+### 분포 근사하기
 
-Now we have the machinery to answer our question from earlier: If the
-player has two items, and we want the player to be able to defeat the
-monster within three hits 50% of the time, how many hit points should
-the monster have?
+이제 앞서의 질문에 답할 수 있는 장치를 갖고 있습니다: 플레이어가
+두 개의 아이템을 갖고 있고, 플레이어가 시간의 50%에서 3번의 공격 내에
+몬스터를 물리칠 수 있기를 원한다면, 몬스터는 얼마나 많은 히트 포인트를
+가져야 할까요?
 
-First, we create our distribution object, using the same `item_dist`
-and `rso` that we created earlier:
+먼저, 앞서 생성했던 동일한 `item_dist`와 `rso`를 사용해서 분포 객체를
+생성합니다:
 
 ```python
 >>> from rpg import DamageDistribution
 >>> damage_dist = DamageDistribution(2, item_dist, num_hits=3, rso=rso)
 ```
 
-Now we can draw a bunch of samples, and compute the 50th percentile 
-(the damage value that is greater than 50% of the samples):
+이제 많은 샘플들을 뽑고, 50번째 백분위수(샘플들의 50%보다 큰 데미지 값)를
+계산할 수 있습니다:
 
 ```python
 >>> samples = np.array([damage_dist.sample() for i in xrange(100000)])
@@ -1133,43 +1071,39 @@ Now we can draw a bunch of samples, and compute the 50th percentile
 27.0
 ```
 
-If we were to plot a histogram of how many samples we got for each
-amount of damage, it would look something like \aosafigref{500l.sampler.damage}.
+각 데미지 양에 대해 얻은 샘플 수의 히스토그램을 그린다면,
+\aosafigref{500l.sampler.damage}와 같은 모습일 것입니다.
 
-\aosafigure[180pt]{sampler-images/damage_distribution.png}{Damage Distribution}{500l.sampler.damage}
+\aosafigure[180pt]{sampler-images/damage_distribution.png}{데미지 분포}{500l.sampler.damage}
 
-There is a pretty wide range of damage that the player could
-potentially inflict, but it has a long tail: the 50th percentile is at
-27 points, meaning that in half the samples, the player inflicted no
-more than 27 points of damage. Thus, if we wanted to use this criteria
-for setting monster difficulty, we would give them 27 hit points.
+플레이어가 잠재적으로 가할 수 있는 데미지는 꽤 넓은 범위를 갖지만,
+긴 꼬리를 가집니다: 50번째 백분위수는 27포인트에 있는데, 이는 샘플의
+절반에서 플레이어가 27포인트보다 많지 않은 데미지를 가했다는 의미입니다.
+따라서 몬스터 난이도를 설정하기 위해 이 기준을 사용하고자 한다면,
+그들에게 27 히트 포인트를 부여할 것입니다.
     
-## Summary
+## 요약
 
-In this chapter, we've seen how to write code for generating samples
-from a non-standard probability distribution, and how to compute the
-probabilities for those samples as well. In working through this
-example, we've covered several design decisions that are applicable in
-the general case:
+이 장에서는 비표준 확률 분포로부터 샘플을 생성하는 코드를 작성하는
+방법과 그러한 샘플들의 확률을 계산하는 방법도 보았습니다. 이 예시를
+작업하면서, 일반적인 경우에 적용 가능한 여러 설계 결정들을
+다루었습니다:
 
-1. Representing probability distributions using a class, and including
-   functions both for sampling and for evaluating the PMF (or PDF).
-2. Computing the PMF (or PDF) using logarithms.
-3. Generating samples from a random number generator object to enable
-   reproducible randomness.
-4. Writing functions whose inputs/outputs are clear and understandable
-   (e.g., using dictionaries as the output of
-   `MagicItemDistribution.sample`) while still exposing the less clear
-   but more efficient and purely numeric version of those functions
-   <latex>\linebreak</latex> (e.g., `MagicItemDistribution._sample_stats`).
+1. 클래스를 사용해서 확률 분포를 나타내고, 샘플링과 PMF(또는 PDF)
+   평가 모두를 위한 함수들을 포함하기.
+2. 로그를 사용해서 PMF(또는 PDF)를 계산하기.
+3. 재현 가능한 무작위성을 가능하게 하기 위해 무작위 숫자 생성기
+   객체로부터 샘플들을 생성하기.
+4. 입력/출력이 명확하고 이해하기 쉬운 함수들을 작성하는 것
+   (예: `MagicItemDistribution.sample`의 출력으로 딕셔너리 사용)과
+   동시에 덜 명확하지만 더 효율적이고 순전히 수치적인 버전의
+   함수들도 노출하기 (예: `MagicItemDistribution._sample_stats`).
 
-Additionally, we've seen how sampling from a probability distribution
-can be useful both for producing single random values (e.g.,
-generating a single magical item after defeating a monster) and for
-computing information about a distribution that we would otherwise not
-know (e.g., discovering how much damage a player with two items is
-likely to deal). Almost every type of sampling you might encounter
-falls under one of these two categories; the differences only have to
-do with what distributions you are sampling from. The general
-structure of the code&mdash;independent of those distributions&mdash;remains
-the same.
+추가적으로, 확률 분포로부터의 샘플링이 단일 무작위 값들을 생성하는 데
+(예: 몬스터를 물리친 후 하나의 마법 아이템 생성) 유용할 수 있을 뿐만
+아니라 그렇지 않았다면 알 수 없었을 분포에 대한 정보를 계산하는 데도
+(예: 두 개의 아이템을 가진 플레이어가 가할 가능성이 있는 데미지 양
+발견) 유용할 수 있다는 것을 보았습니다. 여러분이 마주칠 수 있는 거의
+모든 유형의 샘플링은 이 두 범주 중 하나에 해당합니다; 차이점은 단지
+어떤 분포들로부터 샘플링하고 있는지에만 관련이 있습니다. 코드의 일반적
+구조는—그러한 분포들과 무관하게—동일하게 유지됩니다.
