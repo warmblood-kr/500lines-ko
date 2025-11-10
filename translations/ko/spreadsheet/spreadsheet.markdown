@@ -1,111 +1,111 @@
-title: Web Spreadsheet
+title: 웹 스프레드시트
 author: Audrey Tang
 <markdown>
-_A self-educated programmer and translator, Audrey works with Apple as an independent contractor on cloud service localization and natural language technologies. Audrey has previously designed and led the first working Perl 6 implementation, and served in computer language design committees for Haskell, Perl 5, and Perl 6. Currently Audrey is a full-time g0v contributor and leads Taiwan’s first e-Rulemaking project._
+_독학으로 프로그래밍을 배운 프로그래머이자 번역가인 Audrey는 Apple과 독립 계약자로 클라우드 서비스 현지화 및 자연어 기술 분야에서 일하고 있습니다. 이전에 최초로 작동하는 Perl 6 구현을 설계하고 주도했으며, Haskell, Perl 5, Perl 6의 컴퓨터 언어 설계 위원회에서 활동했습니다. 현재는 g0v의 전임 기여자이며 대만 최초의 전자 규칙 제정 프로젝트를 이끌고 있습니다._
 </markdown>
-This chapter introduces a web spreadsheet written in 99 lines of the three languages natively supported by web browsers: HTML, JavaScript, and CSS.
+이 챕터에서는 웹 브라우저에서 기본적으로 지원하는 세 가지 언어(HTML, JavaScript, CSS)로 작성된 99줄의 웹 스프레드시트를 소개합니다.
 
-The ES5 version of this project is available as a [jsFiddle](http://jsfiddle.net/audreyt/LtDyP/).
+이 프로젝트의 ES5 버전은 [jsFiddle](http://jsfiddle.net/audreyt/LtDyP/)에서 사용할 수 있습니다.
 
 <markdown>
-_(This chapter is also available in [Traditional Chinese](https://github.com/aosabook/500lines/blob/master/spreadsheet/spreadsheet.zh-tw.markdown))_. 
+_(이 챕터는 [번체 중국어](https://github.com/aosabook/500lines/blob/master/spreadsheet/spreadsheet.zh-tw.markdown)로도 제공됩니다)_.
 </markdown>
 
-## Introduction
+## 소개
 
-When Tim Berners-Lee invented the web in 1990, _web pages_ were written in HTML by marking up text with angle-bracketed _tags_, assigning a logical structure to the content. Text marked up within `<a>…</a>` became _hyperlinks_ that would refer the user to other pages on the web.
+Tim Berners-Lee가 1990년에 웹을 발명했을 때, _웹 페이지_는 꺾쇠괄호로 둘러싸인 _태그_로 텍스트를 마크업하여 콘텐츠에 논리적 구조를 부여하는 HTML로 작성되었습니다. `<a>…</a>` 안에 마크업된 텍스트는 사용자를 웹의 다른 페이지로 안내하는 _하이퍼링크_가 되었습니다.
 
-In the 1990s, browsers added various presentational tags to the HTML vocabulary, including some notoriously nonstandard tags such as `<blink>…</blink>` from Netscape Navigator and `<marquee>…</marquee>` from Internet Explorer, causing widespread problems in usability and browser compatibility.
+1990년대에 브라우저들은 HTML 어휘에 다양한 표현 태그들을 추가했는데, 여기에는 Netscape Navigator의 `<blink>…</blink>`와 Internet Explorer의 `<marquee>…</marquee>` 같은 악명 높은 비표준 태그들이 포함되어 사용성과 브라우저 호환성에 광범위한 문제를 일으켰습니다.
 
-In order to restrict HTML to its original purpose—describing a document’s logical structure—browser makers eventually agreed to support two additional languages: CSS to describe presentational styles of a page, and JavaScript (JS) to describe its dynamic interactions.
+HTML을 원래 목적인 문서의 논리적 구조 기술로 제한하기 위해, 브라우저 제조업체들은 결국 두 가지 추가 언어를 지원하기로 합의했습니다: 페이지의 표현 스타일을 기술하는 CSS와 동적 상호작용을 기술하는 JavaScript(JS)입니다.
 
-Since then, the three languages have become more concise and powerful through twenty years of co-evolution. In particular, improvements in JS engines made it practical to deploy large-scale JS frameworks, such as [AngularJS](http://angularjs.org/).
+그 이후로 20년간의 공진화를 통해 세 언어는 더욱 간결하고 강력해졌습니다. 특히 JS 엔진의 개선으로 [AngularJS](http://angularjs.org/)와 같은 대규모 JS 프레임워크를 실용적으로 배포할 수 있게 되었습니다.
 
-Today, cross-platform _web applications_ (such as web spreadsheets) are as ubiquitous and popular as platform-specific applications (such as VisiCalc, Lotus 1-2-3 and Excel) from the previous century.
+오늘날 (웹 스프레드시트와 같은) 크로스 플랫폼 _웹 애플리케이션_은 이전 세기의 플랫폼별 애플리케이션(VisiCalc, Lotus 1-2-3, Excel 등)만큼 보편적이고 인기가 높습니다.
 
-How many features can a web application offer in 99 lines with AngularJS? Let’s see it in action!
+AngularJS로 99줄에 웹 애플리케이션이 얼마나 많은 기능을 제공할 수 있을까요? 실제로 확인해보겠습니다!
 
-## Overview
+## 개요
 
-The [spreadsheet](https://github.com/audreyt/500lines/tree/master/spreadsheet/code) directory contains our showcase for late-2014 editions of the three web languages: [HTML5](http://www.w3.org/TR/html5/) for structure, [CSS3](http://www.w3.org/TR/css3-ui/) for presentation, and the JS [ES6 “Harmony”](http://git.io/es6features) standard for interaction. It also uses [web storage](http://www.whatwg.org/specs/web-apps/current-work/multipage/webstorage.html) for data persistence and [web workers](http://www.whatwg.org/specs/web-apps/current-work/multipage/workers.html) for running JS code in the background. As of this writing, these web standards are supported by Firefox, Chrome, and Internet Explorer 11+, as well as mobile browsers on iOS 5+ and Android 4+.
+[spreadsheet](https://github.com/audreyt/500lines/tree/master/spreadsheet/code) 디렉토리는 2014년 후반 버전의 세 가지 웹 언어를 보여주는 쇼케이스입니다: 구조를 위한 [HTML5](http://www.w3.org/TR/html5/), 표현을 위한 [CSS3](http://www.w3.org/TR/css3-ui/), 그리고 상호작용을 위한 JS [ES6 "Harmony"](http://git.io/es6features) 표준입니다. 또한 데이터 지속성을 위해 [웹 스토리지](http://www.whatwg.org/specs/web-apps/current-work/multipage/webstorage.html)를 사용하고, 백그라운드에서 JS 코드를 실행하기 위해 [웹 워커](http://www.whatwg.org/specs/web-apps/current-work/multipage/workers.html)를 사용합니다. 이 글을 작성하는 시점에서 이러한 웹 표준들은 Firefox, Chrome, Internet Explorer 11+ 및 iOS 5+와 Android 4+의 모바일 브라우저에서 지원됩니다.
 
-Now let’s open [our spreadsheet](http://audreyt.github.io/500lines/spreadsheet/) in a browser (\aosafigref{500l.spreadsheet.initial}):
+이제 브라우저에서 [우리의 스프레드시트](http://audreyt.github.io/500lines/spreadsheet/)를 열어보겠습니다 (\aosafigref{500l.spreadsheet.initial}):
 
-\aosafigure[240pt]{spreadsheet-images/01-initial.png}{Initial Screen}{500l.spreadsheet.initial}
+\aosafigure[240pt]{spreadsheet-images/01-initial.png}{초기 화면}{500l.spreadsheet.initial}
 
-### Basic Concepts
+### 기본 개념
 
-The spreadsheet spans two dimensions, with _columns_ starting from **A**, and _rows_ starting from **1**. Each _cell_ has a unique _coordinate_ (such as **A1**) and _content_ (such as "1874"), which belongs to one of four _types_:
+스프레드시트는 2차원으로 구성되며, _열_은 **A**부터 시작하고 _행_은 **1**부터 시작합니다. 각 _셀_은 고유한 _좌표_(예: **A1**)와 _내용_(예: "1874")을 가지며, 다음 네 가지 _유형_ 중 하나에 속합니다:
 
-* Text: "+" in **B1** and "->" in **D1**, aligned to the left.
-* Number: "1874" in **A1** and "2046" in **C1**, aligned to the right.
-* Formula:  `=A1+C1` in **E1**, which _calculates_ to the _value_ "3920", displayed with a light blue background.
-* Empty: All cells in row **2** are currently empty.
+* 텍스트: **B1**의 "+"와 **D1**의 "->"처럼 왼쪽 정렬됩니다.
+* 숫자: **A1**의 "1874"와 **C1**의 "2046"처럼 오른쪽 정렬됩니다.
+* 수식: **E1**의 `=A1+C1`처럼 _계산_되어 _값_ "3920"을 가지며, 연한 파란색 배경으로 표시됩니다.
+* 빈 셀: **2**행의 모든 셀들은 현재 비어있습니다.
 
-Click "3920" to set _focus_ on **E1**, revealing its formula in an _input box_ (\aosafigref{500l.spreadsheet.inputbox}).
+"3920"을 클릭하여 **E1**에 _포커스_를 설정하면 _입력 상자_에 수식이 나타납니다 (\aosafigref{500l.spreadsheet.inputbox}).
 
-\aosafigure[240pt]{spreadsheet-images/02-input.png}{Input Box}{500l.spreadsheet.inputbox}
+\aosafigure[240pt]{spreadsheet-images/02-input.png}{입력 상자}{500l.spreadsheet.inputbox}
 
-Now let’s set focus on **A1** and _change_ its content to "1", causing **E1** to _recalculate_ its value to "2047" (\aosafigref{500l.spreadsheet.changed}).
+이제 **A1**에 포커스를 설정하고 내용을 "1"로 _변경_하면, **E1**이 값을 "2047"로 _재계산_합니다 (\aosafigref{500l.spreadsheet.changed}).
 
-\aosafigure[240pt]{spreadsheet-images/03-changed.png}{Changed Content}{500l.spreadsheet.changed}
+\aosafigure[240pt]{spreadsheet-images/03-changed.png}{변경된 내용}{500l.spreadsheet.changed}
 
-Press **ENTER** to set focus to **A2** and change its content to `=Date()`, then press **TAB**, change the content of **B2** to `=alert()`, then press **TAB** again to set focus to `C2` (\aosafigref{500l.spreadsheet.error}).
+**ENTER**를 눌러 **A2**로 포커스를 이동하고 내용을 `=Date()`로 변경한 다음, **TAB**을 누르고 **B2**의 내용을 `=alert()`로 변경하고, 다시 **TAB**을 눌러 **C2**로 포커스를 설정합니다 (\aosafigref{500l.spreadsheet.error}).
 
-\aosafigure[240pt]{spreadsheet-images/04-error.png}{Formula Error}{500l.spreadsheet.error}
+\aosafigure[240pt]{spreadsheet-images/04-error.png}{수식 오류}{500l.spreadsheet.error}
 
-This shows that a formula may calculate to a number ("2047" in **E1**), a text (the current time in **A2**, aligned to the left), or an _error_ (red letters in **B2**, aligned to the center).
+이는 수식이 숫자(**E1**의 "2047"), 텍스트(**A2**의 현재 시간, 왼쪽 정렬), 또는 _오류_(**B2**의 빨간 글자, 가운데 정렬)로 계산될 수 있음을 보여줍니다.
 
-Next, let’s try entering `=for(;;){}`, the JS code for an infinite loop that never terminates. The spreadsheet will prevent this by automatically _restoring_ the content of **C2** after an attempted change.
+다음으로 무한히 종료되지 않는 무한 루프를 위한 JS 코드인 `=for(;;){}`를 입력해보겠습니다. 스프레드시트는 변경 시도 후 **C2**의 내용을 자동으로 _복원_하여 이를 방지합니다.
 
-Now reload the page in the browser with **Ctrl-R** or **Cmd-R** to verify that the spreadsheet content is _persistent_, staying the same across browser sessions. To _reset_ the spreadsheet to its original contents, press the 'curved arrow' button on the top-left corner.
+이제 **Ctrl-R** 또는 **Cmd-R**로 브라우저에서 페이지를 새로고침하여 스프레드시트 내용이 브라우저 세션 간에 동일하게 유지되는 _지속성_을 확인합니다. 스프레드시트를 원래 내용으로 _재설정_하려면 왼쪽 상단의 '곡선 화살표' 버튼을 누르세요.
 
-### Progressive Enhancement
+### 점진적 향상
 
-Before we dive into the 99 lines of code, it’s worthwhile to disable JS in the browser, reload the page, and note the differences (\aosafigref{500l.spreadsheet.nojs}).
+99줄의 코드를 자세히 살펴보기 전에, 브라우저에서 JS를 비활성화하고 페이지를 새로고침한 다음 차이점을 확인해 보겠습니다 (\aosafigref{500l.spreadsheet.nojs}).
 
-* Instead of a large grid, only a 2x2 table remains onscreen, with a single content cell.
-* Row and column labels are replaced by `{{ row }}` and `{{ col }}`.
-* Pressing the reset button produces no effect.
-* Pressing **TAB** or clicking into the first line of content still reveals an editable input box.
+* 큰 격자 대신 단일 내용 셀이 있는 2x2 테이블만 화면에 남습니다.
+* 행과 열 레이블이 `{{ row }}`와 `{{ col }}`로 바뀝니다.
+* 재설정 버튼을 눌러도 효과가 없습니다.
+* **TAB**을 누르거나 첫 번째 내용 줄을 클릭하면 여전히 편집 가능한 입력 상자가 나타납니다.
 
-\aosafigure[240pt]{spreadsheet-images/05-nojs.png}{With JavaScript Disabled}{500l.spreadsheet.nojs}
+\aosafigure[240pt]{spreadsheet-images/05-nojs.png}{JavaScript 비활성화 상태}{500l.spreadsheet.nojs}
 
-When we disable the dynamic interactions (JS), the content structure (HTML) and the presentational styles (CSS) remain in effect. If a website is useful with both JS and CSS disabled, we say it adheres to the _progressive enhancement_ principle, making its content accessible to the largest audience possible.
+동적 상호작용(JS)을 비활성화하면 콘텐츠 구조(HTML)와 표현 스타일(CSS)은 계속 유지됩니다. 웹사이트가 JS와 CSS가 모두 비활성화된 상태에서도 유용하다면 _점진적 향상_ 원칙을 준수한다고 말하며, 이는 가능한 한 가장 많은 사용자가 콘텐츠에 접근할 수 있도록 합니다.
 
-Because our spreadsheet is a web application with no server-side code, we must rely on JS to provide the required logic. However, it does work correctly when CSS is not fully supported, such as with screen readers and text-mode browsers.
+우리의 스프레드시트는 서버 측 코드가 없는 웹 애플리케이션이므로 필요한 로직을 제공하기 위해 JS에 의존해야 합니다. 하지만 스크린 리더나 텍스트 모드 브라우저와 같이 CSS가 완전히 지원되지 않는 환경에서도 올바르게 작동합니다.
 
-\aosafigure[240pt]{spreadsheet-images/06-nocss.png}{With CSS Disabled}{500l.spreadsheet.nocss}
+\aosafigure[240pt]{spreadsheet-images/06-nocss.png}{CSS 비활성화 상태}{500l.spreadsheet.nocss}
 
-As shown in \aosafigref{500l.spreadsheet.nocss}, if we enable JS in the browser and disable CSS instead, the effects are:
+\aosafigref{500l.spreadsheet.nocss}에 나타난 것처럼, 브라우저에서 JS를 활성화하고 대신 CSS를 비활성화하면 다음과 같은 효과가 나타납니다:
 
-* All background and foreground colors are gone.
-* The input box and the cell value are both displayed, instead of just one at a time.
-* Otherwise, the application still works the same as the full version.
+* 모든 배경색과 전경색이 사라집니다.
+* 한 번에 하나씩 표시되는 대신 입력 상자와 셀 값이 모두 표시됩니다.
+* 그 외에는 애플리케이션이 전체 버전과 동일하게 작동합니다.
 
-## Code Walkthrough
+## 코드 둘러보기
 
-\aosafigref{500l.spreadsheet.architecture} shows the links between HTML and JS components.  In order to make sense of the diagram, let’s go through the four source code files, in the same sequence as the browser loads them.
+\aosafigref{500l.spreadsheet.architecture}는 HTML과 JS 구성 요소 간의 연결을 보여줍니다. 다이어그램을 이해하기 위해 브라우저가 로드하는 순서와 동일한 순서로 네 개의 소스 코드 파일을 살펴보겠습니다.
 
-\aosafigure[240pt]{spreadsheet-images/00-architecture.png}{Architecture Diagram}{500l.spreadsheet.architecture}
+\aosafigure[240pt]{spreadsheet-images/00-architecture.png}{아키텍처 다이어그램}{500l.spreadsheet.architecture}
 
 
-* **index.html**: 19 lines
-* **main.js**: 38 lines (excluding comments and blank lines)
-* **worker.js**: 30 lines (excluding comments and blank lines)
-* **styles.css**: 12 lines
+* **index.html**: 19줄
+* **main.js**: 38줄 (주석과 빈 줄 제외)
+* **worker.js**: 30줄 (주석과 빈 줄 제외)
+* **styles.css**: 12줄
 
 ### HTML
 
-The first line in `index.html` declares that it’s written in HTML5 with the UTF-8 encoding:
+`index.html`의 첫 번째 줄은 UTF-8 인코딩으로 HTML5로 작성되었음을 선언합니다:
 
 ```html
 <!DOCTYPE html><html><head><meta charset="UTF-8">
 ```
 
-Without the `charset` declaration, the browser may display the reset button’s Unicode symbol as `â†»`, an example of _mojibake_: garbled text caused by decoding issues.
+`charset` 선언이 없으면 브라우저는 재설정 버튼의 유니코드 기호를 `â†»`로 표시할 수 있는데, 이는 디코딩 문제로 인한 깨진 텍스트의 예인 _모지바케_입니다.
 
-The next three lines are JS declarations, placed within the `head` section as usual:
+다음 세 줄은 평소와 같이 `head` 섹션 내에 배치된 JS 선언입니다:
 
 ```html
   <script src="lib/angular.js"></script>
@@ -116,78 +116,78 @@ The next three lines are JS declarations, placed within the `head` section as us
   </script>
 ```
 
-The `<script src="…">` tags load JS resources from the same path as the HTML page. For example, if the current URL is `http://abc.com/x/index.html`, then `lib/angular.js` refers to `http://abc.com/x/lib/angular.js`.
+`<script src="…">` 태그는 HTML 페이지와 동일한 경로에서 JS 리소스를 로드합니다. 예를 들어, 현재 URL이 `http://abc.com/x/index.html`이면 `lib/angular.js`는 `http://abc.com/x/lib/angular.js`를 참조합니다.
 
-The `try{ angular.module('500lines') }` line tests if `main.js` is loaded correctly; if not, it tells the browser to navigate to `es5/index.html` instead. This _redirect-based graceful degradation_ technique ensures that for pre-2015 browsers with no ES6 support, we can use the translated-to-ES5 versions of JS programs as a fallback.
+`try{ angular.module('500lines') }` 줄은 `main.js`가 올바르게 로드되었는지 테스트하고, 그렇지 않으면 브라우저에 `es5/index.html`로 이동하도록 지시합니다. 이 _리다이렉트 기반 점진적 성능 저하_ 기술은 ES6를 지원하지 않는 2015년 이전 브라우저에서 ES5로 변환된 JS 프로그램 버전을 대체재로 사용할 수 있도록 보장합니다.
 
-The next two lines load the CSS resource, close the `head` section, and begin the `body` section containing the user-visible part:
+다음 두 줄은 CSS 리소스를 로드하고, `head` 섹션을 닫고, 사용자가 볼 수 있는 부분을 포함하는 `body` 섹션을 시작합니다:
 
 ```html
   <link href="styles.css" rel="stylesheet">
 </head><body ng-app="500lines" ng-controller="Spreadsheet" ng-cloak>
 ```
 
-The `ng-app` and `ng-controller` attributes above tell [AngularJS](http://angularjs.org/) to call the `500lines` module’s `Spreadsheet` function, which would return a _model_: an object that provides _bindings_ on the document _view_. (The `ng-cloak` attribute hides the document from display until the bindings are in place.)
+위의 `ng-app`과 `ng-controller` 속성은 [AngularJS](http://angularjs.org/)에게 `500lines` 모듈의 `Spreadsheet` 함수를 호출하도록 지시하며, 이는 문서 _뷰_에 _바인딩_을 제공하는 객체인 _모델_을 반환합니다. (`ng-cloak` 속성은 바인딩이 완료될 때까지 문서를 화면에 표시하지 않습니다.)
 
-As a concrete example, when the user clicks the `<button>` defined in the next line, its `ng-click` attribute will trigger and call `reset()` and `calc()`, two named functions provided by the JS model:
+구체적인 예로, 사용자가 다음 줄에 정의된 `<button>`을 클릭하면, `ng-click` 속성이 트리거되어 JS 모델에서 제공하는 두 개의 명명된 함수인 `reset()`과 `calc()`를 호출합니다:
 
 ```html
   <table><tr>
     <th><button type="button" ng-click="reset(); calc()">↻</button></th>
 ```
 
-The next line uses `ng-repeat` to display the list of column labels on the top row:
+다음 줄은 `ng-repeat`를 사용하여 최상단 행에 열 레이블 목록을 표시합니다:
 
 ```html
     <th ng-repeat="col in Cols">{{ col }}</th>
 ```
 
-For example, if the JS model defines `Cols` as `["A","B","C"]`, then there will be three heading cells (`th`) labeled accordingly. The `{{ col }}` notation tells AngularJS to _interpolate_ the expression, filling the contents in each `th` with the current value of `col`.
+예를 들어, JS 모델이 `Cols`를 `["A","B","C"]`로 정의하면, 그에 따라 레이블이 지정된 세 개의 헤딩 셀(`th`)이 생성됩니다. `{{ col }}` 표기법은 AngularJS에게 표현식을 _보간_하도록 지시하여 각 `th`의 내용을 현재 `col` 값으로 채웁니다.
 
-Similarly, the next two lines go through values in `Rows` — `[1,2,3]` and so on — creating a row for each one and labeling the leftmost `th` cell with its number:
+마찬가지로, 다음 두 줄은 `Rows`의 값들(`[1,2,3]` 등)을 순회하여 각각에 대해 행을 만들고 맨 왼쪽 `th` 셀에 해당 번호로 레이블을 지정합니다:
 
 ```html
   </tr><tr ng-repeat="row in Rows">
     <th>{{ row }}</th>
 ```
 
-Because the `<tr ng-repeat>` tag is not yet closed by `</tr>` , the `row` variable is still available for expressions. The next line creates a data cell (`td`) in the current row and uses both `col` and `row` variables in its `ng-class` attribute:
+`<tr ng-repeat>` 태그가 아직 `</tr>`로 닫히지 않았기 때문에, `row` 변수는 여전히 표현식에서 사용할 수 있습니다. 다음 줄은 현재 행에 데이터 셀(`td`)을 생성하고 `ng-class` 속성에서 `col`과 `row` 변수를 모두 사용합니다:
 
 ```html
     <td ng-repeat="col in Cols" ng-class="{ formula: ('=' === sheet[col+row][0]) }">
 ```
 
-A few things are going on here. In HTML, the `class` attribute describes a _set of class names_ that  allow CSS to style them differently. The `ng-class` here evaluates the expression `('=' === sheet[col+row][0])`; if it is true, then the `<td>` gets  `formula` as an additional class, which gives the cell a light-blue background as defined in line 8 of **styles.css** with the `.formula` _class selector_.
+여기에는 몇 가지 일이 일어나고 있습니다. HTML에서 `class` 속성은 CSS가 다르게 스타일을 지정할 수 있도록 하는 _클래스 이름 집합_을 설명합니다. 여기의 `ng-class`는 표현식 `('=' === sheet[col+row][0])`을 평가하고, 이것이 참이면 `<td>`는 추가 클래스로 `formula`를 받게 되어, **styles.css**의 8번째 줄에서 `.formula` _클래스 선택자_로 정의된 대로 셀에 연한 파란색 배경을 제공합니다.
 
-The expression above checks if the current cell is a formula by testing if `=` is the initial character (`[0]`) of the string in `sheet[col+row]`, where `sheet` is a JS model object with coordinates (such as `"E1"`) as properties, and cell contents (such as `"=A1+C1"`) as values. Note that because `col` is a string and not a number, the `+` in `col+row` means concatenation instead of addition.
+위 표현식은 `sheet[col+row]`의 문자열에서 `=`가 첫 번째 문자(`[0]`)인지 테스트하여 현재 셀이 수식인지 확인합니다. 여기서 `sheet`는 좌표(예: `"E1"`)를 속성으로, 셀 내용(예: `"=A1+C1"`)을 값으로 하는 JS 모델 객체입니다. `col`은 숫자가 아닌 문자열이므로 `col+row`의 `+`는 덧셈이 아닌 문자열 연결을 의미합니다.
 
-Inside the `<td>`, we give the user an input box to edit the cell content stored in `sheet[col+row]`:
+`<td>` 안에서 우리는 `sheet[col+row]`에 저장된 셀 내용을 편집할 수 있는 입력 상자를 사용자에게 제공합니다:
 
 ```html
        <input id="{{ col+row }}" ng-model="sheet[col+row]" ng-change="calc()"
         ng-model-options="{ debounce: 200 }" ng-keydown="keydown( $event, col, row )">
 ```
 
-Here, the key attribute is `ng-model`, which enables a _two-way binding_ between the JS model and the input box’s editable content. In practice, this means that whenever the user makes a change in the input box, the JS model will update `sheet[col+row]` to match the content, and trigger its `calc()` function to recalculate values of all formula cells.
+여기서 핵심 속성은 `ng-model`로, JS 모델과 입력 상자의 편집 가능한 내용 간에 _양방향 바인딩_을 가능하게 합니다. 실제로 이는 사용자가 입력 상자에서 변경을 할 때마다 JS 모델이 내용과 일치하도록 `sheet[col+row]`를 업데이트하고, 모든 수식 셀의 값을 재계산하기 위해 `calc()` 함수를 트리거한다는 의미입니다.
 
-To avoid repeated calls to `calc()` when the user presses and holds a key, `ng-model-options` limits the update rate to once every 200 milliseconds.
+사용자가 키를 누르고 유지할 때 `calc()`의 반복 호출을 피하기 위해, `ng-model-options`는 업데이트 빈도를 200밀리초마다 한 번으로 제한합니다.
 
-The `id` attribute here is interpolated with the coordinate `col+row`. The `id` attribute of a HTML element must be different from the `id` of all other elements in the same document. This ensures that the `#A1` _ID selector_ refers to a single element, instead of a set of elements like the class selector `.formula`.  When the user presses the **UP**/**DOWN**/**ENTER** keys, the keyboard-navigation logic in `keydown()` will use ID selectors to determine which input box to focus on.
+여기의 `id` 속성은 좌표 `col+row`로 보간됩니다. HTML 요소의 `id` 속성은 동일한 문서의 다른 모든 요소의 `id`와 달라야 합니다. 이는 `#A1` _ID 선택자_가 클래스 선택자 `.formula`처럼 요소 집합이 아닌 단일 요소를 참조하도록 보장합니다. 사용자가 **UP**/**DOWN**/**ENTER** 키를 누를 때, `keydown()`의 키보드 탐색 로직은 ID 선택자를 사용하여 포커스할 입력 상자를 결정합니다.
 
-After the input box, we place a `<div>` to display the calculated value of the current cell, represented in the JS model by objects `errs` and `vals`:
+입력 상자 후에, 우리는 JS 모델에서 `errs`와 `vals` 객체로 표현되는 현재 셀의 계산된 값을 표시하기 위해 `<div>`를 배치합니다:
 
 ```html
       <div ng-class="{ error: errs[col+row], text: vals[col+row][0] }">
         {{ errs[col+row] || vals[col+row] }}</div>
 ```
 
-If an error occurs when computing a formula, the text interpolation uses the error message contained in `errs[col+row]`, and `ng-class` applies the `error` class to the element, allowing CSS to style it differently (with red letters, aligned to the center, etc.).
+수식을 계산할 때 오류가 발생하면, 텍스트 보간은 `errs[col+row]`에 포함된 오류 메시지를 사용하고, `ng-class`는 요소에 `error` 클래스를 적용하여 CSS가 다르게 스타일을 지정할 수 있게 합니다(빨간 글자, 가운데 정렬 등).
 
-When there is no error, the `vals[col+row]` on the right side of `||` is interpolated instead. If it’s a non-empty string, the initial character (`[0]`) will evaluate to true, applying the `text` class to the element that left-aligns the text.
+오류가 없을 때는 대신 `||`의 오른쪽에 있는 `vals[col+row]`가 보간됩니다. 비어있지 않은 문자열이면, 첫 번째 문자(`[0]`)가 참으로 평가되어 텍스트를 왼쪽 정렬하는 `text` 클래스가 요소에 적용됩니다.
 
-Because empty strings and numeric values have no initial character, `ng-class` will not assign them any classes, so CSS can style them with right alignment as the default case.
+빈 문자열과 숫자 값은 첫 번째 문자가 없기 때문에, `ng-class`는 클래스를 할당하지 않으므로 CSS가 기본적으로 오른쪽 정렬로 스타일을 지정할 수 있습니다.
 
-Finally, we close the `ng-repeat` loop in the column level with `</td>`, close the row-level loop with `</tr>`, and end the HTML document with:
+마지막으로, 열 수준의 `ng-repeat` 루프를 `</td>`로 닫고, 행 수준 루프를 `</tr>`로 닫고, HTML 문서를 다음으로 끝냅니다:
 
 ```html
     </td>
@@ -195,28 +195,28 @@ Finally, we close the `ng-repeat` loop in the column level with `</td>`, close t
 </body></html>
 ```
 
-### JS: Main Controller
+### JS: 메인 컨트롤러
 
-The `main.js` file defines the `500lines` module and its `Spreadsheet` controller function, as required by the `<body>` element in `index.html`.
+`main.js` 파일은 `index.html`의 `<body>` 요소에서 요구하는 `500lines` 모듈과 그 `Spreadsheet` 컨트롤러 함수를 정의합니다.
 
-As the bridge between the HTML view and the background worker, it has four tasks:
+HTML 뷰와 백그라운드 워커 사이의 다리 역할로서, 네 가지 작업을 수행합니다:
 
-* Define the dimensions and labels of columns and rows.
-* Provide event handlers for keyboard navigation and the reset button.
-* When the user changes the spreadsheet, send its new content to the worker.
-* When computed results arrive from the worker, update the view and save the current state.
+* 열과 행의 차원과 레이블을 정의합니다.
+* 키보드 탐색과 재설정 버튼을 위한 이벤트 핸들러를 제공합니다.
+* 사용자가 스프레드시트를 변경하면, 새로운 내용을 워커에게 전송합니다.
+* 워커에서 계산된 결과가 도착하면, 뷰를 업데이트하고 현재 상태를 저장합니다.
 
-The flowchart in \aosafigref{500l.spreadsheet.flowchart} shows the controller-worker interaction in more detail:
+\aosafigref{500l.spreadsheet.flowchart}의 순서도는 컨트롤러-워커 상호작용을 더 자세히 보여줍니다:
 
-\aosafigure[240pt]{spreadsheet-images/00-flowchart.png}{Controller-Worker Flowchart}{500l.spreadsheet.flowchart}
+\aosafigure[240pt]{spreadsheet-images/00-flowchart.png}{컨트롤러-워커 순서도}{500l.spreadsheet.flowchart}
 
-Now let's walk through the code. In the first line, we request the AngularJS `$scope`:
+이제 코드를 살펴보겠습니다. 첫 번째 줄에서 AngularJS의 `$scope`를 요청합니다:
 
 ```javascript
 angular.module('500lines', []).controller('Spreadsheet', function ($scope, $timeout) {
 ```
 
-The `$` in `$scope` is part of the variable name. Here we also request the [`$timeout`](https://docs.angularjs.org/api/ng/service/$timeout) service function from AngularJS; later on, we will use it to prevent infinite-looping formulas.
+`$scope`의 `$`는 변수 이름의 일부입니다. 여기서는 AngularJS의 [`$timeout`](https://docs.angularjs.org/api/ng/service/$timeout) 서비스 함수도 요청합니다. 나중에 무한 루프 수식을 방지하는 데 사용할 것입니다.
 
 To put `Cols` and `Rows` into the model, simply define them as properties of `$scope`:
 
@@ -493,13 +493,13 @@ With accessors defined for all coordinates, the worker goes through the coordina
 
 ### CSS
 
-The **styles.css** file contains just a few selectors and their presentational styles. First, we style the table to merge all cell borders together, leaving no spaces between neighboring cells:
+**styles.css** 파일은 몇 개의 선택자와 그 표현 스타일만을 포함합니다. 먼저 인접한 셀 사이에 공간을 두지 않고 모든 셀 테두리를 합치도록 테이블 스타일을 지정합니다:
 
 ```css
 table { border-collapse: collapse; }
 ```
 
-Both the heading and data cells share the same border style, but we can tell them apart by their background colors: heading cells are light gray, data cells are white by default, and formula cells get a light blue background:
+헤딩 셀과 데이터 셀은 동일한 테두리 스타일을 공유하지만, 배경색으로 구별할 수 있습니다: 헤딩 셀은 연한 회색, 데이터 셀은 기본적으로 흰색, 수식 셀은 연한 파란색 배경을 가집니다:
 
 ```
 th, td { border: 1px solid #ccc; }
@@ -507,21 +507,21 @@ th { background: #ddd; }
 td.formula { background: #eef; }
 ```
 
-The displayed width is fixed for each cell’s calculated values. Empty cells receive a minimal height, and long lines are clipped with a trailing ellipsis:
+각 셀의 계산된 값에 대해 표시 너비가 고정됩니다. 빈 셀은 최소 높이를 받고, 긴 줄은 끝에 줄임표로 잘립니다:
 
 ```css
 td div { text-align: right; width: 120px; min-height: 1.2em;
          overflow: hidden; text-overflow: ellipsis; }
 ```
 
-The text alignment and decorations are determined by each value’s type, as reflected by the `text` and `error` class selectors:
+텍스트 정렬과 장식은 `text`와 `error` 클래스 선택자에 반영된 각 값의 유형에 따라 결정됩니다:
 
 ```css
 div.text { text-align: left; }
 div.error { text-align: center; color: #800; font-size: 90%; border: solid 1px #800 }
 ```
 
-As for the user-editable `input` box, we use _absolute positioning_ to overlay it on top of its cell, and make it transparent so the underlying `div` with the cell’s value shows through:
+사용자가 편집할 수 있는 `input` 상자의 경우, _절대 위치 지정_을 사용하여 해당 셀 위에 오버레이하고, 셀 값이 있는 아래쪽 `div`가 비쳐 보이도록 투명하게 만듭니다:
 
 ```css
 input { position: absolute; border: 0; padding: 0;
@@ -529,38 +529,38 @@ input { position: absolute; border: 0; padding: 0;
         color: transparent; background: transparent; }
 ```
 
-When the user sets focus on the input box, it springs into the foreground:
+사용자가 입력 상자에 포커스를 설정하면 전경으로 나타납니다:
 
 ```css
 input:focus { color: #111; background: #efe; }
 ```
 
-Furthermore, the underlying `div` is collapsed into a single line, so it’s completely covered by the input box:
+또한 아래쪽 `div`는 한 줄로 축소되어 입력 상자에 완전히 덮입니다:
 
 ```css
 input:focus + div { white-space: nowrap; }
 ```
 
-## Conclusion
+## 결론
 
-Since this book is _500 Lines or Less_, a web spreadsheet in 99 lines is a minimal example&mdash;please feel free to experiment and extend it in any direction you’d like.
+이 책이 _500 Lines or Less_이므로, 99줄로 작성된 웹 스프레드시트는 최소한의 예제입니다&mdash;원하는 방향으로 자유롭게 실험하고 확장해 보세요.
 
-Here are some ideas, all easily reachable in the remaining space of 401 lines:
+다음은 남은 401줄의 공간에서 쉽게 달성할 수 있는 몇 가지 아이디어입니다:
 
-* A collaborative online editor using [ShareJS](http://sharejs.org/), [AngularFire](http://angularfire.com) or [GoAngular](http://goangular.org/).
-* Markdown syntax support for text cells, using [angular-marked](http://ngmodules.org/modules/angular-marked).
-* Common formula functions (`SUM`, `TRIM`, etc.) from the [OpenFormula standard](https://en.wikipedia.org/wiki/OpenFormula).
-* Interoperate with popular spreadsheet formats, such as CSV and SpreadsheetML via [SheetJS](http://sheetjs.com/).
-* Import from and export to online spreadsheet services, such as Google Spreadsheet and [EtherCalc](http://ethercalc.net/).
+* [ShareJS](http://sharejs.org/), [AngularFire](http://angularfire.com) 또는 [GoAngular](http://goangular.org/)를 사용한 협업 온라인 에디터
+* [angular-marked](http://ngmodules.org/modules/angular-marked)를 사용한 텍스트 셀의 Markdown 구문 지원
+* [OpenFormula 표준](https://en.wikipedia.org/wiki/OpenFormula)의 일반적인 수식 함수들(`SUM`, `TRIM` 등)
+* [SheetJS](http://sheetjs.com/)를 통한 CSV 및 SpreadsheetML과 같은 인기 스프레드시트 형식과의 상호 운용성
+* Google Spreadsheet 및 [EtherCalc](http://ethercalc.net/)와 같은 온라인 스프레드시트 서비스에서 가져오기 및 내보내기
 
-### A Note on JS versions
+### JS 버전에 대한 참고사항
 
-This chapter aims to demonstrate new concepts in ES6, so we use the [Traceur compiler](https://github.com/google/traceur-compiler) to translate source code to ES5 to run on pre-2015 browsers.
+이 챕터는 ES6의 새로운 개념을 보여주는 것을 목표로 하므로, 2015년 이전 브라우저에서 실행하기 위해 소스 코드를 ES5로 변환하는 [Traceur 컴파일러](https://github.com/google/traceur-compiler)를 사용합니다.
 
-If you prefer to work directly with the 2010 edition of JS, the [as-javascript-1.8.5](https://audreyt.github.io/500lines/spreadsheet/as-javascript-1.8.5/) directory has **main.js** and **worker.js** written in the style of ES5; the [source code](https://github.com/audreyt/500lines/tree/master/spreadsheet/as-javascript-1.8.5) is line-by-line comparable to the ES6 version with the same line count.
+2010년 버전의 JS로 직접 작업하는 것을 선호한다면, [as-javascript-1.8.5](https://audreyt.github.io/500lines/spreadsheet/as-javascript-1.8.5/) 디렉토리에 ES5 스타일로 작성된 **main.js**와 **worker.js**가 있습니다. [소스 코드](https://github.com/audreyt/500lines/tree/master/spreadsheet/as-javascript-1.8.5)는 동일한 줄 수로 ES6 버전과 줄별로 비교할 수 있습니다.
 
-For people preferring a cleaner syntax, the [as-livescript-1.3.0](https://audreyt.github.io/500lines/spreadsheet/as-livescript-1.3.0/) directory uses [LiveScript](http://livescript.net/) instead of ES6 to write **main.ls** and **worker.ls**; it is [20 lines shorter](https://github.com/audreyt/500lines/tree/master/spreadsheet/as-livescript-1.3.0) than the JS version.
+더 깔끔한 구문을 선호하는 사람들을 위해, [as-livescript-1.3.0](https://audreyt.github.io/500lines/spreadsheet/as-livescript-1.3.0/) 디렉토리는 **main.ls**와 **worker.ls**를 작성하기 위해 ES6 대신 [LiveScript](http://livescript.net/)를 사용합니다. 이는 JS 버전보다 [20줄 짧습니다](https://github.com/audreyt/500lines/tree/master/spreadsheet/as-livescript-1.3.0).
 
-Building on the LiveScript language, the [as-react-livescript](https://audreyt.github.io/500lines/spreadsheet/as-react-livescript/) directory uses the [ReactJS](https://facebook.github.io/react/) framework; [it is 10 lines more longer](https://github.com/audreyt/500lines/tree/master/spreadsheet/as-react-livescript) than the AngularJS equivalent, but runs considerably faster.
+LiveScript 언어를 기반으로 하여, [as-react-livescript](https://audreyt.github.io/500lines/spreadsheet/as-react-livescript/) 디렉토리는 [ReactJS](https://facebook.github.io/react/) 프레임워크를 사용합니다. 이는 AngularJS에 상응하는 것보다 [10줄 더 길지만](https://github.com/audreyt/500lines/tree/master/spreadsheet/as-react-livescript), 상당히 빠르게 실행됩니다.
 
-If you are interested in translating this example to alternate JS languages, send a [pull request](https://github.com/audreyt/500lines/pulls)&mdash;I’d love to hear about it!
+이 예제를 다른 JS 언어로 번역하는 데 관심이 있으시면, [풀 리퀘스트](https://github.com/audreyt/500lines/pulls)를 보내주세요&mdash;듣고 싶습니다!
