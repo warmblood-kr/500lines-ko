@@ -1,37 +1,35 @@
-title: A Template Engine
+title: 템플릿 엔진
 author: Ned Batchelder
 <markdown>
-_Ned Batchelder is a software engineer with a long career, currently working at
-edX to build open source software to educate the world.  He's the maintainer of
-coverage.py, an organizer of Boston Python, and has spoken at many PyCons.  He
-blogs at [http://nedbatchelder.com](http://nedbatchelder.com). He once had
-dinner at the White House._
+_Ned Batchelder는 오랜 경력을 가진 소프트웨어 엔지니어로, 현재 edX에서 세상을 교육하는
+오픈 소스 소프트웨어를 구축하는 일을 하고 있습니다. coverage.py의 메인테이너이며,
+Boston Python의 오거나이저이자 많은 PyCon에서 강연했습니다.
+[http://nedbatchelder.com](http://nedbatchelder.com)에서 블로그를 운영하며,
+한때 백악관에서 저녁 식사를 한 적이 있습니다._
 </markdown>
-## Introduction
+## 소개
 
-Most programs contain a lot of logic, and a little bit of literal textual data.
-Programming languages are designed to be good for this sort of programming.
-But some programming tasks involve only a little bit of logic, and a great deal
-of textual data.  For these tasks, we'd like to have a tool better suited to
-these text-heavy problems.  A template engine is such a tool.  In this chapter,
-we build a simple template engine.
+대부분의 프로그램은 많은 로직과 약간의 텍스트 데이터를 포함합니다.
+프로그래밍 언어는 이런 종류의 프로그래밍에 적합하게 설계되었습니다.
+하지만 일부 프로그래밍 작업은 약간의 로직만 포함하고, 대량의
+텍스트 데이터를 다룹니다. 이런 작업을 위해서는 텍스트 중심 문제에 더 적합한
+도구가 필요합니다. 템플릿 엔진이 바로 그런 도구입니다. 이 장에서는
+간단한 템플릿 엔진을 구축해보겠습니다.
 
-The most common example of one of these text-heavy tasks is in web applications.
-An important phase in any web application is generating HTML to be served to
-the browser. Very few HTML pages are completely static: they
-involve at least a small amount of dynamic data, such as the user's name.
-Usually, they contain a great deal of dynamic data: product listings, friends'
-news updates, and so on.
+이러한 텍스트 중심 작업의 가장 일반적인 예는 웹 애플리케이션입니다.
+모든 웹 애플리케이션에서 중요한 단계는 브라우저에 제공할 HTML을 생성하는 것입니다.
+완전히 정적인 HTML 페이지는 거의 없습니다. 대부분은 사용자의 이름과 같은
+최소한의 동적 데이터를 포함합니다. 일반적으로는 제품 목록, 친구들의
+뉴스 업데이트 등과 같은 대량의 동적 데이터를 포함합니다.
 
-At the same time, every HTML page contains large swaths of static text. And
-these pages are large, containing tens of thousands of bytes of text. The
-web application developer has a problem to solve: how best to generate a large
-string containing a mix of static and dynamic data?  To add to the problem, the
-static text is actually HTML markup that is authored by another member of the
-team, the front-end designer, who wants to be able to work with it in familiar
-ways.
+동시에 모든 HTML 페이지는 대량의 정적 텍스트를 포함합니다.
+이러한 페이지들은 크기가 크며, 수만 바이트의 텍스트를 포함합니다.
+웹 애플리케이션 개발자는 해결해야 할 문제가 있습니다: 정적 데이터와 동적 데이터가
+혼합된 대용량 문자열을 어떻게 가장 효율적으로 생성할 것인가? 문제를 더 복잡하게 만드는 것은
+정적 텍스트가 실제로는 팀의 다른 구성원인 프론트엔드 디자이너가 작성한 HTML 마크업이라는 점이며,
+디자이너는 익숙한 방식으로 작업할 수 있어야 합니다.
 
-For purposes of illustration, let's imagine we want to produce this toy HTML:
+설명을 위해 다음과 같은 예제 HTML을 생성하고 싶다고 상상해봅시다:
 
 ```html
 <p>Welcome, Charlie!</p>
@@ -43,18 +41,17 @@ For purposes of illustration, let's imagine we want to produce this toy HTML:
 </ul>
 ```
 
-Here, the user's name will be dynamic, as will the names and prices of
-the products.  Even the number of products isn't fixed: at another moment, there
-could be more or fewer products to display.
+여기서 사용자의 이름은 동적이며, 제품의 이름과 가격도 마찬가지입니다.
+제품의 개수도 고정되어 있지 않습니다: 다른 순간에는
+표시할 제품이 더 많거나 적을 수 있습니다.
 
-One way to make this HTML would be to have string constants in our code,
-and join them together to produce the page.  Dynamic data would be inserted
-with string substitution of some sort.  Some of our dynamic data is repetitive,
-like our lists of products.  This means we'll have chunks of HTML that repeat,
-so those will have to be handled separately and combined with the rest of the
-page.
+이 HTML을 만드는 한 가지 방법은 코드에 문자열 상수를 두고,
+이들을 조합하여 페이지를 생성하는 것입니다. 동적 데이터는 어떤 형태의
+문자열 치환을 통해 삽입될 것입니다. 우리의 동적 데이터 중 일부는 반복적입니다.
+제품 목록처럼요. 이는 반복되는 HTML 청크가 있다는 것을 의미하며,
+따라서 이들은 별도로 처리되어 페이지의 나머지 부분과 결합되어야 합니다.
 
-Producing our toy page in this way might look like this:
+이 방식으로 예제 페이지를 생성하면 다음과 같을 것입니다:
 
 ```python
 # The main HTML for the whole page.
@@ -78,21 +75,20 @@ def make_page(username, products):
     return html
 ```
 
-This works, but we have a mess on our hands.  The HTML is in multiple string
-constants embedded in our application code.  The logic of the page is hard to
-see because the static text is broken into separate pieces. The details of
-how data is formatted is lost in the Python code.  In order to modify the HTML
-page, our front-end designer would need to be able to edit Python code to make
-HTML changes.  Imagine what the code would look like if the page were ten (or
-one hundred) times more complicated; it would quickly become unworkable.
+이 방법은 작동하지만, 우리에게는 골치 아픈 문제가 있습니다. HTML이 애플리케이션 코드에
+포함된 여러 문자열 상수로 분산되어 있습니다. 정적 텍스트가 별도의 조각으로 분리되어 있어서
+페이지의 로직을 파악하기 어렵습니다. 데이터가 어떻게 형식화되는지에 대한 세부사항이
+Python 코드에 묻혀 있습니다. HTML 페이지를 수정하기 위해서는 프론트엔드 디자이너가
+HTML 변경을 위해 Python 코드를 편집할 수 있어야 합니다. 페이지가 열 배(또는 백 배)
+더 복잡해진다면 어떤 모습일지 상상해보세요. 곧 작업할 수 없게 될 것입니다.
 
 
-## Templates
+## 템플릿
 
-The better way to produce HTML pages is with *templates*.  The HTML page is
-authored as a template, meaning that the file is mostly static HTML, with
-dynamic pieces embedded in it using special notation.  Our toy page above could
-look like this as a template:
+HTML 페이지를 생성하는 더 나은 방법은 *템플릿*을 사용하는 것입니다. HTML 페이지는
+템플릿으로 작성되며, 이는 파일이 대부분 정적 HTML이고 특별한 표기법을 사용하여
+동적 부분이 포함된 것을 의미합니다. 위의 예제 페이지는 템플릿으로 다음과 같이
+작성될 수 있습니다:
 
 ```html
 <p>Welcome, {{user_name}}!</p>
@@ -105,15 +101,15 @@ look like this as a template:
 </ul>
 ```
 
-Here the focus is on the HTML text, with logic embedded in the HTML.  Contrast
-this document-centric approach with our logic-centric code above.
-Our earlier program was mostly Python code, with HTML embedded in
-the Python logic.  Here our program is mostly static HTML markup.
+여기서 포커스는 HTML 텍스트에 있으며, 로직이 HTML에 포함되어 있습니다.
+이러한 문서 중심 접근 방식을 위의 로직 중심 코드와 비교해보세요.
+이전의 프로그램은 대부분이 Python 코드였고, HTML이 Python 로직에
+포함되어 있었습니다. 여기서는 프로그램이 대부분 정적 HTML 마크업입니다.
 
-The mostly-static style used in templates is the opposite of how most
-programming languages work.  For example, with Python, most of
-the source file is executable code, and if you need literal static text, you
-embed it in a string literal:
+템플릿에서 사용되는 대부분 정적인 스타일은 대부분의 프로그래밍 언어가
+작동하는 방식과 반대입니다. 예를 들어, Python의 경우 소스 파일의 대부분은
+실행 가능한 코드이며, 리터럴 정적 텍스트가 필요하면 문자열 리터럴에
+포함시킵니다:
 
 ```python
 def hello():
@@ -122,67 +118,64 @@ def hello():
 hello()
 ```
 
-When Python reads this source file, it interprets text like `def hello():` as
-instructions to be executed.  The double quote character in
-`print("Hello, world!")` indicates that the following text is meant literally,
-until the closing double quote.  This is how most programming languages work:
-mostly dynamic, with some static pieces embedded in the instructions.  The
-static pieces are indicated by the double-quote notation.
+Python이 이 소스 파일을 읽을 때, `def hello():`와 같은 텍스트를
+실행할 명령어로 해석합니다. `print("Hello, world!")`의 이중 따옴표 문자는
+닫는 이중 따옴표까지 다음 텍스트가 리터럴로 의도되었다는 것을 나타냅니다.
+이것이 대부분의 프로그래밍 언어가 작동하는 방식입니다:
+대부분 동적이고, 일부 정적 조각들이 명령어에 포함되어 있습니다.
+정적 조각들은 이중 따옴표 표기법으로 나타납니다.
 
-A template language flips this around: the template file is mostly static
-literal text, with special notation to indicate the executable dynamic parts.
-
-```html
-<p>Welcome, {{user_name}}!</p>
-```
-
-Here the text is meant to appear literally in the resulting HTML page, until the
-'`{{`' indicates a switch into dynamic mode, where the `user_name` variable
-will be substituted into the output.
-
-String formatting functions such as Python's `"foo = {foo}!".format(foo=17)`
-are examples of mini-languages used to create text from a string literal and the data
-to be inserted.  Templates extend this idea to include constructs like
-conditionals and loops, but the difference is only of degree.
-
-These files are called templates because they are used to produce many
-pages with similar structure but differing details.
-
-To use HTML templates in our programs, we need a *template engine*: a function
-that takes a static template describing the structure and static content of
-the page, and a dynamic *context* that provides the dynamic data to plug into
-the template.  The template engine combines the template and the context to
-produce a complete string of HTML.  The job of a template engine is to
-interpret the template, replacing the dynamic pieces with real data.
-
-By the way, there's often nothing particular about HTML in a template engine,
-it could be used to produce any textual result.  For example, they are also
-used to produce plain-text email messages.  But usually they are used for
-HTML, and occasionally have HTML-specific features, such as escaping, which
-makes it possible to insert values into the HTML without worrying about which
-characters are special in HTML.
-
-
-## Supported Syntax
-
-Template engines vary in the syntax they support.  Our template syntax is based
-on Django, a popular web framework.  Since we are implementing our engine in
-Python, some Python concepts will appear in our syntax. We've already seen some
-of this syntax in our toy example at the top of the chapter, but this is a quick
-summary of all of the syntax we'll implement.
-
-Data from the context is inserted using double curly braces:
+템플릿 언어는 이를 뒤집습니다: 템플릿 파일은 대부분 정적 리터럴 텍스트이고,
+실행 가능한 동적 부분을 나타내는 특별한 표기법이 있습니다.
 
 ```html
 <p>Welcome, {{user_name}}!</p>
 ```
 
-The data available to the template is provided in the context when the template
-is rendered. More on that later.
+여기서 텍스트는 결과 HTML 페이지에 리터럴로 나타나도록 의도되어 있으며,
+'`{{`'는 동적 모드로의 전환을 나타내고, 여기서 `user_name` 변수가
+출력으로 치환될 것입니다.
 
-Template engines usually provide access to elements within data using a
-simplified and relaxed syntax. In Python, these expressions all have different
-effects:
+Python의 `"foo = {foo}!".format(foo=17)`과 같은 문자열 포맷팅 함수는
+문자열 리터럴과 삽입될 데이터로부터 텍스트를 생성하는 데 사용되는
+미니 언어의 예입니다. 템플릿은 이 아이디어를 확장하여 조건문이나
+루프와 같은 구조를 포함하지만, 차이는 정도의 문제일 뿐입니다.
+
+이러한 파일들은 비슷한 구조지만 세부사항이 다른 많은 페이지를
+생성하는 데 사용되기 때문에 템플릿이라고 불립니다.
+
+프로그램에서 HTML 템플릿을 사용하려면 *템플릿 엔진*이 필요합니다:
+페이지의 구조와 정적 콘텐츠를 설명하는 정적 템플릿과 템플릿에 삽입할
+동적 데이터를 제공하는 동적 *컨텍스트*를 받는 함수입니다.
+템플릿 엔진은 템플릿과 컨텍스트를 결합하여 완전한 HTML 문자열을 생성합니다.
+템플릿 엔진의 역할은 템플릿을 해석하여 동적 부분을 실제 데이터로 교체하는 것입니다.
+
+참고로, 템플릿 엔진에는 종종 HTML에 특별한 것이 없으며,
+어떤 텍스트 결과든 생성하는 데 사용될 수 있습니다. 예를 들어,
+일반 텍스트 이메일 메시지를 생성하는 데도 사용됩니다. 하지만 보통은
+HTML에 사용되며, 때때로 HTML에서 어떤 문자가 특별한지 걱정하지 않고
+값을 HTML에 삽입할 수 있게 해주는 이스케이핑과 같은 HTML 전용 기능을 갖습니다.
+
+
+## 지원되는 문법
+
+템플릿 엔진은 지원하는 문법이 다양합니다. 우리의 템플릿 문법은
+인기 있는 웹 프레임워크인 Django를 기반으로 합니다. 우리는 Python에서
+엔진을 구현하고 있으므로, 일부 Python 개념이 우리 문법에 나타날 것입니다.
+이미 이 장의 상단에 있는 예제에서 이 문법의 일부를 보았지만,
+여기서는 우리가 구현할 모든 문법에 대한 간단한 요약입니다.
+
+컨텍스트의 데이터는 이중 중괄호를 사용하여 삽입됩니다:
+
+```html
+<p>Welcome, {{user_name}}!</p>
+```
+
+템플릿에 사용할 수 있는 데이터는 템플릿이 렌더링될 때 컨텍스트에서 제공됩니다.
+이에 대해서는 나중에 자세히 설명하겠습니다.
+
+템플릿 엔진은 일반적으로 단순화되고 유연한 문법을 사용하여 데이터 내의 요소에
+액세스를 제공합니다. Python에서는 이 표현식들이 모두 다른 효과를 가집니다:
 
 ```python
 dict["key"]
@@ -190,7 +183,7 @@ obj.attr
 obj.method()
 ```
 
-In our template syntax, all of these operations are expressed with a dot:
+우리의 템플릿 문법에서는 이 모든 연산이 점으로 표현됩니다:
 
 ```
 dict.key
@@ -198,24 +191,24 @@ obj.attr
 obj.method
 ```
 
-The dot will access object attributes or dictionary values, and
-if the resulting value is callable, it's automatically called.  This is
-different than the Python code, where you need to use different syntax for
-those operations. This results in simpler template syntax:
+점은 객체 속성이나 딕셔너리 값에 액세스하며,
+결과 값이 호출 가능한 경우 자동으로 호출됩니다. 이는
+이러한 연산에 대해 다른 문법을 사용해야 하는 Python 코드와 다릅니다.
+이렇게 하면 더 간단한 템플릿 문법이 됩니다:
 
 ```html
 <p>The price is: {{product.price}}, with a {{product.discount}}% discount.</p>
 ```
 
-You can use functions called _filters_ to modify values.  Filters
-are invoked with a pipe character:
+값을 수정하기 위해 _필터_라고 불리는 함수를 사용할 수 있습니다.
+필터는 파이프 문자로 호출됩니다:
 
 ```html
 <p>Short name: {{story.subject|slugify|lower}}</p>
 ```
 
-Building interesting pages usually requires at least a small amount of decision-making,
-so conditionals are available:
+흥미로운 페이지를 구축하려면 일반적으로 최소한의 의사결정이 필요하므로
+조건문을 사용할 수 있습니다:
 
 ```html
 {% if user.is_logged_in %}
@@ -223,7 +216,7 @@ so conditionals are available:
 {% endif %}
 ```
 
-Looping lets us include collections of data in our pages:
+루프를 사용하면 페이지에 데이터 컬렉션을 포함할 수 있습니다:
 
 ```html
 <p>Products:</p>
@@ -234,73 +227,70 @@ Looping lets us include collections of data in our pages:
 </ul>
 ```
 
-As with other programming languages, conditionals and loops can be nested to
-build complex logical structures.
+다른 프로그래밍 언어와 마찬가지로 조건문과 루프는 중첩되어
+복잡한 논리적 구조를 구축할 수 있습니다.
 
-Lastly, so that we can document our templates, comments appear between
-brace-hashes:
+마지막으로, 템플릿을 문서화할 수 있도록 주석은
+중괄호-해시 사이에 나타납니다:
 
 ```html
 {# This is the best template ever! #}
 ```
 
 
-## Implementation Approaches
+## 구현 방법
 
-In broad strokes, the template engine will have two main phases: _parsing_ the template, and then _rendering_ the template.
+대략적으로 말하면, 템플릿 엔진은 두 가지 주요 단계를 갖습니다: 템플릿을 _파싱_하는 것과
+그 다음 템플릿을 _렌더링_하는 것입니다.
 
-Rendering the template specifically involves:
+구체적으로 템플릿 렌더링에는 다음이 포함됩니다:
 
-* Managing the dynamic context, the source of the data
-* Executing the logic elements
-* Implementing dot access and filter execution
+* 동적 컨텍스트(데이터의 소스) 관리
+* 로직 요소 실행
+* 점 접근과 필터 실행 구현
 
-The question of what to pass from the parsing
-phase to the rendering phase is key.  What does parsing produce that can be rendered?
-There are two main options; we'll call them *interpretation* and
-*compilation*, using the terms loosely from other language implementations.
+파싱 단계에서 렌더링 단계로 무엇을 전달할지가 핵심 질문입니다.
+파싱은 렌더링할 수 있는 무엇을 생성할까요?
+두 가지 주요 옵션이 있습니다. 다른 언어 구현에서 사용하는 용어를 느슨하게 빌려와서
+*해석*과 *컴파일*이라고 부르겠습니다.
 
-In an interpretation model, parsing produces a data structure representing the
-structure of the template. The rendering phase walks that data structure,
-assembling the result text based on the instructions it finds.  For a
-real-world example, the Django template engine uses this approach.
+해석 모델에서는 파싱이 템플릿의 구조를 나타내는 데이터 구조를 생성합니다.
+렌더링 단계는 그 데이터 구조를 순회하며, 발견한 명령어를 기반으로
+결과 텍스트를 조립합니다. 실제 사례로는 Django 템플릿 엔진이 이 방법을 사용합니다.
 
-In a compilation model, parsing produces some form of directly executable code.
-The rendering phase executes that code, producing the result.  Jinja2 and Mako
-are two examples of template engines that use the compilation approach.
+컴파일 모델에서는 파싱이 직접 실행 가능한 코드 형태를 생성합니다.
+렌더링 단계는 그 코드를 실행하여 결과를 생성합니다. Jinja2와 Mako는
+컴파일 접근 방식을 사용하는 템플릿 엔진의 두 가지 예입니다.
 
-Our implementation of the engine uses compilation: we compile the template
-into Python code.  When run, the Python code assembles the result.
+우리의 엔진 구현은 컴파일을 사용합니다: 템플릿을 Python 코드로 컴파일합니다.
+실행될 때, Python 코드가 결과를 조립합니다.
 
-The template engine described here was originally written as part of
-coverage.py, to produce HTML reports.  In coverage.py, there are only a few
-templates, and they are used over and over to produce many files from the same
-template.  Overall, the program ran faster if the templates were compiled to
-Python code, because even though the compilation process was a bit more
-complicated, it only had to run once, while the execution of the compiled code
-ran many times, and was faster than interpreting a data structure many times.
+여기서 설명하는 템플릿 엔진은 원래 HTML 보고서를 생성하기 위해
+coverage.py의 일부로 작성되었습니다. coverage.py에서는 템플릿이 몇 개뿐이지만,
+같은 템플릿에서 많은 파일을 생성하기 위해 반복적으로 사용됩니다.
+전반적으로 템플릿을 Python 코드로 컴파일하면 프로그램이 더 빠르게 실행됩니다.
+컴파일 과정이 좀 더 복잡하긴 하지만 한 번만 실행하면 되고,
+컴파일된 코드의 실행은 여러 번 실행되면서 데이터 구조를 여러 번 해석하는 것보다 빠르기 때문입니다.
 
-It's a bit more complicated to compile the template to Python, but it's not as
-bad as you might think. And besides, as any developer can tell you,
-it's more fun to write a program to write a program than it is to write a
-program!
+템플릿을 Python으로 컴파일하는 것은 좀 더 복잡하지만,
+생각만큼 나쁘지는 않습니다. 게다가 모든 개발자가 말할 수 있듯이,
+프로그램을 작성하는 프로그램을 작성하는 것이 프로그램을 작성하는 것보다 더 재미있습니다!
 
-Our template compiler is a small example of a general technique called code
-generation.  Code generation underlies many powerful and flexible tools,
-including programming language compilers.  Code generation can get
-complex, but is a useful technique to have in your toolbox.
+우리의 템플릿 컴파일러는 코드 생성이라고 불리는 일반적인 기법의 작은 예입니다.
+코드 생성은 프로그래밍 언어 컴파일러를 포함하여 많은 강력하고 유연한 도구의 기반이 됩니다.
+코드 생성은 복잡해질 수 있지만, 도구 상자에 갖고 있으면 유용한 기법입니다.
 
-Another application of templates might prefer the interpreted approach, if
-templates will be used only a few times each.  Then the effort to compile to
-Python won't pay off in the long run, and a simpler interpretation process
-might perform better overall.
+템플릿의 다른 응용에서는 각 템플릿이 몇 번만 사용될 경우
+해석 접근 방식을 선호할 수 있습니다. 그러면 Python으로 컴파일하는 노력이
+장기적으로 보상받지 못할 것이고, 더 간단한 해석 과정이
+전반적으로 더 나은 성능을 발휘할 수 있습니다.
 
 
-## Compiling to Python
+## Python으로 컴파일하기
 
-Before we get to the code of the template engine, let's look at the code it
-produces.  The parsing phase will convert a template into a Python function.
-Here is our small template again:
+템플릿 엔진의 코드를 살펴보기 전에, 그것이 생성하는 코드를 먼저 살펴봅시다.
+파싱 단계는 템플릿을 Python 함수로 변환할 것입니다.
+다시 우리의 작은 템플릿입니다:
 
 ```html
 <p>Welcome, {{user_name}}!</p>
@@ -313,9 +303,9 @@ Here is our small template again:
 </ul>
 ```
 
-Our engine will compile this template to Python code.  The resulting Python
-code looks unusual, because we've chosen some shortcuts that produce slightly
-faster code.  Here is the Python (slightly reformatted for readability):
+우리 엔진은 이 템플릿을 Python 코드로 컴파일할 것입니다. 결과로 나오는 Python
+코드는 약간 더 빠른 코드를 생성하는 몇 가지 단축키를 선택했기 때문에
+특이하게 보입니다. 다음은 Python 코드입니다(가독성을 위해 약간 재구성됨):
 
 ```python
 def render_function(context, do_dots):
@@ -345,27 +335,24 @@ def render_function(context, do_dots):
     return ''.join(result)
 ```
 
-Each template is converted into a `render_function` function that takes a
-dictionary of data called the context.  The body of the function starts by
-unpacking the data from the context into local names, because they are faster
-for repeated use.  All the context data goes into locals with a `c_` prefix so
-that we can use other local names without fear of collisions.
+각 템플릿은 컨텍스트라고 불리는 데이터 딕셔너리를 받는 `render_function` 함수로 변환됩니다.
+함수의 본문은 컨텍스트에서 데이터를 지역 이름으로 언패킹하는 것으로 시작하는데,
+반복 사용에서 더 빠르기 때문입니다. 모든 컨텍스트 데이터는 `c_` 접두사를 가진 지역 변수로 들어가므로
+충돌 걱정 없이 다른 지역 이름을 사용할 수 있습니다.
 
-The result of the template will be a string. The fastest way to build a
-string from parts is to create a list of strings, and join them together at the
-end.  `result` will be the list of strings.  Because we're going to add strings
-to this list, we capture its `append` and `extend` methods in the local names
-`result_append` and `result_extend`.  The last local we create is a `to_str`
-shorthand for the `str` built-in.
+템플릿의 결과는 문자열이 될 것입니다. 부분들로부터 문자열을 구축하는 가장 빠른 방법은
+문자열 리스트를 생성하고 마지막에 그것들을 함께 조인하는 것입니다.
+`result`는 문자열 리스트가 될 것입니다. 이 리스트에 문자열을 추가할 것이므로,
+`result_append`와 `result_extend`라는 지역 이름으로 `append`와 `extend` 메서드를 캡처합니다.
+마지막으로 생성하는 지역 변수는 `str` 내장 함수를 위한 `to_str` 단축키입니다.
 
-These kinds of shortcuts are unusual. Let's look at them more closely.  In
-Python, a method call on an object like `result.append("hello")` is executed in
-two steps.  First, the append attribute is fetched from the result object:
-`result.append`.  Then the value fetched is invoked as a function, passing it
-the argument `"hello"`.  Although we're used to seeing those steps performed
-together, they really are separate. If you save the result of the first step,
-you can perform the second step on the saved value.  So these two Python
-snippets do the same thing:
+이런 종류의 단축키는 특이합니다. 더 자세히 살펴봅시다. Python에서
+`result.append("hello")`와 같은 객체의 메서드 호출은 두 단계로 실행됩니다.
+먼저, result 객체에서 append 속성을 가져옵니다: `result.append`.
+그런 다음 가져온 값이 함수로 호출되며 `"hello"` 인수를 전달합니다.
+이 단계들이 함께 수행되는 것에 익숙하지만, 실제로는 별개입니다.
+첫 번째 단계의 결과를 저장하면, 저장된 값에 두 번째 단계를 수행할 수 있습니다.
+따라서 이 두 Python 코드 조각은 같은 일을 합니다:
 
 ```python
 # The way we're used to seeing it:
@@ -376,66 +363,59 @@ append_result = result.append
 append_result("hello")
 ```
 
-In the template engine code, we've split it out this way so that we only do the
-first step once, no matter how many times we do the second step.  This saves us
-a small amount of time, because we avoid taking the time to look up the append attribute.
+템플릿 엔진 코드에서는 두 번째 단계를 몇 번 수행하든 첫 번째 단계를 한 번만 수행하도록
+이렇게 분리했습니다. append 속성을 찾는 데 드는 시간을 피할 수 있어서
+작은 시간을 절약할 수 있습니다.
 
-This is an example of a micro-optimization: an unusual coding technique that
-gains us tiny improvements in speed.  Micro-optimizations can be less readable, or more
-confusing, so they are only justified for code that is a proven performance
-bottleneck.  Developers disagree on how much micro-optimization is justified,
-and some beginners overdo it.  The optimizations here were added only after
-timing experiments showed that they improved performance, even if only a little
-bit.  Micro-optimizations can be instructive, as they make use of some exotic
-aspects of Python, but don't over-use them in your own code.
+이것은 마이크로 최적화의 예입니다: 속도의 미세한 향상을 얻는 특이한 코딩 기법입니다.
+마이크로 최적화는 가독성이 떨어지거나 더 혼란스러울 수 있으므로,
+입증된 성능 병목 지점인 코드에서만 정당화됩니다. 개발자들은 마이크로 최적화가 얼마나
+정당한지에 대해 의견이 분분하며, 일부 초보자들은 과도하게 사용합니다.
+여기서의 최적화는 성능을 향상시킨다는 것을 보여주는 타이밍 실험 후에만 추가되었습니다.
+비록 조금일지라도 말입니다. 마이크로 최적화는 Python의 일부 특이한 측면을 사용하므로
+교육적일 수 있지만, 자신의 코드에서 과도하게 사용하지는 마세요.
 
-The shortcut for `str` is also a micro-optimization. Names in Python can be
-local to a function, global to a module, or built-in to Python.  Looking up a
-local name is faster than looking up a global or a built-in.  We're used to the
-fact that `str` is a builtin that is always available, but Python still has to
-look up the name `str` each time it is used.  Putting it in a local saves us
-another small slice of time because locals are faster than builtins.
+`str`에 대한 단축키도 마이크로 최적화입니다. Python의 이름은 함수에 대해 지역,
+모듈에 대해 전역, 또는 Python에 대해 내장일 수 있습니다. 지역 이름을 찾는 것이
+전역이나 내장을 찾는 것보다 빠릅니다. `str`은 항상 사용할 수 있는 내장 함수라는 사실에
+익숙하지만, Python은 여전히 사용될 때마다 `str`이라는 이름을 찾아야 합니다.
+지역 변수에 넣으면 지역 변수가 내장 함수보다 빠르기 때문에 또 다른 작은 시간을 절약할 수 있습니다.
 
-Once those shortcuts are defined, we're ready for the Python lines created from
-our particular template. Strings will be added to the result list using the
-`append_result` or `extend_result` shorthands, depending on whether we have one
-string to add, or more than one.  Literal text in the template becomes a simple
-string literal.
+이러한 단축키들이 정의되면, 우리의 특정 템플릿에서 생성된 Python 라인들을 위한 준비가 됩니다.
+문자열은 추가할 문자열이 하나인지 여러 개인지에 따라 `append_result` 또는 `extend_result`
+단축키를 사용하여 결과 리스트에 추가될 것입니다. 템플릿의 리터럴 텍스트는
+간단한 문자열 리터럴이 됩니다.
 
-Having both append and extend adds complexity, but remember we're aiming
-for the fastest execution of the template, and using extend for one item means
-making a new list of one item so that we can pass it to extend.
+append와 extend를 모두 갖는 것은 복잡성을 추가하지만, 우리는 템플릿의 가장 빠른 실행을
+목표로 하고 있으며, 하나의 항목에 extend를 사용한다는 것은 extend에 전달할 수 있도록
+하나의 항목으로 새 리스트를 만든다는 뜻입니다.
 
-Expressions in `{{ ... }}` are computed, converted to strings, and added to the
-result.  Dots in the expression are handled by the `do_dots` function passed
-into our function, because the meaning of the dotted expressions depends on the
-data in the context: it could be attribute access or item access, and it could
-be a callable. 
+`{{ ... }}`의 표현식은 계산되고, 문자열로 변환되어 결과에 추가됩니다.
+표현식의 점은 우리 함수로 전달된 `do_dots` 함수에 의해 처리되는데,
+점 표현식의 의미가 컨텍스트의 데이터에 따라 달라지기 때문입니다:
+속성 접근이거나 항목 접근일 수 있고, 호출 가능할 수도 있습니다.
 
-The logical structures `{% if ... %}` and `{% for ... %}` are converted into
-Python conditionals and loops.  The expression in the `{% if/for ... %}` tag
-will become the expression in the `if` or `for` statement, and the contents up
-until the `{% end... %}` tag will become the body of the statement.
+논리 구조 `{% if ... %}`와 `{% for ... %}`는 Python 조건문과 루프로 변환됩니다.
+`{% if/for ... %}` 태그의 표현식은 `if` 또는 `for` 문의 표현식이 되고,
+`{% end... %}` 태그까지의 내용은 문의 본문이 됩니다.
 
 
 <!-- [[[cog from cogutil import include ]]] -->
 <!-- [[[end]]] -->
 
 
-## Writing the Engine
+## 엔진 작성하기
 
-Now that we understand what the engine will do, let's walk through the
-implementation.
+이제 엔진이 무엇을 할지 이해했으므로, 구현을 살펴보겠습니다.
 
 
-### The Templite class
+### Templite 클래스
 
-The heart of the template engine is the Templite class.  (Get it? It's a
-template, but it's lite!)
+템플릿 엔진의 핵심은 Templite 클래스입니다. (이해하시겠죠? 템플릿이지만 라이트입니다!)
 
-The Templite class has a small interface.  You construct a Templite object with the
-text of the template, then later you can use the `render` method on it to
-render a particular context, the dictionary of data, through the template:
+Templite 클래스는 작은 인터페이스를 가집니다. 템플릿의 텍스트로 Templite 객체를 생성하고,
+나중에 그것의 `render` 메서드를 사용하여 특정 컨텍스트(데이터 딕셔너리)를
+템플릿을 통해 렌더링할 수 있습니다:
 
 ```python
 # Make a Templite object.
@@ -455,39 +435,34 @@ text = templite.render({
 })
 ```
 
-We pass the text of the template when the object is created so that we can
-do the compile step just once, and later call `render` many times to reuse the
-compiled results.
+객체가 생성될 때 템플릿의 텍스트를 전달하여 컴파일 단계를 한 번만 수행하고,
+나중에 `render`를 여러 번 호출하여 컴파일된 결과를 재사용할 수 있습니다.
 
-The constructor also accepts a dictionary of values, an initial context. These
-are stored in the Templite object, and will be available when the template is
-later rendered.  These are good for defining functions or constants we want to
-be available everywhere, like `upper` in the previous example.
+생성자는 또한 값들의 딕셔너리인 초기 컨텍스트를 받습니다. 이들은 Templite 객체에
+저장되고, 템플릿이 나중에 렌더링될 때 사용할 수 있습니다. 이는 이전 예제의 `upper`와 같이
+어디서나 사용할 수 있기를 원하는 함수나 상수를 정의하는 데 좋습니다.
 
-Before we discuss the implementation of Templite, we have a helper to define
-first: CodeBuilder.
+Templite의 구현을 논의하기 전에, 먼저 정의해야 할 도우미가 있습니다: CodeBuilder입니다.
 
 
 ### CodeBuilder
 
-The bulk of the work in our engine is parsing the template and producing the
-necessary Python code.  To help with producing the Python, we have the
-CodeBuilder class, which handles the bookkeeping for us as we construct 
-the Python code.  It adds lines of code, manages indentation, and
-finally gives us values from the compiled Python.
+우리 엔진의 작업 대부분은 템플릿을 파싱하고 필요한 Python 코드를 생성하는 것입니다.
+Python 생성을 돕기 위해 우리는 Python 코드를 구성할 때 부기를 처리해주는
+CodeBuilder 클래스를 가지고 있습니다. 이 클래스는 코드 라인을 추가하고, 들여쓰기를 관리하며,
+마지막으로 컴파일된 Python에서 값을 제공합니다.
 
-One CodeBuilder object is responsible for a complete chunk of Python code. As
-used by our template engine, the chunk of Python is always a single complete
-function definition. But the CodeBuilder class makes no assumption that it will
-only be one function.  This keeps the CodeBuilder code more general, and less
-coupled to the rest of the template engine code.
+하나의 CodeBuilder 객체는 완전한 Python 코드 청크에 대해 책임집니다.
+우리 템플릿 엔진에서 사용될 때, Python 청크는 항상 하나의 완전한 함수 정의입니다.
+하지만 CodeBuilder 클래스는 하나의 함수만 있을 것이라고 가정하지 않습니다.
+이렇게 하면 CodeBuilder 코드가 더 일반적이고 나머지 템플릿 엔진 코드와
+덜 결합됩니다.
 
-As we'll see, we also use nested CodeBuilders to make it possible to put code
-at the beginning of the function even though we don't know what it will be
-until we are nearly done.
+보게 되겠지만, 우리는 또한 중첩된 CodeBuilder를 사용하여 거의 완료될 때까지
+무엇이 될지 모르더라도 함수의 시작 부분에 코드를 넣을 수 있게 합니다.
 
-A CodeBuilder object keeps a list of strings that will together be the final
-Python code.  The only other state it needs is the current indentation level:
+CodeBuilder 객체는 함께 최종 Python 코드가 될 문자열 리스트를 보관합니다.
+필요한 유일한 다른 상태는 현재 들여쓰기 레벨입니다:
 
 <!-- [[[cog include("templite.py", first="class CodeBuilder", numblanks=2) ]]] -->
 ```python
@@ -516,7 +491,7 @@ newline:
 ```
 <!-- [[[end]]] -->
 
-`indent` and `dedent` increase or decrease the indentation level:
+`indent`와 `dedent`는 들여쓰기 레벨을 증가시키거나 감소시킵니다:
 
 <!-- [[[cog include("templite.py", first="INDENT_STEP = 4", numblanks=3, dedent=False) ]]] -->
 ```python
@@ -532,10 +507,9 @@ newline:
 ```
 <!-- [[[end]]] -->
 
-`add_section` is managed by another CodeBuilder object.  This lets us
-keep a reference to a place in the code, and add text to it later. The
-`self.code` list is mostly a list of strings, but will also hold references to
-these sections:
+`add_section`은 다른 CodeBuilder 객체에 의해 관리됩니다. 이를 통해
+코드의 한 지점에 대한 참조를 유지하고, 나중에 텍스트를 추가할 수 있습니다.
+`self.code` 리스트는 대부분 문자열 리스트이지만, 이러한 섹션들에 대한 참조도 보유합니다:
 
 <!-- [[[cog include("templite.py", first="def add_section", numblanks=1, dedent=False) ]]] -->
 ```python
@@ -547,10 +521,9 @@ these sections:
 ```
 <!-- [[[end]]] -->
 
-`__str__` produces a single string with all the code. This
-simply joins together all the strings in `self.code`.  Note that because
-`self.code` can contain sections, this might call other `CodeBuilder`
-objects recursively:
+`__str__`은 모든 코드가 포함된 단일 문자열을 생성합니다. 이는
+단순히 `self.code`의 모든 문자열을 함께 조인합니다. `self.code`가 섹션을 포함할 수 있으므로,
+이는 다른 `CodeBuilder` 객체를 재귀적으로 호출할 수 있음에 주목하세요:
 
 <!-- [[[cog include("templite.py", first="def __str__", numblanks=1, dedent=False) ]]] -->
 ```python
@@ -559,9 +532,8 @@ objects recursively:
 ```
 <!-- [[[end]]] -->
 
-`get_globals` yields the final values by executing the code.  This stringifies
-the object, executes it to get its definitions, and returns the resulting
-values:
+`get_globals`는 코드를 실행하여 최종 값을 생성합니다. 이는 객체를 문자열화하고,
+그것을 실행하여 정의를 얻고, 결과 값을 반환합니다:
 
 <!-- [[[cog include("templite.py", first="def get_globals", numblanks=1, dedent=False) ]]] -->
 ```python
@@ -578,10 +550,10 @@ values:
 ```
 <!-- [[[end]]] -->
 
-This last method uses some exotic features of Python.  The `exec` function
-executes a string containing Python code.  The second argument to `exec` is
-a dictionary that will collect up the globals defined by the code.  So for
-example, if we do this:
+이 마지막 메서드는 Python의 일부 특이한 기능을 사용합니다. `exec` 함수는
+Python 코드를 포함하는 문자열을 실행합니다. `exec`의 두 번째 인수는
+코드에 의해 정의된 전역 변수들을 수집할 딕셔너리입니다. 따라서
+예를 들어, 이렇게 한다면:
 
 ```python
 python_source = """\
@@ -594,40 +566,37 @@ global_namespace = {}
 exec(python_source, global_namespace)
 ```
 
-then `global_namespace['SEVENTEEN']` is 17, and `global_namespace['three']` is
-an actual function named `three`.
+그러면 `global_namespace['SEVENTEEN']`은 17이고, `global_namespace['three']`은
+`three`라는 이름의 실제 함수입니다.
 
-Although we only use CodeBuilder to produce one function, there's nothing here
-that limits it to that use.  This makes the class simpler to implement, and
-easier to understand.
+우리는 CodeBuilder를 하나의 함수만 생성하는 데 사용하지만, 여기에는
+그 사용을 제한하는 것이 없습니다. 이렇게 하면 클래스가 구현하기 더 간단하고
+이해하기 더 쉬워집니다.
 
-CodeBuilder lets us create a chunk of Python source code, and has no specific
-knowledge about our template engine at all.  We could use it in such a way that
-three different functions would be defined in the Python, and then `get_globals`
-would return a dict of three values, the three functions.  As it happens, our
-template engine only needs to define one function.  But it's better software
-design to keep that implementation detail in the template engine code, and out
-of our CodeBuilder class.
+CodeBuilder를 사용하면 Python 소스 코드 청크를 생성할 수 있으며, 우리 템플릿 엔진에 대한
+특정 지식이 전혀 없습니다. Python에서 세 개의 다른 함수가 정의되도록 사용할 수 있고,
+그러면 `get_globals`가 세 개의 값, 즉 세 개의 함수의 딕셔너리를 반환할 것입니다.
+우연히도 우리 템플릿 엔진은 하나의 함수만 정의하면 됩니다. 하지만 그 구현 세부사항을
+템플릿 엔진 코드에 유지하고 CodeBuilder 클래스에서 제외하는 것이 더 나은 소프트웨어 설계입니다.
 
-Even as we're actually using it&mdash;to define a single function&mdash;having `get_globals`
-return the dictionary keeps the code more modular because it doesn't need to
-know the name of the function we've defined.  Whatever function name we define
-in our Python source, we can retrieve that name from the dict returned by
-`get_globals`.
+실제로 사용하는 방식&mdash;단일 함수를 정의하는&mdash;에서도 `get_globals`가
+딕셔너리를 반환하도록 하면 정의한 함수의 이름을 알 필요가 없기 때문에
+코드가 더 모듈화됩니다. Python 소스에서 어떤 함수 이름을 정의하든,
+`get_globals`에서 반환된 딕셔너리에서 그 이름을 검색할 수 있습니다.
 
-Now we can get into the implementation of the Templite class itself, and see
-how and where CodeBuilder is used.
+이제 Templite 클래스 자체의 구현에 들어가서 CodeBuilder가 어떻게 그리고 어디서 사용되는지
+살펴볼 수 있습니다.
 
 
-### The Templite class implementation
+### Templite 클래스 구현
 
-Most of our code is in the Templite class.  As we've discussed, it has both a compilation and a rendering phase.
+우리 코드의 대부분은 Templite 클래스에 있습니다. 논의했듯이, 컴파일 단계와 렌더링 단계를 모두 가집니다.
 
 
-#### Compiling
+#### 컴파일하기
 
-All of the work to compile the template into a Python function happens in the
-Templite constructor.  First the contexts are saved away:
+템플릿을 Python 함수로 컴파일하는 모든 작업은 Templite 생성자에서 발생합니다.
+먼저 컨텍스트들이 저장됩니다:
 
 <!-- [[[cog include("templite.py", first="def __init__(self, text, ", numblanks=3, dedent=False) ]]] -->
 ```python
@@ -644,11 +613,10 @@ Templite constructor.  First the contexts are saved away:
 ```
 <!-- [[[end]]] -->
 
-Notice we used `*contexts` as the parameter. The asterisk denotes that any
-number of positional arguments will be packed into a tuple and passed in as
-`contexts`.  This is called argument unpacking, and means that the caller can
-provide a number of different context dictionaries.  Now any of these calls are
-valid:
+매개변수로 `*contexts`를 사용한 것에 주목하세요. 별표는 임의의 수의
+위치 인수가 튜플로 패킹되어 `contexts`로 전달됨을 나타냅니다. 이것을
+인수 언패킹이라고 하며, 호출자가 여러 개의 다른 컨텍스트 딕셔너리를 제공할 수 있음을 의미합니다.
+이제 다음 호출들이 모두 유효합니다:
 
 ```python
 t = Templite(template_text)
@@ -656,16 +624,15 @@ t = Templite(template_text, context1)
 t = Templite(template_text, context1, context2)
 ```
 
-The context arguments (if any) are supplied to the constructor as a tuple of
-contexts.  We can then iterate over the `contexts` tuple, dealing with each of
-them in turn.  We simply create one combined dictionary called `self.context`
-which has the contents of all of the supplied contexts.  If duplicate names are
-provided in the contexts, the last one wins.
+컨텍스트 인수들(있는 경우)은 컨텍스트의 튜플로 생성자에 제공됩니다.
+그런 다음 `contexts` 튜플을 반복하면서 각각을 차례로 처리할 수 있습니다.
+우리는 단순히 제공된 모든 컨텍스트의 내용을 가진 `self.context`라는
+하나의 결합된 딕셔너리를 생성합니다. 컨텍스트에서 중복 이름이 제공되면
+마지막 것이 우선됩니다.
 
-To make our compiled function as fast as possible, we extract context variables
-into Python locals.  We'll get those names by keeping a set of variable names
-we encounter, but we also need to track the names of variables defined in the
-template, the loop variables:
+컴파일된 함수를 가능한 한 빠르게 만들기 위해, 컨텍스트 변수를 Python 지역 변수로 추출합니다.
+우리가 만나는 변수 이름 집합을 유지하여 그 이름들을 얻을 것이지만, 또한
+템플릿에 정의된 변수들의 이름, 즉 루프 변수들도 추적해야 합니다:
 
 <!-- [[[cog include("templite.py", first="self.all_vars", numblanks=1, dedent=False) ]]] -->
 ```python
@@ -674,9 +641,8 @@ template, the loop variables:
 ```
 <!-- [[[end]]] -->
 
-Later we'll see how these get used to help construct the prologue of our
-function. First, we'll use the CodeBuilder class we wrote earlier to start to
-build our compiled function:
+나중에 이들이 우리 함수의 프롤로그 구성을 돕는 데 어떻게 사용되는지 볼 것입니다.
+먼저, 앞서 작성한 CodeBuilder 클래스를 사용하여 컴파일된 함수 구축을 시작하겠습니다:
 
 <!-- [[[cog include("templite.py", first="code = CodeBuilder", numblanks=2, dedent=False) ]]] -->
 ```python
@@ -692,35 +658,30 @@ build our compiled function:
 ```
 <!-- [[[end]]] -->
 
-Here we construct our CodeBuilder object, and start writing lines into it. Our
-Python function will be called `render_function`, and will take two arguments:
-`context` is the data dictionary it should use, and `do_dots` is a function
-implementing dot attribute access.
+여기서 CodeBuilder 객체를 구성하고, 라인을 작성하기 시작합니다. 우리 Python 함수는
+`render_function`이라고 불릴 것이며, 두 개의 인수를 받습니다:
+`context`는 사용해야 하는 데이터 딕셔너리이고, `do_dots`는 점 속성 접근을 구현하는 함수입니다.
 
-The context here is the combination of the data context passed to the Templite
-constructor, and the data context passed to the render function.  It's the complete
-set of data available to the template that we made in the Templite constructor.
+여기서 컨텍스트는 Templite 생성자로 전달된 데이터 컨텍스트와 렌더 함수로 전달된
+데이터 컨텍스트의 결합입니다. 이는 Templite 생성자에서 만든 템플릿에 사용할 수 있는
+완전한 데이터 집합입니다.
 
-Notice that CodeBuilder is very simple: it doesn't "know" about function
-definitions, just lines of code.  This keeps CodeBuilder simple, both in its
-implementation, and in its use.  We can read our generated code here without
-having to mentally interpolate too many specialized CodeBuilder.
+CodeBuilder가 매우 간단하다는 점에 주목하세요: 함수 정의에 대해 "알지" 못하고,
+단지 코드 라인에 대해서만 압니다. 이렇게 하면 구현과 사용 모두에서 CodeBuilder가 간단해집니다.
+너무 많은 특화된 CodeBuilder를 정신적으로 보간할 필요 없이 여기서 생성된 코드를 읽을 수 있습니다.
 
-We create a section called `vars_code`.  Later we'll write the variable
-extraction lines into that section.  The `vars_code` object lets us save a
-place in the function that can be filled in later when we have the information
-we need.
+`vars_code`라는 섹션을 만듭니다. 나중에 변수 추출 라인을 그 섹션에 작성할 것입니다.
+`vars_code` 객체를 사용하면 필요한 정보가 있을 때 나중에 채울 수 있는 함수의
+위치를 저장할 수 있습니다.
 
-Then four fixed lines are written, defining a result list, shortcuts for the
-methods to append to or extend that list, and a shortcut for the `str()`
-builtin.  As we discussed earlier, this odd step squeezes just a little bit
-more performance out of our rendering function.
+그런 다음 네 개의 고정 라인이 작성되어, 결과 리스트, 그 리스트에 추가하거나 확장하는
+메서드의 단축키, 그리고 `str()` 내장 함수의 단축키를 정의합니다.
+앞서 논의했듯이, 이 특이한 단계는 렌더링 함수에서 조금 더 많은 성능을 짜냅니다.
 
-The reason we have both the `append` and the `extend` shortcut is so we can
-use the most effective method, depending on whether we have one line to add to
-our result, or more than one.
+`append`와 `extend` 단축키를 모두 가지는 이유는 결과에 추가할 라인이 하나인지
+여러 개인지에 따라 가장 효과적인 방법을 사용할 수 있기 때문입니다.
 
-Next we define an inner function to help us with buffering output strings:
+다음으로 출력 문자열 버퍼링을 돕는 내부 함수를 정의합니다:
 
 <!-- [[[cog include("templite.py", first="buffered =", numblanks=1, dedent=False) ]]] -->
 ```python
@@ -735,49 +696,45 @@ Next we define an inner function to help us with buffering output strings:
 ```
 <!-- [[[end]]] -->
 
-As we create chunks of output that need to go into our compiled function, we need
-to turn them into function calls that append to our result.  We'd like to
-combine repeated append calls into one extend call.  This is another micro-optimization.
-To make this possible, we buffer the chunks.
+컴파일된 함수에 들어가야 하는 출력 청크를 생성할 때, 우리 결과에 추가하는
+함수 호출로 변환해야 합니다. 반복되는 추가 호출을 하나의 확장 호출로 결합하고 싶습니다.
+이것도 또 다른 마이크로 최적화입니다. 이를 가능하게 하기 위해 청크를 버퍼링합니다.
 
-The `buffered` list holds strings that are yet to be written to our function
-source code.  As our template compilation proceeds, we'll append strings to
-`buffered`, and flush them to the function source when we reach control flow
-points, like if statements, or the beginning or ends of loops.
+`buffered` 리스트는 아직 우리 함수 소스 코드에 작성되지 않은 문자열들을 보관합니다.
+템플릿 컴파일이 진행되면서 `buffered`에 문자열을 추가하고, if문이나
+루프의 시작 또는 끝과 같은 제어 흐름 지점에 도달할 때 함수 소스로 플러시할 것입니다.
 
-The `flush_output` function is a *closure*, which is a fancy word for a function
-that refers to variables outside of itself. Here `flush_output` refers to
-`buffered` and `code`. This simplifies our calls to the function:  we don't
-have to tell `flush_output` what buffer to flush, or where to flush it; it
-knows all that implicitly.
+`flush_output` 함수는 *클로저*인데, 이는 자신 밖의 변수를 참조하는 함수에 대한 멋진 용어입니다.
+여기서 `flush_output`은 `buffered`와 `code`를 참조합니다. 이렇게 하면 함수 호출이 간단해집니다:
+`flush_output`에게 어떤 버퍼를 플러시할지, 어디로 플러시할지 알려줄 필요가 없습니다;
+그것은 그 모든 것을 암묵적으로 압니다.
 
-If only one string has been buffered, then the `append_result` shortcut is used
-to append it to the result. If more than one is buffered, then the 
-`extend_result` shortcut is used, with all of them,
-to add them to the result.
-Then the buffered list is cleared so more strings can be buffered.
+하나의 문자열만 버퍼링된 경우, `append_result` 단축키가 사용되어 결과에 추가됩니다.
+둘 이상이 버퍼링된 경우, `extend_result` 단축키가 모든 것과 함께 사용되어
+결과에 추가됩니다. 그런 다음 버퍼된 리스트가 지워져서 더 많은 문자열이 버퍼링될 수 있습니다.
 
-The rest of the compiling code will add lines to the function by appending them
-to `buffered`, and eventually call `flush_output` to write them to the
-CodeBuilder.
+나머지 컴파일 코드는 `buffered`에 추가하여 함수에 라인을 추가하고,
+결국 `flush_output`을 호출하여 CodeBuilder에 작성할 것입니다.
 
-With this function in place, we can have a line of code in our compiler like
-this:
+이 함수가 제자리에 있으면, 컴파일러에서 다음과 같은 코드 라인을 가질 수 있습니다:
 
 ```python
 buffered.append("'hello'")
 ```
 
-\noindent which will mean that our compiled Python function will have this line:
+이는 우리의 컴파일된 Python 함수가 다음 라인을 갖는다는 의미입니다:
 
 ```python
 append_result('hello')
 ```
 
-\noindent which will add the string `hello` to the rendered output of the template. We have multiple levels of abstraction here which can be difficult to keep straight. The compiler uses \newline `buffered.append("'hello'")`, which creates `append_result('hello')` in the compiled Python function, which when run, appends `hello` to the template result.
+이는 템플릿의 렌더링된 출력에 `hello` 문자열을 추가할 것입니다. 여기서는 여러 수준의
+추상화가 있어서 명확하게 유지하기 어려울 수 있습니다. 컴파일러는
+`buffered.append("'hello'")`를 사용하며, 이는 컴파일된 Python 함수에서 `append_result('hello')`를 생성하고,
+실행될 때 템플릿 결과에 `hello`를 추가합니다.
 
-Back to our Templite class. As we parse control structures, we want to check
-that they are properly nested.  The `ops_stack` list is a stack of strings:
+Templite 클래스로 돌아가봅시다. 제어 구조를 파싱할 때, 제대로 중첩되어 있는지 확인하고 싶습니다.
+`ops_stack` 리스트는 문자열의 스택입니다:
 
 <!-- [[[cog include("templite.py", first="ops_stack", numblanks=1, dedent=False) ]]] -->
 ```python
@@ -785,16 +742,13 @@ that they are properly nested.  The `ops_stack` list is a stack of strings:
 ```
 <!-- [[[end]]] -->
 
-When we encounter an `{% if .. %}` tag (for example), we'll push `'if'` onto
-the stack.  When we find an `{% endif %}` tag, we can pop the stack and report
-an error if there was no `'if'` at the top of the stack.
+`{% if .. %}` 태그를 만나면(예를 들어), 스택에 `'if'`를 푸시할 것입니다.
+`{% endif %}` 태그를 찾으면, 스택을 팝하고 스택의 맨 위에 `'if'`가 없으면 오류를 보고할 수 있습니다.
 
-Now the real parsing begins.  We split the template text into a number of
-tokens using a regular expression, or *regex*.  Regexes can be
-daunting: they are a very compact notation for complex pattern matching.  They
-are also very efficient, since the complexity of matching the pattern is
-implemented in C in the regular expression engine, rather than in your own
-Python code.  Here's our regex:
+이제 실제 파싱이 시작됩니다. 정규 표현식 또는 *regex*를 사용하여 템플릿 텍스트를
+여러 토큰으로 분할합니다. 정규식은 복잡한 패턴 매칭을 위한 매우 간결한 표기법이라서
+벅찰 수 있습니다. 패턴을 매치하는 복잡성이 자신의 Python 코드가 아닌 정규 표현식 엔진에서
+C로 구현되므로 매우 효율적이기도 합니다. 다음이 우리의 정규식입니다:
 
 <!-- [[[cog include("templite.py", first="tokens =", numblanks=1, dedent=False) ]]] -->
 ```python
@@ -802,28 +756,26 @@ Python code.  Here's our regex:
 ```
 <!-- [[[end]]] -->
 
-This looks complicated; let's break it down.  
+이것은 복잡해 보입니다; 분석해봅시다.
 
-The `re.split` function will
-split a string using a regex.  Our pattern is parenthesized,
-so the matches will be used to split the string, and will also be returned as
-pieces in the split list.  Our pattern will match our tag syntaxes, but we've
-parenthesized it so that the string will be split at the tags, and the tags
-will also be returned.
+`re.split` 함수는 정규식을 사용하여 문자열을 분할합니다. 우리 패턴이 괄호로 묶여 있으므로,
+매치가 문자열을 분할하는 데 사용되고, 분할 리스트의 조각으로도 반환됩니다.
+우리 패턴은 태그 문법과 일치하지만, 문자열이 태그에서 분할되고 태그도 반환되도록
+괄호로 묶었습니다.
 
-The `(?s)` flag in the regex means that a dot should match even a newline. Next
-we have our parenthesized group of three alternatives: `{{.*?}}` matches an
-expression, `{%.*?%}` matches a tag, and `{#.*?#}` matches a comment.  In all
-of these, we use `.*?` to match any number of characters, but the shortest
-sequence that matches.
+정규식의 `(?s)` 플래그는 점이 개행 문자와도 일치해야 함을 의미합니다.
+다음으로 세 가지 대안의 괄호로 묶인 그룹이 있습니다: `{{.*?}}`는 표현식과 일치하고,
+`{%.*?%}`는 태그와 일치하며, `{#.*?#}`는 주석과 일치합니다.
+이 모든 것에서 우리는 `.*?`를 사용하여 임의의 수의 문자와 일치시키지만,
+일치하는 가장 짧은 시퀀스를 사용합니다.
 
-The result of `re.split` is a list of strings.  For example, this template text:
+`re.split`의 결과는 문자열 리스트입니다. 예를 들어, 이 템플릿 텍스트는:
 
 ```html
 <p>Topics for {{name}}: {% for t in topics %}{{t}}, {% endfor %}</p>
 ```
 
-would be split into these pieces:
+다음 조각들로 분할될 것입니다:
 
 ```python
 [
@@ -839,11 +791,10 @@ would be split into these pieces:
 ]
 ```
 
-Once the text is split into tokens like this, we can loop over the tokens, and
-deal with each in turn.  By splitting them according to their type, we can
-handle each type separately.
+텍스트가 이렇게 토큰으로 분할되면, 토큰을 반복하여 각각을 차례로 처리할 수 있습니다.
+유형에 따라 분할하여 각 유형을 별도로 처리할 수 있습니다.
 
-The compilation code is a loop over these tokens:
+컴파일 코드는 이 토큰들에 대한 루프입니다:
 
 <!-- [[[cog include("templite.py", first="for token", numlines=1, dedent=False) ]]] -->
 ```python
@@ -851,9 +802,8 @@ The compilation code is a loop over these tokens:
 ```
 <!-- [[[end]]] -->
 
-Each token is examined to see which of the four cases it is.  Just looking at
-the first two characters is enough.  The first case is a comment, which is easy
-to handle: just ignore it and move on to the next token:
+각 토큰을 검사하여 네 가지 경우 중 어느 것인지 확인합니다. 처음 두 문자만 보면 충분합니다.
+첫 번째 경우는 주석인데, 처리하기 쉽습니다: 그냥 무시하고 다음 토큰으로 넘어가면 됩니다:
 
 <!-- [[[cog include("templite.py", first="if token.", numlines=3, dedent=False) ]]] -->
 ```python
@@ -863,9 +813,8 @@ to handle: just ignore it and move on to the next token:
 ```
 <!-- [[[end]]] -->
 
-For the case of `{{...}}` expressions, we cut off the two braces at the front
-and back, strip off the white space, and pass the entire expression to
-`_expr_code`:
+`{{...}}` 표현식의 경우, 앞뒤의 두 중괄호를 잘라내고, 공백을 제거한 다음,
+전체 표현식을 `_expr_code`로 전달합니다:
 
 <!-- [[[cog include("templite.py", first="elif token.startswith('{{')", numlines=4, dedent=False) ]]] -->
 ```python
@@ -876,13 +825,12 @@ and back, strip off the white space, and pass the entire expression to
 ```
 <!-- [[[end]]] -->
 
-The `_expr_code` method will compile the template expression into a Python
-expression.  We'll see that function later.  We use the `to_str` function to
-force the expression's value to be a string, and add that to our result.
+`_expr_code` 메서드는 템플릿 표현식을 Python 표현식으로 컴파일할 것입니다.
+그 함수는 나중에 볼 것입니다. 표현식의 값을 문자열로 강제하기 위해 `to_str` 함수를 사용하고,
+그것을 우리 결과에 추가합니다.
 
-The third case is the big one: `{% ... %}` tags.  These are control structures
-that will become Python control structures.  First we have to flush our
-buffered output lines, then we extract a list of words from the tag:
+세 번째 경우는 중요한 것입니다: `{% ... %}` 태그들입니다. 이들은 Python 제어 구조가 될
+제어 구조입니다. 먼저 버퍼된 출력 라인을 플러시해야 하고, 그런 다음 태그에서 단어 리스트를 추출합니다:
 
 <!-- [[[cog include("templite.py", first="elif token.startswith('{%')", numlines=4, dedent=False) ]]] -->
 ```python
@@ -893,8 +841,8 @@ buffered output lines, then we extract a list of words from the tag:
 ```
 <!-- [[[end]]] -->
 
-Now we have three sub-cases, based on the first word in the tag: `if`, `for`,
-or `end`.  The `if` case shows our simple error handling and code generation:
+이제 태그의 첫 번째 단어를 기반으로 세 가지 하위 경우가 있습니다: `if`, `for`, 또는 `end`.
+`if` 경우는 우리의 간단한 오류 처리와 코드 생성을 보여줍니다:
 
 <!-- [[[cog include("templite.py", first="if words[0] == 'if'", numlines=7, dedent=False) ]]] -->
 ```python
@@ -908,14 +856,13 @@ or `end`.  The `if` case shows our simple error handling and code generation:
 ```
 <!-- [[[end]]] -->
 
-The `if` tag should have a single expression, so the `words` list should have
-only two elements in it.  If it doesn't, we use the `_syntax_error` helper
-method to raise a syntax error exception.  We push `'if'` onto `ops_stack` so
-that we can check the `endif` tag.  The expression part of the `if` tag is compiled
-to a Python expression with `_expr_code`, and is used as the conditional
-expression in a Python `if` statement.
+`if` 태그는 단일 표현식을 가져야 하므로, `words` 리스트에는 두 개의 요소만 있어야 합니다.
+그렇지 않으면 `_syntax_error` 도우미 메서드를 사용하여 구문 오류 예외를 발생시킵니다.
+`endif` 태그를 확인할 수 있도록 `ops_stack`에 `'if'`를 푸시합니다.
+`if` 태그의 표현식 부분은 `_expr_code`로 Python 표현식으로 컴파일되고,
+Python `if` 문의 조건부 표현식으로 사용됩니다.
 
-The second tag type is `for`, which will be compiled to a Python `for` statement:
+두 번째 태그 유형은 `for`인데, 이는 Python `for` 문으로 컴파일될 것입니다:
 
 <!-- [[[cog include("templite.py", first="elif words[0] == 'for'", numlines=13, dedent=False) ]]] -->
 ```python
@@ -935,23 +882,19 @@ The second tag type is `for`, which will be compiled to a Python `for` statement
 ```
 <!-- [[[end]]] -->
 
-We do a check of the syntax and push `'for'` onto the stack.  The
-`_variable` method checks the syntax of the variable, and adds it to the set
-we provide.  This is how we collect up the names of all the variables
-during compilation. Later we'll need to write the prologue of our function,
-where we'll unpack all the variable names we get from the context.  To do that
-correctly, we need to know the names of all the variables we encountered,
-`self.all_vars`, and the names of all the variables defined by loops, `self.loop_vars`.
+구문을 확인하고 스택에 `'for'`를 푸시합니다. `_variable` 메서드는 변수의 구문을 확인하고,
+우리가 제공하는 집합에 추가합니다. 이것이 컴파일 중에 모든 변수의 이름을 수집하는 방법입니다.
+나중에 컨텍스트에서 얻는 모든 변수 이름을 언패킹하는 함수의 프롤로그를 작성해야 할 것입니다.
+이를 올바르게 수행하려면 우리가 만난 모든 변수의 이름인 `self.all_vars`와
+루프에 의해 정의된 모든 변수의 이름인 `self.loop_vars`를 알아야 합니다.
 
-We add one line to our function source, a `for` statement.  All of our template
-variables are turned into Python variables by prepending `c_` to them, so that
-we know they won't collide with other names we're using in our Python function.
-We use `_expr_code` to compile the iteration expression from the template into
-an iteration expression in Python.
+함수 소스에 한 라인, `for` 문을 추가합니다. 우리의 모든 템플릿 변수는 `c_`를 앞에 붙여
+Python 변수로 바뀝니다. 그래서 Python 함수에서 사용하는 다른 이름과 충돌하지 않을 것임을 압니다.
+`_expr_code`를 사용하여 템플릿에서 반복 표현식을 Python의 반복 표현식으로 컴파일합니다.
 
-The last kind of tag we handle is an `end` tag; either `{% endif %}` or
-`{% endfor %}`.  The effect on our compiled function source is the same: simply
-unindent to end the `if` or `for` statement that was started earlier:
+우리가 처리하는 마지막 종류의 태그는 `end` 태그입니다; `{% endif %}` 또는 `{% endfor %}`입니다.
+컴파일된 함수 소스에 미치는 효과는 같습니다: 단순히 앞서 시작된 `if` 또는 `for` 문을 끝내기 위해
+들여쓰기를 해제하는 것입니다:
 
 <!-- [[[cog include("templite.py", first="elif words[0].startswith('end')", numlines=11, dedent=False) ]]] -->
 ```python
@@ -969,13 +912,12 @@ unindent to end the `if` or `for` statement that was started earlier:
 ```
 <!-- [[[end]]] -->
 
-Notice here that the actual work needed for the end tag is one line: unindent the
-function source.  The rest of this clause is all error checking to make sure
-that the template is properly formed.  This isn't unusual in program
-translation code.
+여기서 end 태그에 필요한 실제 작업은 한 라인입니다: 함수 소스의 들여쓰기를 해제하는 것입니다.
+이 절의 나머지는 모두 템플릿이 올바르게 형성되었는지 확인하는 오류 검사입니다.
+이것은 프로그램 번역 코드에서 흔하지 않은 일이 아닙니다.
 
-Speaking of error handling, if the tag isn't an `if`, a `for`, or an `end`, then
-we don't know what it is, so raise a syntax error:
+오류 처리에 대해 말하자면, 태그가 `if`, `for`, 또는 `end`가 아니라면,
+그것이 무엇인지 모르므로 구문 오류를 발생시킵니다:
 
 <!-- [[[cog include("templite.py", first="else:", numlines=2, dedent=False) ]]] -->
 ```python
@@ -984,10 +926,9 @@ we don't know what it is, so raise a syntax error:
 ```
 <!-- [[[end]]] -->
 
-We're done with the three different special syntaxes (`{{...}}`, `{#...#}`, and
-`{%...%}`). What's left is literal content.  We'll add the literal string to
-the buffered output, using the `repr` built-in function to produce a Python
-string literal for the token:
+세 가지 다른 특수 문법(`{{...}}`, `{#...#}`, `{%...%}`)을 완료했습니다.
+남은 것은 리터럴 콘텐츠입니다. `repr` 내장 함수를 사용하여 토큰에 대한 Python 문자열 리터럴을 생성하여
+리터럴 문자열을 버퍼된 출력에 추가할 것입니다:
 
 <!-- [[[cog include("templite.py", first="else:", after="Don't understand tag", numblanks=1, dedent=False) ]]] -->
 ```python
@@ -998,36 +939,32 @@ string literal for the token:
 ```
 <!-- [[[end]]] -->
 
-If we didn't use `repr`, then we'd end up with lines like this in our compiled
-function:
+`repr`을 사용하지 않았다면, 컴파일된 함수에서 다음과 같은 라인을 갖게 될 것입니다:
 
 ```python
 append_result(abc)      # Error! abc isn't defined
 ```
 
-We need the value to be quoted like this:
+값이 다음과 같이 따옴표로 묶여야 합니다:
 
 ```python
 append_result('abc')
 ```
 
-The `repr` function supplies the quotes around the string for us, and also
-provides backslashes where needed:
+`repr` 함수는 우리를 위해 문자열 주위에 따옴표를 제공하며,
+필요한 곳에 백슬래시도 제공합니다:
 
 ```python
 append_result('"Don\'t you like my hat?" he asked.')
 ```
 
-Notice that we first check if the token is an empty string with `if token:`,
-since there's no point adding an empty string to the output. Because our regex
-is splitting on tag syntax, adjacent tags will have an empty token between
-them.  The check here is an easy way to avoid putting useless
-`append_result("")` statements into our compiled function.
+출력에 빈 문자열을 추가하는 의미가 없으므로 `if token:`으로 토큰이 빈 문자열인지 먼저 확인함에 주목하세요.
+우리의 정규식이 태그 문법으로 분할하고 있기 때문에, 인접한 태그들 사이에는 빈 토큰이 있을 것입니다.
+여기서의 확인은 컴파일된 함수에 쓸모없는 `append_result("")` 문을 넣는 것을 피하는 쉬운 방법입니다.
 
-That completes the loop over all the tokens in the template.  When the loop is
-done, all of the template has been processed.  We have one last check to make:
-if `ops_stack` isn't empty, then we must be missing an end tag.  Then we flush
-the buffered output to the function source:
+그것으로 템플릿의 모든 토큰에 대한 루프가 완료됩니다. 루프가 끝나면, 모든 템플릿이 처리된 것입니다.
+마지막으로 확인해야 할 것이 하나 있습니다: `ops_stack`이 비어있지 않다면, end 태그가 누락된 것입니다.
+그런 다음 버퍼된 출력을 함수 소스로 플러시합니다:
 
 <!-- [[[cog include("templite.py", first="if ops_stack:", numblanks=2, dedent=False) ]]] -->
 ```python
@@ -1038,12 +975,11 @@ the buffered output to the function source:
 ```
 <!-- [[[end]]] -->
 
-We had created a section at the beginning of the function.  Its role was to
-unpack template variables from the context into Python locals.  Now that we've
-processed the entire template, we know the names of all the variables, so we
-can write the lines in this prologue.
+함수의 시작 부분에 섹션을 생성했었습니다. 그 역할은 컨텍스트에서 템플릿 변수를
+Python 지역 변수로 언패킹하는 것이었습니다. 이제 전체 템플릿을 처리했으므로,
+모든 변수의 이름을 알고 있어서 이 프롤로그에 라인을 작성할 수 있습니다.
 
-We have to do a little work to know what names we need to define.  Looking at our sample template:
+정의해야 할 이름이 무엇인지 알기 위해 약간의 작업을 해야 합니다. 샘플 템플릿을 보면:
 
 ```html
 <p>Welcome, {{user_name}}!</p>
@@ -1056,15 +992,14 @@ We have to do a little work to know what names we need to define.  Looking at ou
 </ul>
 ```
 
-There are two variables used here, `user_name` and `product`.  The `all_vars`
-set will have both of those names, because both are used in `{{...}}`
-expressions.  But only `user_name` needs to be extracted from the context in
-the prologue, because `product` is defined by the loop.
+여기서 사용되는 변수는 `user_name`과 `product` 두 개입니다. `all_vars` 집합은
+둘 다 `{{...}}` 표현식에 사용되므로 이 두 이름을 모두 가질 것입니다.
+하지만 `product`는 루프에 의해 정의되므로 프롤로그에서 컨텍스트에서 추출해야 하는 것은
+`user_name`뿐입니다.
 
-All the variables used in the template are in the set `all_vars`, and all the
-variables defined in the template are in `loop_vars`.  All of the names in
-`loop_vars` have already been defined in the code because they are used in
-loops.  So we need to unpack any name in `all_vars` that isn't in `loop_vars`:
+템플릿에서 사용되는 모든 변수는 `all_vars` 집합에 있고, 템플릿에서 정의되는 모든 변수는
+`loop_vars`에 있습니다. `loop_vars`의 모든 이름은 루프에서 사용되므로
+이미 코드에서 정의되었습니다. 따라서 `loop_vars`에 없는 `all_vars`의 모든 이름을 언패킹해야 합니다:
 
 <!-- [[[cog include("templite.py", first="for var_name", numblanks=1, dedent=False) ]]] -->
 ```python
@@ -1073,12 +1008,10 @@ loops.  So we need to unpack any name in `all_vars` that isn't in `loop_vars`:
 ```
 <!-- [[[end]]] -->
 
-Each name becomes a line in the function's prologue, unpacking the context
-variable into a suitably named local variable.
+각 이름은 함수의 프롤로그에서 한 라인이 되어, 컨텍스트 변수를 적절히 이름 지어진 지역 변수로 언패킹합니다.
 
-We're almost done compiling the template into a Python function.  Our function
-has been appending strings to `result`, so the last line of the function is
-simply to join them all together and return them:
+템플릿을 Python 함수로 컴파일하는 작업이 거의 완료되었습니다. 우리 함수는 `result`에 문자열을 추가해왔으므로,
+함수의 마지막 라인은 단순히 그것들을 모두 함께 조인하여 반환하는 것입니다:
 
 <!-- [[[cog include("templite.py", first='code.add_line("return', numlines=2, dedent=False) ]]] -->
 ```python
@@ -1087,16 +1020,13 @@ simply to join them all together and return them:
 ```
 <!-- [[[end]]] -->
 
-Now that we've finished writing the source for our compiled Python function,
-we need to get the function itself from our CodeBuilder object.  The
-`get_globals` method executes the Python code we've been assembling.  Remember
-that our code is a function definition (starting with `def render_function(..):`),
-so executing the code will define `render_function`, but not execute the body
-of `render_function`.
+이제 컴파일된 Python 함수의 소스 작성을 완료했으므로,
+CodeBuilder 객체에서 함수 자체를 얻어야 합니다. `get_globals` 메서드는
+우리가 조립해온 Python 코드를 실행합니다. 우리 코드는 함수 정의(`def render_function(..):`로 시작)라는 점을
+기억하세요. 따라서 코드를 실행하면 `render_function`을 정의하지만 `render_function`의 본문은 실행하지 않습니다.
 
-The result of `get_globals` is the dictionary of values defined in the code.
-We grab the `render_function` value from it, and save it as an attribute in our
-Templite object:
+`get_globals`의 결과는 코드에서 정의된 값들의 딕셔너리입니다.
+그것에서 `render_function` 값을 가져와서 Templite 객체의 속성으로 저장합니다:
 
 <!-- [[[cog include("templite.py", first="self._render_function =", numlines=1, dedent=False) ]]] -->
 ```python
@@ -1104,31 +1034,28 @@ Templite object:
 ```
 <!-- [[[end]]] -->
 
-Now `self._render_function` is a callable Python function. We'll use it later,
-during the rendering phase.
+이제 `self._render_function`은 호출 가능한 Python 함수입니다. 나중에 렌더링 단계에서 사용할 것입니다.
 
 
-#### Compiling Expressions
+#### 표현식 컴파일하기
 
-We haven't yet seen a significant piece of the compiling process: the
-`_expr_code` method that compiles a template expression into a Python
-expression.  Our template expressions can be as simple as a single name:
+컴파일 과정의 중요한 부분을 아직 보지 못했습니다: 템플릿 표현식을 Python 표현식으로 컴파일하는
+`_expr_code` 메서드입니다. 우리 템플릿 표현식은 단일 이름만큼 간단할 수 있습니다:
 
 ```
 {{user_name}}
 ```
 
-\noindent or can be a complex sequence of attribute accesses and filters:
+또는 속성 접근과 필터의 복잡한 시퀀스일 수 있습니다:
 
 ```
 {{user.name.localized|upper|escape}}
 ```
 
-Our `_expr_code` method will handle all of these possibilities.  As with
-expressions in any language, ours are built recursively: big expressions are
-composed of smaller expressions.  A full expression is pipe-separated, where
-the first piece is dot-separated, and so on.  So our function naturally takes a
-recursive form:
+우리의 `_expr_code` 메서드는 이 모든 가능성을 처리할 것입니다. 모든 언어의 표현식과 마찬가지로,
+우리 것도 재귀적으로 구축됩니다: 큰 표현식은 더 작은 표현식들로 구성됩니다.
+전체 표현식은 파이프로 분리되어 있고, 첫 번째 조각은 점으로 분리되어 있는 식입니다.
+따라서 우리 함수는 자연스럽게 재귀 형태를 취합니다:
 
 <!-- [[[cog include("templite.py", first="def _expr_code", numlines=2, dedent=False) ]]] -->
 ```python
@@ -1137,9 +1064,9 @@ recursive form:
 ```
 <!-- [[[end]]] -->
 
-The first case to consider is that our expression has pipes in it.  If it does,
-then we split it into a list of pipe-pieces.  The first pipe-piece is passed
-recursively to `_expr_code` to convert it into a Python expression.
+고려할 첫 번째 경우는 표현식에 파이프가 있는 것입니다. 있다면,
+파이프 조각들의 리스트로 분할합니다. 첫 번째 파이프 조각은 Python 표현식으로 변환하기 위해
+`_expr_code`에 재귀적으로 전달됩니다.
 
 <!-- [[[cog include("templite.py", first="if ", after="def _expr_code", numlines=6, dedent=False) ]]] -->
 ```python
@@ -1152,14 +1079,12 @@ recursively to `_expr_code` to convert it into a Python expression.
 ```
 <!-- [[[end]]] -->
 
-Each of the remaining pipe pieces is the name of a function.  The value is
-passed through the function to produce the final value.  Each function name is
-a variable that gets added to `all_vars` so that we can extract it properly in
-the prologue.
+나머지 파이프 조각들 각각은 함수의 이름입니다. 값은 최종 값을 생성하기 위해 함수를 통과합니다.
+각 함수 이름은 프롤로그에서 적절히 추출할 수 있도록 `all_vars`에 추가되는 변수입니다.
 
-If there were no pipes, there might be dots.  If so, split on the dots.  The
-first part is passed recursively to `_expr_code` to turn it into a Python
-expression, then each dot name is handled in turn:
+파이프가 없었다면, 점이 있을 수 있습니다. 그렇다면, 점으로 분할합니다.
+첫 번째 부분은 Python 표현식으로 변환하기 위해 `_expr_code`에 재귀적으로 전달되고,
+그런 다음 각 점 이름이 차례로 처리됩니다:
 
 <!-- [[[cog include("templite.py", first="elif ", after="def _expr_code", numlines=5, dedent=False) ]]] -->
 ```python
@@ -1171,20 +1096,18 @@ expression, then each dot name is handled in turn:
 ```
 <!-- [[[end]]] -->
 
-To understand how dots get compiled, remember that `x.y` in the template could
-mean either `x['y']` or `x.y` in Python, depending on which works;  if the
-result is callable, it's called.  This uncertainty means that we have to try
-those possibilities at run time, not compile time.  So we compile `x.y.z` into
-a function call, `do_dots(x, 'y', 'z')`.  The dot function will try the
-various access methods and return the value that succeeded.
+점이 어떻게 컴파일되는지 이해하려면, 템플릿의 `x.y`가 작동하는 것에 따라 Python에서
+`x['y']` 또는 `x.y` 중 하나를 의미할 수 있음을 기억하세요; 결과가 호출 가능하면 호출됩니다.
+이 불확실성은 컴파일 시가 아닌 런타임에 그 가능성들을 시도해야 한다는 것을 의미합니다.
+따라서 `x.y.z`를 함수 호출 `do_dots(x, 'y', 'z')`로 컴파일합니다. 점 함수는
+다양한 접근 방법을 시도하고 성공한 값을 반환할 것입니다.
 
-The `do_dots` function is passed into our compiled Python function at run time.
-We'll see its implementation in just a bit.
+`do_dots` 함수는 런타임에 컴파일된 Python 함수로 전달됩니다.
+조금 후에 그 구현을 볼 것입니다.
 
-The last clause in the `_expr_code` function handles the case that there was no
-pipe or dot in the input expression.  In that case, it's just a name. We
-record it in `all_vars`, and access the variable using its prefixed Python
-name:
+`_expr_code` 함수의 마지막 절은 입력 표현식에 파이프나 점이 없었던 경우를 처리합니다.
+그 경우에는 단지 이름입니다. 그것을 `all_vars`에 기록하고, 접두사가 붙은 Python 이름을 사용하여
+변수에 접근합니다:
 
 <!-- [[[cog include("templite.py", first="else:", after="def _expr_code", numlines=4, dedent=False) ]]] -->
 ```python
@@ -1196,10 +1119,10 @@ name:
 <!-- [[[end]]] -->
 
 
-#### Helper Functions
+#### 도우미 함수들
 
-During compilation, we used a few helper functions.  The `_syntax_error` method
-simply puts together a nice error message and raises the exception:
+컴파일 중에 몇 가지 도우미 함수를 사용했습니다. `_syntax_error` 메서드는
+단순히 좋은 오류 메시지를 조합하고 예외를 발생시킵니다:
 
 <!-- [[[cog include("templite.py", first="def _syntax_error", numblanks=1, dedent=False) ]]] -->
 ```python
@@ -1209,10 +1132,8 @@ simply puts together a nice error message and raises the exception:
 ```
 <!-- [[[end]]] -->
 
-The `_variable` method helps us with validating variable names and adding them
-to the sets of names we collected during compilation.  We use a
-regex to check that the name is a valid Python identifier, then add the name to
-the set:
+`_variable` 메서드는 변수 이름을 검증하고 컴파일 중에 수집한 이름 집합에 추가하는 데 도움을 줍니다.
+정규식을 사용하여 이름이 유효한 Python 식별자인지 확인한 다음, 이름을 집합에 추가합니다:
 
 <!-- [[[cog include("templite.py", first="def _variable", numblanks=4, dedent=False) ]]] -->
 ```python
@@ -1230,14 +1151,14 @@ the set:
 ```
 <!-- [[[end]]] -->
 
-With that, the compilation code is done!
+그것으로 컴파일 코드가 완료되었습니다!
 
 
-#### Rendering
+#### 렌더링
 
-All that's left is to write the rendering code.  Since we've compiled our
-template to a Python function, the rendering code doesn't have much to do.  It
-has to get the data context ready, and then call the compiled Python code:
+남은 것은 렌더링 코드를 작성하는 것뿐입니다. 템플릿을 Python 함수로 컴파일했으므로,
+렌더링 코드는 할 일이 많지 않습니다. 데이터 컨텍스트를 준비하고,
+컴파일된 Python 코드를 호출해야 합니다:
 
 <!-- [[[cog include("templite.py", first="def render(", numblanks=3, dedent=False) ]]] -->
 ```python
@@ -1255,24 +1176,21 @@ has to get the data context ready, and then call the compiled Python code:
 ```
 <!-- [[[end]]] -->
 
-Remember that when we constructed the `Templite` object, we started with a data
-context.  Here we copy it, and merge in whatever data has been passed in for
-this rendering.  The copying is so that successive rendering calls won't see
-each others' data, and the merging is so that we have a single dictionary to
-use for data lookups.  This is how we build one unified data context from the
-contexts provided when the template was constructed, with the data provided now
-at render time.
+`Templite` 객체를 구성할 때 데이터 컨텍스트로 시작했다는 점을 기억하세요.
+여기서 그것을 복사하고, 이 렌더링을 위해 전달된 모든 데이터를 병합합니다.
+복사는 연속적인 렌더링 호출이 서로의 데이터를 보지 않도록 하기 위함이고,
+병합은 데이터 조회에 사용할 단일 딕셔너리를 갖기 위함입니다. 이것이 템플릿이 구성될 때
+제공된 컨텍스트와 렌더 시간에 지금 제공되는 데이터로부터 하나의 통합된 데이터 컨텍스트를
+구축하는 방법입니다.
 
-Notice that the data passed to `render` could overwrite data passed to the
-Templite constructor.  That tends not to happen, because the context passed to
-the constructor has global-ish things like filter definitions and
-constants, and the context passed to `render` has specific data for that one
-rendering.
+`render`에 전달된 데이터가 Templite 생성자에 전달된 데이터를 덮어쓸 수 있음에 주목하세요.
+생성자에 전달된 컨텍스트는 필터 정의와 상수 같은 전역적인 것들을 가지고 있고,
+`render`에 전달된 컨텍스트는 그 한 번의 렌더링을 위한 특정 데이터를 가지고 있기 때문에
+그런 일은 일반적으로 발생하지 않습니다.
 
-Then we simply call our compiled `render_function`.  The first argument is the
-complete data context, and the second argument is the function that will implement
-the dot semantics.  We use the same implementation every time: our own
-`_do_dots` method.
+그런 다음 단순히 컴파일된 `render_function`을 호출합니다. 첫 번째 인수는
+완전한 데이터 컨텍스트이고, 두 번째 인수는 점 의미론을 구현할 함수입니다.
+매번 같은 구현을 사용합니다: 우리 자체의 `_do_dots` 메서드입니다.
 
 <!-- [[[cog include("templite.py", first="def _do_dots", numblanks=1, dedent=False) ]]] -->
 ```python
@@ -1289,55 +1207,50 @@ the dot semantics.  We use the same implementation every time: our own
 ```
 <!-- [[[end]]] -->
 
-During compilation, a template expression like `x.y.z` gets turned into
-`do_dots(x, 'y', 'z')`.  This function loops over the dot-names, and for each
-one tries it as an attribute, and if that fails, tries it as a key.  This is
-what gives our single template syntax the flexibility to act as either `x.y` or
-`x['y']`.  At each step, we also check if the new value is callable, and if it
-is, we call it.  Once we're done with all the dot-names, the value in hand is
-the value we want.
+컴파일 중에 `x.y.z`와 같은 템플릿 표현식은 `do_dots(x, 'y', 'z')`로 변환됩니다.
+이 함수는 점-이름들을 반복하며, 각각에 대해
+속성으로 시도해보고, 실패하면 키로 시도해봅니다. 이것이
+우리의 단일 템플릿 문법이 `x.y` 또는 `x['y']` 중 하나로 작동할 수 있는 유연성을 제공합니다.
+각 단계에서 새 값이 호출 가능한지도 확인하고, 호출 가능하면 호출합니다.
+모든 점-이름을 다 처리하면, 손에 있는 값이 우리가 원하는 값입니다.
 
-Here we used Python argument unpacking again (`*dots`) so that `_do_dots` could
-take any number of dot names.  This gives us a flexible function that will work
-for any dotted expression we encounter in the template.
+여기서 다시 Python 인수 언패킹(`*dots`)을 사용하여 `_do_dots`가
+임의의 수의 점 이름을 받을 수 있게 했습니다. 이는 템플릿에서 마주치는
+모든 점 표현식에 대해 작동할 유연한 함수를 제공합니다.
 
-Note that when calling `self._render_function`, we pass in a function to use
-for evaluating dot expressions, but we always pass in the same one.  We could
-have made that code part of the compiled template, but it's the same eight
-lines for every template, and those eight lines are part of the definition of
-how templates work, not part of the details of a particular template.  It feels
-cleaner to implement it like this than to have that code be part of the
-compiled template.
+`self._render_function`을 호출할 때 점 표현식을 평가하는 데 사용할 함수를 전달하지만,
+항상 같은 것을 전달한다는 점에 주목하세요. 그 코드를 컴파일된 템플릿의 일부로 만들 수도 있었지만,
+모든 템플릿에 대해 같은 8줄이고, 그 8줄은 템플릿이 작동하는 방법의 정의의 일부이지
+특정 템플릿의 세부사항의 일부가 아닙니다. 그 코드가 컴파일된 템플릿의 일부가 되는 것보다는
+이렇게 구현하는 것이 더 깔끔하게 느껴집니다.
 
 
-## Testing
+## 테스트
 
-Provided with the template engine is a suite of tests that cover all of the
-behavior and edge cases.  I'm actually a little bit over my 500-line limit:
-the template engine is 252 lines, and the tests are 275 lines.  This is typical
-of well-tested code: you have more code in your tests than in your product.
-
-
-## What's Left Out
-
-Full-featured template engines provide much more than we've implemented
-here.  To keep this code small, we're leaving out interesting ideas like:
-
-* Template inheritance and inclusion
-* Custom tags
-* Automatic escaping
-* Arguments to filters
-* Complex conditional logic like else and elif
-* Loops with more than one loop variable
-* Whitespace control
-
-Even so, our simple template engine is useful.  In fact, it is the template
-engine used in coverage.py to produce its HTML reports.
+템플릿 엔진과 함께 모든 동작과 엣지 케이스를 다루는 테스트 스위트가 제공됩니다.
+실제로 저는 500줄 제한을 약간 초과했습니다: 템플릿 엔진이 252줄이고 테스트가 275줄입니다.
+이것은 잘 테스트된 코드의 일반적인 특징입니다: 제품보다 테스트에 더 많은 코드가 있습니다.
 
 
-## Summing up
+## 빠진 것들
 
-In 252 lines, we've got a simple yet capable template engine.  Real template
-engines have many more features, but this code lays out the basic ideas of the
-process: compile the template to a Python function, then execute the function
-to produce the text result.
+완전한 기능을 갖춘 템플릿 엔진은 우리가 여기서 구현한 것보다 훨씬 더 많은 것을 제공합니다.
+이 코드를 작게 유지하기 위해 다음과 같은 흥미로운 아이디어들을 제외했습니다:
+
+* 템플릿 상속과 포함
+* 사용자 정의 태그
+* 자동 이스케이핑
+* 필터에 대한 인수
+* else와 elif와 같은 복잡한 조건부 로직
+* 둘 이상의 루프 변수를 가진 루프
+* 공백 제어
+
+그럼에도 불구하고 우리의 간단한 템플릿 엔진은 유용합니다. 실제로 이것은
+coverage.py에서 HTML 보고서를 생성하는 데 사용되는 템플릿 엔진입니다.
+
+
+## 마무리
+
+252줄로 간단하면서도 유능한 템플릿 엔진을 갖게 되었습니다. 실제 템플릿 엔진들은
+훨씬 더 많은 기능을 가지고 있지만, 이 코드는 프로세스의 기본 아이디어를 제시합니다:
+템플릿을 Python 함수로 컴파일한 다음, 함수를 실행하여 텍스트 결과를 생성하는 것입니다.
