@@ -1,154 +1,61 @@
-title: A Continuous Integration System
+title: 지속적 통합 시스템
 author: Malini Das
 <markdown>
-_Malini Das is a software engineer who is passionate about developing quickly (but safely!), and solving cross-functional problems. She has worked at Mozilla as a tools engineer and is currently honing her skills at Twitch. Follow Malini on [Twitter](https://twitter.com/malinidas) or on her [blog](http://malinidas.com/)._
+_Malini Das는 빠르지만 안전한 개발과 교차 기능적 문제 해결에 열정적인 소프트웨어 엔지니어입니다. Mozilla에서 도구 엔지니어로 일했으며 현재 Twitch에서 기술을 연마하고 있습니다. Malini를 [Twitter](https://twitter.com/malinidas)나 그녀의 [블로그](http://malinidas.com/)에서 팔로우하세요._
 </markdown>
-## What is a Continuous Integration System?
+## 지속적 통합 시스템이란 무엇인가?
 
-When developing software, we want to be able to verify that our new
-features or bug fixes are safe and work as expected. We do this by
-running tests against our code. Sometimes, developers will run tests
-locally to verify that their changes are safe, but developers may not
-have the time to test their code on every system their software runs in.
-Further, as more and more tests are added the amount of time required to
-run them, even only locally, becomes less viable. Because of this,
-continuous integration systems have been created.
+소프트웨어를 개발할 때, 우리는 새로운 기능이나 버그 수정이 안전하고 예상대로 작동하는지 검증할 수 있기를 원합니다. 이를 위해 코드에 대해 테스트를 실행합니다. 때로는 개발자들이 자신의 변경사항이 안전한지 확인하기 위해 로컬에서 테스트를 실행하지만, 소프트웨어가 실행되는 모든 시스템에서 코드를 테스트할 시간이 없을 수도 있습니다. 또한, 점점 더 많은 테스트가 추가됨에 따라 로컬에서만이라도 테스트를 실행하는 데 필요한 시간이 현실적이지 않게 됩니다. 이러한 이유로 지속적 통합 시스템이 만들어졌습니다.
 
-Continuous Integration (CI) systems are dedicated systems used to test
-new code. Upon a commit to the code repository, it is the responsibility
-of the continuous integration system to verify that this commit will not
-break any tests. To do this, the system must be able to fetch the new
-changes, run the tests and report its results. Like any other system, it
-should also be failure resistant. This means if any part of the system
-fails, it should be able to recover and continue from that point.
+지속적 통합(CI) 시스템은 새로운 코드를 테스트하는 데 전용으로 사용되는 시스템입니다. 코드 저장소에 커밋이 이루어지면, 지속적 통합 시스템은 이 커밋이 기존 테스트를 깨뜨리지 않는지 검증할 책임이 있습니다. 이를 위해 시스템은 새로운 변경사항을 가져오고, 테스트를 실행하며, 결과를 보고할 수 있어야 합니다. 다른 모든 시스템과 마찬가지로, 장애에 대한 저항력도 갖추어야 합니다. 즉, 시스템의 일부가 실패하더라도 그 지점에서 복구하여 계속 진행할 수 있어야 합니다.
 
-This test system should also handle load well, so that we can get test
-results in a reasonable amount of time in the event that commits are being made
-faster than the tests can be run. We can achieve this by distributing and
-parallelizing the testing effort. This project will demonstrate a small,
-bare-bones distributed continuous integration system that is designed for
-extensibility.
+이 테스트 시스템은 또한 부하를 잘 처리해야 하므로, 테스트를 실행할 수 있는 속도보다 빠르게 커밋이 이루어지는 경우에도 합리적인 시간 내에 테스트 결과를 얻을 수 있어야 합니다. 이는 테스트 작업을 분산하고 병렬화함으로써 달성할 수 있습니다. 이 프로젝트는 확장성을 고려해 설계된 작고 기본적인 분산 지속적 통합 시스템을 보여줄 것입니다.
 
-## Project Limitations and Notes
+## 프로젝트 제약사항 및 참고사항
 
-This project uses Git as the repository for the code that needs to be tested.
-Only standard source code management calls will be used, so if you are
-unfamiliar with Git but are familiar with other version control systems (VCS)
-like svn or Mercurial, you can still follow along. 
+이 프로젝트는 테스트해야 할 코드의 저장소로 Git을 사용합니다. 표준 소스 코드 관리 호출만 사용될 예정이므로, Git에 익숙하지 않더라도 svn이나 Mercurial 같은 다른 버전 관리 시스템(VCS)에 익숙하다면 따라올 수 있습니다. 
 
-Due to the limitations of code length and unittest, I simplified test
-discovery. We will *only* run tests that are in a directory named
-`tests` within the repository.
+코드 길이와 유닛테스트의 제약으로 인해, 테스트 탐색을 단순화했습니다. 저장소 내에서 `tests`라는 이름의 디렉터리에 있는 테스트*만* 실행할 것입니다.
 
-Continuous integration systems monitor a master repository which is
-usually hosted on a web server, and not local to the CI's file systems.
-For the cases of our example, we will use a local repository instead of
-a remote repository.
+지속적 통합 시스템은 일반적으로 웹 서버에 호스팅되어 있고 CI의 파일 시스템에 로컬로 있지 않은 마스터 저장소를 모니터링합니다. 우리 예제의 경우, 원격 저장소 대신 로컬 저장소를 사용할 것입니다.
 
-Continuous integration systems need not run on a fixed, regular
-schedule. You can also have them run every few commits, or per-commit.
-For our example case, the CI system will run periodically. This means if
-it is set up to check for changes in five-second periods, it will run
-tests against the most recent commit made after the five-second period.
-It won't test every commit made within that period of time, only the
-most recent one.
+지속적 통합 시스템은 고정된 정규 스케줄에 따라 실행될 필요가 없습니다. 몇 번의 커밋마다 또는 커밋별로 실행하도록 할 수도 있습니다. 우리 예제의 경우, CI 시스템은 주기적으로 실행될 것입니다. 즉, 5초 주기로 변경사항을 확인하도록 설정된 경우, 5초 주기 후에 이루어진 가장 최근 커밋에 대해 테스트를 실행할 것입니다. 해당 시간 간격 내에 이루어진 모든 커밋을 테스트하지 않고, 가장 최근 커밋만 테스트합니다.
 
-This CI system is designed to check periodically for changes in a
-repository. In real-world CI systems, you can also have the repository
-observer get notified by a hosted repository. Github, for example,
-provides "post-commit hooks" which send out notifications to a URL.
-Following this model, the repository observer would be called by the web
-server hosted at that URL to respond to that notification. Since this is
-complex to model locally, we're using an observer model, where the
-repository observer will check for changes instead of being notified.
+이 CI 시스템은 저장소의 변경사항을 주기적으로 확인하도록 설계되었습니다. 실제 CI 시스템에서는 호스팅된 저장소에 의해 저장소 옵저버가 알림을 받을 수도 있습니다. 예를 들어, GitHub은 URL로 알림을 보내는 "포스트 커밋 훅"을 제공합니다. 이 모델을 따르면, 저장소 옵저버는 해당 알림에 응답하기 위해 그 URL에서 호스팅되는 웹 서버에 의해 호출될 것입니다. 이를 로컬로 모델링하기에는 복잡하므로, 우리는 저장소 옵저버가 알림을 받는 대신 변경사항을 확인하는 옵저버 모델을 사용하고 있습니다.
 
-CI systems also have a reporter aspect, where the test runner reports
-its results to a component that makes them available for people to see,
-perhaps on a webpage. For simplicity, this project gathers the test
-results and stores them as files in the file system local to the
-dispatcher process.
+CI 시스템에는 또한 리포터 측면이 있는데, 여기서 테스트 실행기는 결과를 사람들이 볼 수 있도록 하는 컴포넌트에 보고합니다. 아마도 웹페이지에서 말이죠. 단순화를 위해, 이 프로젝트는 테스트 결과를 수집하여 디스패처 프로세스에 로컬인 파일 시스템에 파일로 저장합니다.
 
-Note that the architecture this CI system uses is just one possibility
-among many. This approach has been chosen to simplify our case study
-into three main components.
+이 CI 시스템이 사용하는 아키텍처는 여러 가능성 중 하나일 뿐이라는 점을 유의하세요. 이 접근 방식은 우리의 사례 연구를 세 가지 주요 컴포넌트로 단순화하기 위해 선택되었습니다.
 
-## Introduction
+## 소개
 
-The basic structure of a continuous integration system consists of three
-components: an observer, a test job dispatcher, and a test runner. The
-observer watches the repository. When it notices that a commit has been
-made, it notifies the job dispatcher. The job dispatcher then finds a
-test runner and gives it the commit number to test.
+지속적 통합 시스템의 기본 구조는 세 가지 컴포넌트로 구성됩니다: 옵저버(observer), 테스트 작업 디스패처(test job dispatcher), 그리고 테스트 실행기(test runner)입니다. 옵저버는 저장소를 감시합니다. 커밋이 이루어졌음을 알아차리면, 작업 디스패처에게 알립니다. 그러면 작업 디스패처는 테스트 실행기를 찾아 테스트할 커밋 번호를 제공합니다.
 
-There are many ways to architect a CI system. We could have the
-observer, dispatcher and runner be the same process on a single machine.
-This approach is very limited since there is no load handling, so if
-more changes are added to the repository than the CI system can handle,
-a large backlog will accrue. This approach is also not fault-tolerant at
-all; if the computer it is running on fails or there is a power outage,
-there are no fallback systems, so no tests will run. The ideal system
-would be one that can handle as many test jobs as requested, and will do
-its best to compensate when machines go down.
+CI 시스템을 설계하는 방법은 여러 가지가 있습니다. 옵저버, 디스패처, 그리고 실행기를 단일 머신의 같은 프로세스로 할 수도 있습니다. 이 접근 방식은 부하 처리가 없기 때문에 매우 제한적입니다. 따라서 CI 시스템이 처리할 수 있는 것보다 더 많은 변경사항이 저장소에 추가되면, 큰 백로그가 누적됩니다. 이 접근 방식은 또한 전혀 장애 허용성이 없습니다. 실행 중인 컴퓨터가 실패하거나 정전이 발생하면, 백업 시스템이 없으므로 어떤 테스트도 실행되지 않습니다. 이상적인 시스템은 요청되는 만큼 많은 테스트 작업을 처리할 수 있고, 머신이 다운될 때 최선을 다해 보상하는 시스템일 것입니다.
 
-To build a CI system that is fault-tolerant and load-bearing, in this
-project, each of these components is its own process. This will let each
-process be independent of the others, and let us run multiple instances
-of each process. This is useful when you have more than one test job
-that needs to be run at the same time. We can then spawn multiple test
-runners in parallel, allowing us to run as many jobs as needed, and
-prevent us from accumulating a backlog of queued tests.
+장애 허용적이고 부하를 견딜 수 있는 CI 시스템을 구축하기 위해, 이 프로젝트에서는 이러한 각 컴포넌트가 각자의 프로세스입니다. 이렇게 하면 각 프로세스가 다른 것들과 독립적이 되고, 각 프로세스의 여러 인스턴스를 실행할 수 있게 됩니다. 이는 동시에 실행되어야 할 테스트 작업이 하나 이상 있을 때 유용합니다. 그러면 여러 테스트 실행기를 병렬로 생성하여 필요한 만큼 많은 작업을 실행할 수 있고, 대기 중인 테스트의 백로그가 누적되는 것을 방지할 수 있습니다.
 
-In this project, not only do these components run as separate processes,
-but they also communicate via sockets, which will let us run each
-process on a separate, networked machine. A unique host/port address is
-assigned to each component, and each process can communicate with the
-others by posting messages at the assigned addresses.
+이 프로젝트에서는 이러한 컴포넌트들이 별도의 프로세스로 실행될 뿐만 아니라, 소켓을 통해 통신하므로 각 프로세스를 별도의 네트워크 머신에서 실행할 수 있습니다. 각 컴포넌트에는 고유한 호스트/포트 주소가 할당되며, 각 프로세스는 할당된 주소에 메시지를 게시함으로써 다른 프로세스들과 통신할 수 있습니다.
 
-This design will let us handle hardware failures on the fly by enabling
-a distributed architecture. We can have the observer run on one machine,
-the test job dispatcher on another, and the test runners on another, and
-they can all communicate with each other over a network. If any of these
-machines go down, we can schedule a new machine to go up on the network,
-so the system becomes fail-safe.
+이 설계는 분산 아키텍처를 가능하게 함으로써 하드웨어 장애를 즉석에서 처리할 수 있게 해줍니다. 옵저버를 한 머신에서, 테스트 작업 디스패처를 다른 머신에서, 테스트 실행기들을 또 다른 머신에서 실행할 수 있으며, 이들 모두가 네트워크를 통해 서로 통신할 수 있습니다. 이러한 머신 중 하나가 다운되면, 네트워크에 새 머신을 스케줄링할 수 있으므로 시스템이 장애 안전(fail-safe)이 됩니다.
 
-This project does not include auto-recovery code, as that is dependent
-on your distributed system's architecture, but in the real world, CI
-systems are run in a distributed environment like this so they can have
-failover redundancy (i.e., we can fall back to a standby machine if one
-of the machines a process was running on becomes defunct).
+이 프로젝트는 자동 복구 코드를 포함하지 않습니다. 이는 분산 시스템의 아키텍처에 의존하기 때문입니다. 하지만 실제로 CI 시스템들은 페일오버 이중화(failover redundancy)를 가질 수 있도록 이와 같은 분산 환경에서 실행됩니다(즉, 프로세스가 실행 중이던 머신 중 하나가 고장나면 대기 머신으로 폴백할 수 있습니다).
 
-For the purposes of this project, each of these processes will be locally and
-manually started distinct local ports.
+이 프로젝트의 목적상, 이러한 각 프로세스는 로컬에서 그리고 서로 다른 로컬 포트에서 수동으로 시작될 것입니다.
 
-### Files in this Project
+### 이 프로젝트의 파일들
 
-This project contains Python files for each of these components: the repository
-observer \newline (`repo_observer.py`), the test job dispatcher
-(`dispatcher.py`), and the test runner \newline (`test_runner.py`). Each of
-these three processes communicate with each other using sockets, and since the
-code used to transmit information is shared by all of them, there is a
-helpers.py file that contains it, so each process imports the communicate
-function from here instead of having it duplicated in the file.
+이 프로젝트는 이러한 각 컴포넌트에 대한 Python 파일을 포함합니다: 저장소 옵저버(`repo_observer.py`), 테스트 작업 디스패처(`dispatcher.py`), 그리고 테스트 실행기(`test_runner.py`)입니다. 이 세 프로세스는 각각 소켓을 사용해서 서로 통신하며, 정보 전송에 사용되는 코드가 모든 프로세스에서 공유되므로, 이를 포함하는 helpers.py 파일이 있습니다. 각 프로세스는 파일에 코드를 복제하는 대신 여기서 통신 함수를 가져옵니다.
 
-There are also bash script files used by these processes. These script
-files are used to execute bash and git commands in an easier way than
-constantly using Python's operating system-level modules like os and
-subprocess.
+이러한 프로세스들에서 사용되는 bash 스크립트 파일들도 있습니다. 이 스크립트 파일들은 os나 subprocess 같은 Python의 운영체제 수준 모듈을 계속 사용하는 것보다 더 쉬운 방법으로 bash와 git 명령어를 실행하기 위해 사용됩니다.
 
-Lastly, there is a tests directory, which contains two example tests the
-CI system will run. One test will pass, and the other will fail.
+마지막으로, CI 시스템이 실행할 두 개의 예제 테스트를 포함하는 tests 디렉터리가 있습니다. 하나의 테스트는 통과하고, 다른 하나는 실패할 것입니다.
 
-### Initial Setup
+### 초기 설정
 
-While this CI system is ready to work in a distributed system, let us
-start by running everything locally on one computer so we can get a
-grasp on how the CI system works without adding the risk of running into
-network-related issues. If you wish to run this in a distributed
-environment, you can run each component on its own machine.
+이 CI 시스템은 분산 시스템에서 작동할 준비가 되어 있지만, 네트워크 관련 문제에 부딪힐 위험을 추가하지 않으면서 CI 시스템이 어떻게 작동하는지 파악할 수 있도록 우선 한 대의 컴퓨터에서 로컬로 모든 것을 실행해 보겠습니다. 분산 환경에서 실행하고 싶다면, 각 컴포넌트를 각자의 머신에서 실행할 수 있습니다.
 
-Continuous integration systems run tests by detecting changes in a code
-repository, so to start, we will need to set up the repository our CI
-system will monitor.
+지속적 통합 시스템은 코드 저장소의 변경사항을 감지하여 테스트를 실행하므로, 시작하려면 우리 CI 시스템이 모니터링할 저장소를 설정해야 합니다.
 
 Let's call this `test_repo`:
 
