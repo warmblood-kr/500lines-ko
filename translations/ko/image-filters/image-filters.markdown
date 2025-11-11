@@ -1,154 +1,63 @@
-title: Making Your Own Image Filters
+title: 나만의 이미지 필터 만들기
 author: Cate Huston
 <markdown>
-_Cate left the tech industry and spent a year finding her way back whilst building her passion project Show & Hide. She is Director of Mobile Engineering at Ride, speaks internationally on mobile development and engineering culture, co-curates Technically Speaking and is an advisor at Glowforge. Cate doesn’t exactly live in Colombia but she spends a lot of time there, and has lived and worked in the UK, Australia, Canada, China the United States, previously as an engineer at Google, an Extreme Blue intern at IBM, and a ski instructor. Cate blogs at [Accidentally in Code](http://www.catehuston.com/blog/) and is [\@catehstn](https://twitter.com/catehstn) on Twitter._
+_케이트는 기술 업계를 떠나 1년간 자신만의 길을 찾으며 열정 프로젝트인 Show & Hide를 구축했습니다. 현재 Ride의 모바일 엔지니어링 디렉터로 일하며, 모바일 개발과 엔지니어링 문화에 대해 국제적으로 강연하고, Technically Speaking을 공동 큐레이팅하며 Glowforge의 어드바이저로 활동하고 있습니다. 케이트는 정확히 콜롬비아에 살지는 않지만 그곳에서 많은 시간을 보내며, 영국, 호주, 캐나다, 중국, 미국에서 살고 일한 경험이 있습니다. 이전에는 Google의 엔지니어, IBM의 Extreme Blue 인턴, 스키 강사로 일했습니다. 케이트는 [Accidentally in Code](http://www.catehuston.com/blog/)에서 블로그를 쓰고 트위터에서 [\@catehstn](https://twitter.com/catehstn)로 활동하고 있습니다._
 </markdown>
-## A Brilliant Idea (That Wasn’t All That Brilliant)
+## 훌륭한 아이디어 (그런데 실제로는 그리 훌륭하지 않았던)
 
-When I was traveling in China I often saw series of four paintings showing the same
-place in different seasons. Color&mdash;the cool whites of winter, pale hues of
-spring, lush greens of summer, and reds and yellows of fall&mdash;is what
-visually 
-differentiates the seasons. Around 2011, I had what I thought was a brilliant
-idea: I wanted to be able to visualize a photo series as a series of colors. I
-thought it would show travel, and progression through the seasons.
+중국을 여행할 때 같은 장소를 다른 계절에 그린 네 개의 연작 그림을 자주 보게 되었습니다. 색깔&mdash;겨울의 차가운 하얀색, 봄의 연한 색조, 여름의 풍성한 녹색, 가을의 빨강과 노랑&mdash;이 계절을 시각적으로 구분해주는 요소였습니다. 2011년경, 나는 훌륭하다고 생각한 아이디어를 떠올렸습니다: 사진 시리즈를 색상 시리즈로 시각화할 수 있다면 좋겠다고 생각했습니다. 이를 통해 여행과 계절의 변화를 보여줄 수 있을 거라 생각했습니다.
 
-But I didn’t know how to calculate the dominant color from an image. I thought
-about scaling the image down to a 1x1 square and seeing what was left, but that
-seemed like cheating. I knew how I wanted to display the images, though: in a layout
-called the [Sunflower
-layout](http://www.catehuston.com/applets/Sunflower/index.html). It’s the most
-efficient way to lay out circles.
+하지만 이미지에서 주요 색상을 계산하는 방법을 몰랐습니다. 이미지를 1x1 정사각형으로 축소한 후 남은 색상을 확인하는 것도 생각해봤지만, 그것은 속임수 같았습니다. 하지만 이미지를 어떻게 표시할지는 알고 있었습니다: [해바라기 레이아웃](http://www.catehuston.com/applets/Sunflower/index.html)이라는 배치 방식이었습니다. 이것은 원들을 배치하는 가장 효율적인 방법입니다.
 
-I left this project for years, distracted by work, life, travel, talks.
-Eventually I returned to it, figured out how to calculate the dominant
-color, and [finished my
-visualization](http://www.catehuston.com/blog/2013/09/02/visualising-a-photo-series/).
-That is when I discovered that this idea wasn’t, in fact, brilliant.
-The progression wasn’t as clear as I hoped, the dominant color
-extracted wasn’t generally the most appealing shade, the creation took a long
-time (a couple of seconds per image), and it took hundreds of images to make
-something cool (\aosafigref{500l.imagefilters.sunflower}).
+나는 이 프로젝트를 몇 년 동안 방치했습니다. 일, 생활, 여행, 강연에 정신이 팔려서였죠. 결국 다시 돌아와서 주요 색상을 계산하는 방법을 알아내고 [시각화를 완성했습니다](http://www.catehuston.com/blog/2013/09/02/visualising-a-photo-series/). 그때 이 아이디어가 사실 그리 훌륭하지 않다는 것을 발견했습니다. 진행 과정이 기대만큼 명확하지 않았고, 추출된 주요 색상이 일반적으로 가장 매력적인 색조가 아니었으며, 생성하는 데 오랜 시간이 걸렸고(이미지당 몇 초씩), 멋진 것을 만들기 위해서는 수백 개의 이미지가 필요했습니다(\aosafigref{500l.imagefilters.sunflower}).
 
 \aosafigure[180pt]{image-filters-images/sunflower.jpg}{Sunflower layout}{500l.imagefilters.sunflower}
 
-You might think this would be discouraging, but by the time I got to this
-point I had learned many things that hadn’t come my way before — about color
-spaces and pixel manipulation — and I had started making those cool partially
-colored images, the kind you find on postcards of London with a red bus or
-phone booth and everything else in grayscale.
+이것이 실망스러울 수 있다고 생각할지도 모르겠지만, 이 지점에 이르렀을 때 나는 이전에는 접해보지 못했던 많은 것들을 배웠습니다. 색 공간과 픽셀 조작에 대한 지식이었죠. 그리고 멋진 부분 컬러 이미지들을 만들기 시작했습니다. 런던의 빨간 버스나 전화 부스만 컬러로 하고 나머지는 모두 회색조로 처리한 엽서에서 볼 수 있는 그런 이미지 말입니다.
 
-I used a framework called [Processing](https://processing.org/) because I was
-familiar with it from developing programming curricula, and because I knew it
-made it easy to create visual applications. It’s a tool originally
-designed for artists, so it abstracts away much of the boilerplate. It allowed
-me to play and experiment.
+나는 [Processing](https://processing.org/)이라는 프레임워크를 사용했습니다. 프로그래밍 커리큘럼을 개발할 때 익숙해졌고, 시각적 애플리케이션을 쉽게 만들 수 있다는 것을 알고 있었기 때문입니다. 이것은 원래 예술가들을 위해 설계된 도구로, 많은 상용구 코드를 추상화해줍니다. 덕분에 자유롭게 실험해볼 수 있었습니다.
 
-University, and later work, filled up my time with other people’s ideas and
-priorities. Part of finishing this project was learning how to carve out time
-to make progress on my own ideas; I required 
-about four hours of good mental time a week. A tool that allowed me to
-move faster was therefore really helpful, even necessary&mdash;although it came with
-its own set of problems, especially around writing tests. 
+대학교, 그리고 나중에 직장은 다른 사람들의 아이디어와 우선순위로 내 시간을 채워버렸습니다. 이 프로젝트를 완성하는 과정의 일부는 내 자신의 아이디어를 발전시킬 수 있는 시간을 확보하는 방법을 배우는 것이었습니다. 일주일에 약 4시간의 좋은 정신적 시간이 필요했습니다. 따라서 더 빠르게 작업할 수 있게 해주는 도구는 정말 도움이 되었고, 심지어 필수적이었습니다&mdash;비록 테스트 작성과 관련해서는 고유한 문제점들이 있었지만요. 
 
-I felt that thorough
-tests were especially important for validating how the project was working, and for
-making it easier to pick up and resume a project that was often on ice for
-weeks, even months at a time. Tests (and blogposts!) formed the documentation
-for this project. I could leave failing tests to document what should happen
-that I hadn’t figured out yet, and make changes with confidence that if
-I changed something that I had forgotten was critical, the tests would remind
-me.
+철저한 테스트가 프로젝트가 어떻게 작동하는지 검증하고, 몇 주, 심지어 몇 달씩 중단된 프로젝트를 다시 시작하기 쉽게 만드는 데 특히 중요하다고 느꼈습니다. 테스트(그리고 블로그 포스트!)가 이 프로젝트의 문서 역할을 했습니다. 아직 해결하지 못한 부분에 대해 어떤 일이 일어나야 하는지 문서화하기 위해 실패하는 테스트를 남겨둘 수 있었고, 중요했던 부분을 잊고 변경했을 때 테스트가 상기시켜 줄 것이라는 확신을 가지고 변경할 수 있었습니다.
 
-This chapter will cover some details about Processing and talk you through color
-spaces, decomposing an image into pixels and manipulating them, and unit
-testing something that wasn’t designed with testing in mind. But I hope it will
-also prompt you to make some progress on whatever idea you haven’t made
-time for lately; even if your idea turns out to be as terrible as mine
-was, you may make something cool and learn something fascinating in the
-process.
+이 장에서는 Processing에 대한 몇 가지 세부사항을 다루고, 색 공간, 이미지를 픽셀로 분해하고 조작하는 방법, 그리고 테스트를 염두에 두고 설계되지 않은 것을 단위 테스트하는 방법에 대해 설명합니다. 하지만 최근에 시간을 내지 못했던 아이디어를 발전시키는 데도 도움이 되기를 바랍니다. 여러분의 아이디어가 내 것만큼 끔찍한 것으로 판명되더라도, 과정에서 멋진 것을 만들고 흥미로운 것을 배울 수 있을 겁니다.
 
-## The App
+## 애플리케이션
 
-This chapter will show you how to create an image filter application
-that you can use to
-manipulate your digital images using filters that you create.
-We'll use Processing, a programming language and development environment built in
-Java. 
-We’ll cover setting up the application in Processing, some of
-the features of Processing, aspects of color representation, and how to create color filters (mimicking what was
-used in old-fashioned photography). We'll also create a special kind of filter that
-can only be done digitally: determining the dominant hue of an image and
-showing or hiding it, to create eerie partially colored images.
+이 장에서는 직접 만든 필터를 사용하여 디지털 이미지를 조작할 수 있는 이미지 필터 애플리케이션을 만드는 방법을 보여줍니다. Java로 구축된 프로그래밍 언어이자 개발 환경인 Processing을 사용할 것입니다. Processing에서 애플리케이션을 설정하는 방법, Processing의 몇 가지 기능, 색상 표현의 측면, 그리고 (옛날 사진술에서 사용되던 것을 모방한) 색상 필터를 만드는 방법을 다룰 것입니다. 또한 디지털로만 가능한 특별한 종류의 필터도 만들어볼 것입니다: 이미지의 주요 색조를 결정하고 이를 보이거나 숨기는 것으로, 으스스한 부분 컬러 이미지를 만드는 방법입니다.
 
-Finally, we’ll add a thorough test suite, and cover how to handle some of
-the limitations of Processing when it comes to testability.
+마지막으로, 철저한 테스트 모음을 추가하고 테스트 가능성 측면에서 Processing의 몇 가지 제한사항을 처리하는 방법을 다룰 것입니다.
 
-## Background
+## 배경
 
-Today we can take a photo, manipulate it, and share it with all our friends in
-a matter of seconds. However, a long long time ago (in digital terms),
-it was a process that took weeks.
+오늘날 우리는 사진을 찍고, 조작하고, 몇 초 안에 모든 친구들과 공유할 수 있습니다. 하지만 (디지털 용어로) 아주 오래전에는 몇 주가 걸리는 과정이었습니다.
 
-In the old days, we would take the picture, then when we had used a whole roll of film, we would
-take it in to be developed (often at the pharmacy). We'd pick up the developed pictures some days 
-later&mdash;and discover that there was something wrong with many of them.
-Hand not steady enough? Random person or thing that we didn’t notice at
-the time? Overexposed? Underexposed? Of course by then it was too late to remedy the problem.
+옛날에는 사진을 찍은 다음, 필름 한 롤을 다 사용하면 현상을 위해 가져다 줬습니다(보통 약국에서). 며칠 후 현상된 사진들을 가져와서&mdash;그 중 많은 사진에 문제가 있다는 것을 발견했습니다. 손이 충분히 안정적이지 않았나? 당시에는 알아차리지 못한 무작위 사람이나 사물이 들어갔나? 과다 노출? 노출 부족? 물론 그때는 이미 문제를 해결하기에는 너무 늦었죠.
 
-The process that turned the film into pictures was one that most people
-didn’t understand. Light was a problem, so you had to be careful with the film.
-There was a process, involving darkened rooms and chemicals, that they
-sometimes showed in films or on TV.
+필름을 사진으로 바꾸는 과정은 대부분의 사람들이 이해하지 못하는 것이었습니다. 빛이 문제가 되어서 필름을 조심스럽게 다뤄야 했죠. 어두운 방과 화학물질이 관련된 과정이 있었는데, 영화나 TV에서 가끔 보여주곤 했습니다.
 
-But probably even fewer people understand how we get from the 
-point-and-click on our smartphone camera to an image on Instagram. 
-There are actually many similarities.
+하지만 스마트폰 카메라의 포인트 앤 클릭에서 인스타그램 이미지에 이르는 과정을 이해하는 사람들은 아마 더 적을 것입니다. 실제로는 많은 유사점이 있습니다.
 
-### Photographs, the Old Way
+### 사진술, 옛날 방식
 
-Photographs are created by the effect of light on a light-sensitive surface.
-Photographic film is covered in silver halide crystals. (Extra layers are used
-to create color photographs — for simplicity let’s just stick to
-black-and-white photography here.) 
+사진은 빛에 민감한 표면에 빛이 미치는 효과로 만들어집니다. 사진 필름은 할로겐화은 결정으로 덮여 있습니다. (컬러 사진을 만들기 위해서는 추가 레이어가 사용됩니다 — 단순화를 위해 여기서는 흑백 사진만 다루겠습니다.) 
 
-When talking an old-fashioned photograph — with film — the light hits the
-film according to what you’re pointing at, and the crystals at those points are
-changed in varying degrees, according to the amount of light. Then, the
-[development
-process](http://photography.tutsplus.com/tutorials/step-by-step-guide-to-developing-black-and-white-t-max-film--photo-2580)
-converts the silver salts to metallic silver, creating the negative. The
-negative has the light and dark areas of the image inverted. Once
-the negatives have been developed, there is another series of steps to
-reverse the image and print it.
+옛날 방식의 사진 — 필름을 사용한 — 을 찍을 때, 빛은 당신이 가리키는 것에 따라 필름에 맞습니다. 그리고 그 지점의 결정들은 빛의 양에 따라 다양한 정도로 변화됩니다. 그런 다음, [현상 과정](http://photography.tutsplus.com/tutorials/step-by-step-guide-to-developing-black-and-white-t-max-film--photo-2580)에서 은염을 금속 은으로 변환하여 네거티브를 만듭니다. 네거티브는 이미지의 밝고 어두운 부분이 반전되어 있습니다. 네거티브가 현상되면, 이미지를 뒤집어서 인쇄하는 또 다른 일련의 단계들이 있습니다.
 
-### Photographs, the Digital Way
+### 사진술, 디지털 방식
 
-When taking pictures using our smartphones or digital cameras, there is no
-film. There is something called an *active-pixel sensor* which functions in a
-similar way. Where we used to have silver crystals, now we have pixels — tiny
-squares. (In fact, pixel is short for "picture element".) Digital images are
-made up of pixels, and the higher the resolution the more pixels there are.
-This is why low-resolution images are described as "pixelated" — you can start
-to see the squares. These pixels are stored in an array, with the number
-in each array "box" containing the color.
+스마트폰이나 디지털 카메라를 사용해서 사진을 찍을 때는 필름이 없습니다. 비슷한 방식으로 작동하는 *능동 픽셀 센서*라는 것이 있습니다. 예전에 은 결정이 있던 자리에 이제는 픽셀 — 작은 사각형들 — 이 있습니다. (사실, 픽셀은 "picture element"의 줄임말입니다.) 디지털 이미지는 픽셀로 구성되며, 해상도가 높을수록 더 많은 픽셀이 있습니다. 이것이 저해상도 이미지가 "픽셀화되었다"고 설명되는 이유입니다 — 사각형들을 보기 시작할 수 있기 때문입니다. 이러한 픽셀들은 배열에 저장되며, 각 배열 "박스"의 숫자는 색상을 포함합니다.
 
-In \aosafigref{500l.imagefilters.animals}, we see a high-resolution picture of some blow-up animals taken at
-MoMA in NYC. \aosafigref{500l.imagefilters.pixelanimals} is
-the same image blown up, but with just 24 x 32 pixels.
+\aosafigref{500l.imagefilters.animals}에서는 뉴욕의 MoMA에서 찍은 풍선 동물들의 고해상도 사진을 볼 수 있습니다. \aosafigref{500l.imagefilters.pixelanimals}는 같은 이미지를 확대한 것이지만 24 x 32 픽셀만 사용했습니다.
 
 \aosafigure[220pt]{image-filters-images/animals.jpg}{Blow-up animals at MoMA NY}{500l.imagefilters.animals}
 
 \aosafigure[220pt]{image-filters-images/pixelanimals.jpg}{Blow-up animals, blown up}{500l.imagefilters.pixelanimals}
 
-See how it's so blurry? We call
-that _pixelation_, which means the image is too big for the number of pixels it
-contains and the squares become visible. Here we can use it to get a better
-sense of an image being made up of squares of color.
+얼마나 흐릿한지 보이시나요? 이것을 _픽셀화_라고 부르는데, 이미지가 포함하고 있는 픽셀 수에 비해 너무 크기 때문에 사각형들이 보이게 되는 것을 의미합니다. 여기서는 이미지가 색상의 사각형들로 구성되어 있다는 것을 더 잘 이해할 수 있도록 사용할 수 있습니다.
 
-What do these pixels look like? If we print out the colors of some of the
-pixels in the middle (10,10 to 10,14) using the handy `Integer.toHexString` in
-Java, we get hex colors:
+이러한 픽셀들은 어떻게 생겼을까요? Java의 편리한 `Integer.toHexString`을 사용하여 중간 부분의 일부 픽셀들(10,10에서 10,14까지)의 색상을 출력하면 16진수 색상을 얻습니다:
 
 ```
 FFE8B1
@@ -159,69 +68,43 @@ FFF5B7
 ```
 
 
-Hex colors are six characters long. The first two are the red value, the second
-two the green value, and the third two the blue value. Sometimes there are an
-extra two characters which are the alpha value. In this case `FFFAC4` means:
+16진수 색상은 6자리 길이입니다. 처음 두 자리는 빨강 값, 다음 두 자리는 초록 값, 마지막 두 자리는 파랑 값입니다. 때로는 알파 값인 추가 두 자리가 있기도 합니다. 이 경우 `FFFAC4`는 다음을 의미합니다:
 
 \newpage
 
-- red = FF (hex) = 255 (base 10)
-- green = FA (hex) = 250 (base 10)
-- blue = C4 (hex) = 196 (base 10)
+- 빨강 = FF (16진수) = 255 (10진수)
+- 초록 = FA (16진수) = 250 (10진수)
+- 파랑 = C4 (16진수) = 196 (10진수)
 
-## Running the App 
+## 애플리케이션 실행하기
 
-In \aosafigref{500l.imagefilters.app}, we have a picture of our app running.
-It’s very much developer-designed, I know, but we only have 500 lines of Java
-to work with so something had to suffer! You can see the list of commands on the right.
-Some things we can do:
+\aosafigref{500l.imagefilters.app}에서는 실행 중인 애플리케이션의 사진을 볼 수 있습니다. 개발자가 디자인한 것 같다는 걸 알고 있지만, 500줄의 Java 코드만 사용할 수 있었기 때문에 뭔가는 포기해야 했습니다! 오른쪽에서 명령어 목록을 볼 수 있습니다. 할 수 있는 일들은 다음과 같습니다:
 
-- Adjust the RGB filters.
-- Adjust the “hue tolerance”.
-- Set the dominant hue filters, to either show or hide the dominant hue.
-- Apply our current setting (it is infeasible to run this every key press).
-- Reset the image.
-- Save the image we have made.
+- RGB 필터를 조정합니다.
+- "색조 허용범위"를 조정합니다.
+- 주요 색조 필터를 설정하여 주요 색조를 보이거나 숨깁니다.
+- 현재 설정을 적용합니다 (모든 키 입력마다 실행하는 것은 비현실적입니다).
+- 이미지를 재설정합니다.
+- 만든 이미지를 저장합니다.
 
 \aosafigure[266pt]{image-filters-images/app.jpg}{The App}{500l.imagefilters.app}
 
-Processing makes it simple to create a little
-application and do image manipulation;
-it has a very visual focus. We’ll work with the Java-based version, although Processing has now been ported
-to other languages.
+Processing을 사용하면 작은 애플리케이션을 만들고 이미지 조작을 수행하는 것이 간단해집니다. 매우 시각적인 초점을 가지고 있습니다. Processing이 이제 다른 언어로 이식되었지만, 우리는 Java 기반 버전으로 작업할 것입니다.
 
-For this tutorial, I use Processing in Eclipse by adding `core.jar` to my build path. If
-you want, you can use the Processing IDE, which removes the need for a lot of
-boilerplate Java code. If you later want to port it over to Processing.js and
-upload it online, you need to replace the file chooser with something else.
+이 튜토리얼에서는 Eclipse에서 빌드 경로에 `core.jar`를 추가하여 Processing을 사용합니다. 원한다면 Processing IDE를 사용할 수 있는데, 이는 많은 상용구 Java 코드의 필요성을 제거해줍니다. 나중에 Processing.js로 이식하여 온라인에 업로드하려면 파일 선택기를 다른 것으로 교체해야 합니다.
 
-There are detailed instructions with screenshots in the project's
-[repository](https://github.com/aosabook/500lines/blob/master/image-filters/SETUP.MD).
-If you are familiar with Eclipse and Java already you may not need them.
+프로젝트의 [저장소](https://github.com/aosabook/500lines/blob/master/image-filters/SETUP.MD)에 스크린샷과 함께 상세한 지침이 있습니다. Eclipse와 Java에 이미 익숙하다면 필요하지 않을 수도 있습니다.
 
-## Processing Basics
+## Processing 기초
 
-### Size and Color
+### 크기와 색상
 
-We don’t want our app to be a tiny grey window, so the two essential methods
-that we will start by overriding are
-[`setup()`](http://processing.org/reference/setup_.html), and
-[`draw()`](http://processing.org/reference/draw_.html). The `setup()` method is
-only called when the app starts, and is where we do things like set the size of
-the app window.  The `draw()` method is called for every animation, or after
-some action can be triggered by calling `redraw()`. (As covered in the
-Processing Documentation, `draw()` should not be called explicitly.) 
+애플리케이션이 작은 회색 창이 되는 것을 원하지 않으므로, 우선 재정의할 두 가지 필수 메서드는 [`setup()`](http://processing.org/reference/setup_.html)과 [`draw()`](http://processing.org/reference/draw_.html)입니다. `setup()` 메서드는 앱이 시작될 때만 호출되며, 앱 창의 크기를 설정하는 것과 같은 일들을 수행하는 곳입니다. `draw()` 메서드는 모든 애니메이션에 대해 호출되거나 `redraw()`를 호출하여 어떤 동작이 트리거된 후에 호출됩니다. (
+Processing 문서에 따르면 `draw()`는 명시적으로 호출되어서는 안 됩니다.)
 
-Processing is designed to work nicely to create animated sketches, but in this
-case we don’t want animation[^noanim], we want to respond to key presses. To prevent
-animation (which would be a drag on performance) we will call
-[`noLoop()`](http://www.processing.org/reference/noLoop_.html) from setup. This
-means that `draw()` will only be called immediately after `setup()`, and
-whenever we call `redraw()`.
+Processing은 애니메이션 스케치를 만들기 위해 잘 작동하도록 설계되었지만, 이 경우에는 애니메이션[^noanim]을 원하지 않고 키 입력에 응답하기를 원합니다. (성능에 부담이 될) 애니메이션을 방지하기 위해 setup에서 [`noLoop()`](http://www.processing.org/reference/noLoop_.html)를 호출할 것입니다. 이는 `draw()`가 `setup()` 직후와 `redraw()`를 호출할 때마다만 호출된다는 것을 의미합니다.
 
-[^noanim]: If we wanted to create an animated sketch we would not call
-`noLoop()` (or, if we wanted to start animating later, we would call `loop()`).
-The frequency of the animation is determined by `frameRate()`.
+[^noanim]: 애니메이션 스케치를 만들고 싶다면 `noLoop()`을 호출하지 않을 것입니다 (또는, 나중에 애니메이션을 시작하고 싶다면 `loop()`을 호출할 것입니다). 애니메이션의 빈도는 `frameRate()`에 의해 결정됩니다.
 
 ```java
 private static final int WIDTH = 360;
@@ -240,38 +123,30 @@ public void draw() {
 }
 ```
 
-These don’t really do much yet, but try running the app again, adjusting the constants
-in `WIDTH` and `HEIGHT`, to see different sizes.
+이것들은 아직 많은 일을 하지 않지만, `WIDTH`와 `HEIGHT`의 상수를 조정하여 다른 크기를 보기 위해 앱을 다시 실행해보세요.
 
-`background(0)` specifies a black background. Try changing the number passed
-to `background()` and see what happens — it’s the alpha value, and so if you
-only pass one number in, it is always greyscale. Alternatively, you can call
-`background(int r, int g, int b)`.
+`background(0)`은 검은색 배경을 지정합니다. `background()`에 전달되는 숫자를 바꿔보세요 — 이것은 알파 값이며, 하나의 숫자만 전달하면 항상 회색조입니다. 대안으로 `background(int r, int g, int b)`를 호출할 수 있습니다.
 
 ### PImage
 
-The [PImage object](http://processing.org/reference/PImage.html) is the
-Processing object that represents an image. We’re going to be using this a lot,
-so it’s worth reading through the documentation.  It has three fields
-(\aosatblref{500l.imagefilters.pimagefields}) as well as some methods that we
-will use (\aosatblref{500l.imagefilters.pimagemethods}).
+[PImage 객체](http://processing.org/reference/PImage.html)는 이미지를 나타내는 Processing 객체입니다. 이것을 많이 사용할 예정이므로 문서를 읽어보는 것이 좋습니다. 세 개의 필드(\aosatblref{500l.imagefilters.pimagefields})와 우리가 사용할 몇 가지 메서드(\aosatblref{500l.imagefilters.pimagemethods})가 있습니다.
 
 <markdown>
 <table>
   <tr>
     <td>`pixels[]`</td>
-    <td>Array containing the color of every pixel in the image</td>
+    <td>이미지의 모든 픽셀 색상을 포함하는 배열</td>
   </tr>
   <tr>
     <td>`width`</td>
-    <td>Image width in pixels</td>
+    <td>픽셀 단위 이미지 너비</td>
   </tr>
   <tr>
     <td>`height`</td>
-    <td>Image height in pixels</td>
+    <td>픽셀 단위 이미지 높이</td>
   </tr>
 </table>
-: \label{500l.imagefilters.pimagefields} PImage fields
+: \label{500l.imagefilters.pimagefields} PImage 필드
 </markdown>
 <latex>
 \begin{table}
@@ -280,13 +155,13 @@ will use (\aosatblref{500l.imagefilters.pimagemethods}).
 \rowcolors{2}{TableOdd}{TableEven}
 \begin{tabular}{ll}
 \hline
-pixels[] & Array containing the color of every pixel in the image \\
-width & Image width in pixels \\
-height & Image height in pixels \\
+pixels[] & 이미지의 모든 픽셀 색상을 포함하는 배열 \\
+width & 픽셀 단위 이미지 너비 \\
+height & 픽셀 단위 이미지 높이 \\
 \hline
 \end{tabular}
 }
-\caption{PImage fields}
+\caption{PImage 필드}
 \label{500l.imagefilters.pimagefields}
 \end{table}
 </latex>
