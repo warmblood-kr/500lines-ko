@@ -575,13 +575,13 @@ House를 작성할 때 염두에 두었던 우려 중 하나는, 더 넓은 인�
 	,name (make-stream-handler ,args ,@body))))
 ```
 
-It delegates to three other macros (`bind-handler`, `make-closing-handler`, \newline `make-stream-handler`) that we will define later. `make-closing-handler` will create a handler for a full HTTP request/response cycle; `make-stream-handler` will instead handle an SSE message. The predicate `is-stream?` distinguishes between these cases for us. The backtick and comma are macro-specific operators that we can use to "cut holes" in our code that will be filled out by values specified in our Lisp code when we actually use `define-handler`.
+이는 나중에 정의할 세 개의 다른 매크로(`bind-handler`, `make-closing-handler`, `make-stream-handler`)에 위임합니다. `make-closing-handler`는 완전한 HTTP 요청/응답 사이클을 위한 핸들러를 생성하고, `make-stream-handler`는 대신 SSE 메시지를 처리합니다. 조건절 `is-stream?`이 이러한 경우들을 구분해줍니다. 백틱과 쉼표는 매크로 전용 연산자로, 실제로 `define-handler`를 사용할 때 Lisp 코드에서 지정한 값들로 채워질 코드의 "구멍을 뚫는" 데 사용할 수 있습니다.
 
-Notice how closely our macro conforms to our specification of what we wanted `define-handler` to do: If we were to write a series of Lisp functions to do all of these things, the intent of the code would be much more difficult to discern by inspection.
+우리 매크로가 `define-handler`가 하기를 원했던 것에 대한 명세와 얼마나 밀접하게 일치하는지 주목해보세요: 이 모든 것들을 수행하는 일련의 Lisp 함수들을 작성한다면, 코드의 의도를 검사를 통해 파악하기가 훨씬 어려웠을 것입니다.
 
-### Expanding a Handler
+### 핸들러 확장하기
 
-Let's step through the expansion for the `send-message` handler so that we better understand what is actually going on when Lisp "expands" our macro for us. We'll use the macro expansion feature from the [SLIME](https://common-lisp.net/project/slime/) Emacs mode to do this. Calling `macro-expander` on `define-handler` will expand our macro by one "level", leaving our helper macros in their still-condensed form:
+`send-message` 핸들러의 확장을 단계별로 살펴보면서 Lisp가 우리를 위해 매크로를 "확장"할 때 실제로 어떤 일이 일어나는지 더 잘 이해해봅시다. 이를 위해 [SLIME](https://common-lisp.net/project/slime/) Emacs 모드의 매크로 확장 기능을 사용할 것입니다. `define-handler`에서 `macro-expander`를 호출하면 매크로를 한 "수준"씩 확장하여 도우미 매크로들을 여전히 압축된 형태로 남겨둡니다:
 
 ```lisp
 (BIND-HANDLER
@@ -596,7 +596,7 @@ Let's step through the expansion for the `send-message` handler so that we bette
 	     `((:NAME ,@NAME) (:MESSAGE ,@MESSAGE))))))
 ```
 
-Our macro has already saved us a bit of typing by substituting our `send-message` specific code into our handler template. `bind-handler` is another macro which maps a URI to a handler function on our handlers table; since it's now at the root of our expansion, let's see how it is defined before expanding this further.
+우리 매크로는 이미 `send-message` 전용 코드를 핸들러 템플릿에 대입함으로써 약간의 타이핑을 절약해주었습니다. `bind-handler`는 핸들러 테이블에서 URI를 핸들러 함수에 매핑하는 또 다른 매크로입니다. 이제 이것이 확장의 루트에 있으므로, 더 확장하기 전에 어떻게 정의되어 있는지 살펴봅시다.
 
 ```lisp
 (defmacro bind-handler (name handler)
@@ -608,9 +608,9 @@ Our macro has already saved us a bit of typing by substituting our `send-message
        (setf (gethash ,uri *handlers*) ,handler))))
 ```
 
-The binding happens in the last line: `(setf (gethash ,uri *handlers*) ,handler)`, which is what hash-table assignments look like in Common Lisp (modulo the commas, which are part of our macro). Note that the `assert` is outside of the quoted area, which means that it'll be run as soon as the macro is _called_ rather than when its result is evaluated.
+바인딩은 마지막 줄에서 일어납니다: `(setf (gethash ,uri *handlers*) ,handler)`. 이는 Common Lisp에서 해시 테이블 할당이 어떻게 생겼는지를 보여줍니다(쉼표는 우리 매크로의 일부임을 고려해서). `assert`가 인용된 영역 밖에 있다는 점에 주목하세요. 이는 그 결과가 평가될 때가 아니라 매크로가 _호출되는_ 즉시 실행될 것임을 의미합니다.
 
-When we further expand our expansion of the `send-message` `define-handler` above, we get:
+위의 `send-message` `define-handler`의 확장을 더 확장하면, 다음을 얻습니다:
 
 ```lisp
 (PROGN
@@ -627,9 +627,9 @@ When we further expand our expansion of the `send-message` `define-handler` abov
 		    `((:NAME ,@NAME) (:MESSAGE ,@MESSAGE)))))))
 ```
 
-This is starting to look more like a custom implementation of what we would have written to marshal a request from a URI to a handler function, had we written it all ourselves. But we didn't have to!
+이는 우리가 URI에서 핸들러 함수로 요청을 마샬링하기 위해 직접 작성했다면 쓸 수 있는 것의 사용자 정의 구현과 더 비슷해 보이기 시작합니다. 하지만 우리는 그렇게 할 필요가 없었습니다!
 
-We still have `make-closing-handler` left to go in our expansion. Here is its definition:
+우리 확장에서 아직 `make-closing-handler`가 남아있습니다. 다음은 그 정의입니다:
 
 ```lisp
 (defmacro make-closing-handler
@@ -646,7 +646,7 @@ We still have `make-closing-handler` left to go in our expansion. Here is its de
 	  (socket-close sock)))))
 ```
 
-So making a closing-handler involves making a `lambda`, which is just what you call anonymous functions in Common Lisp. We also set up an interior scope that makes a `response` out of the `body` argument we're passing in, performs a `write!` to the requesting socket, then closes it. The remaining question is, what is `arguments`?
+따라서 closing-handler를 만든다는 것은 `lambda`를 만든다는 것이며, 이는 Common Lisp에서 익명 함수라고 부르는 것입니다. 또한 우리가 전달하는 `body` 인수로부터 `response`를 만들고, 요청하는 소켓에 `write!`를 수행한 후, 소켓을 닫는 내부 범위를 설정합니다. 남은 질문은, `arguments`가 무엇인가 하는 것입니다.
 
 ```lisp
 (defun arguments (args body)
@@ -668,7 +668,7 @@ So making a closing-handler involves making a `lambda`, which is just what you c
      finally (return res)))
 ```
 
-Welcome to the hard part. `arguments` turns the validators we registered with our handler into a tree of parse attempts and assertions. `type-expression`, `arg-exp`, and `type-assertion` are used to implement and enforce a "type system" for the kinds of data we're expecting in our responses; we'll discuss them in \aosasecref{sec.eventsweb.types}. Using this together with `make-closing-handler` would implement the validation rules we wrote here:
+어려운 부분에 오신 것을 환영합니다. `arguments`는 우리가 핸들러에 등록한 검증자들을 파싱 시도와 어설션의 트리로 변환합니다. `type-expression`, `arg-exp`, `type-assertion`은 응답에서 기대하는 데이터 종류에 대한 "타입 시스템"을 구현하고 강제하는 데 사용됩니다. 이들에 대해서는 \aosasecref{sec.eventsweb.types}에서 논의할 것입니다. 이를 `make-closing-handler`와 함께 사용하면 우리가 여기에 작성한 검증 규칙들을 구현할 것입니다:
 
 ```lisp
 (define-handler (send-message)
@@ -717,7 +717,7 @@ Welcome to the hard part. `arguments` turns the validators we registered with ou
 	  (SOCKET-CLOSE SOCK))))))
 ```
 
-This gets us the validation we need for full HTTP request/response cycles. What about our SSEs? `make-stream-handler` does the same basic thing as `make-closing-handler`, except that it writes an `SSE` rather than a `RESPONSE`, and it calls `force-output` instead of `socket-close` because we want to flush data over the connection without closing it:
+이는 완전한 HTTP 요청/응답 사이클에 필요한 검증을 제공합니다. 우리의 SSE는 어떨까요? `make-stream-handler`는 `make-closing-handler`와 동일한 기본 작업을 수행하지만, `RESPONSE` 대신 `SSE`를 쓰고, 연결을 닫지 않고 데이터를 플러시하고 싶으므로 `socket-close` 대신 `force-output`을 호출한다는 점이 다릅니다:
 
 ```lisp
 (defmacro make-stream-handler ((&rest args) &body body)
@@ -744,7 +744,7 @@ This gets us the validation we need for full HTTP request/response cycles. What 
 	     :assertion ',assertion))))
 ```
 
-`assert-http` is a macro that creates the boilerplate code we need in error cases. It expands into a check of the given assertion, throws an `http-assertion-error` if it fails, and packs the original assertion along in that event.
+`assert-http`는 오류 경우에 필요한 상용구 코드를 생성하는 매크로입니다. 주어진 어설션의 검사로 확장되며, 실패할 경우 `http-assertion-error`를 던지고, 그 경우에 원래 어설션을 함께 패킹합니다.
 
 ```lisp
 (defmacro assert-http (assertion)
@@ -757,11 +757,11 @@ This gets us the validation we need for full HTTP request/response cycles. What 
 ### HTTP "Types"
 \label{sec.eventsweb.types}
 
-In the previous section, we briefly touched on three expressions that we're using to implement our HTTP type validation system: `arg-exp`, `type-expression` and `type-assertion`. Once you understand those, there will be no magic left in our framework. We'll start with the easy one first.
+이전 섹션에서 HTTP 타입 검증 시스템을 구현하는 데 사용하고 있는 세 가지 표현식(`arg-exp`, `type-expression`, `type-assertion`)에 대해 간략히 언급했습니다. 이들을 이해하고 나면 우리 프레임워크에는 더 이상 마법이 남아있지 않을 것입니다. 쉬운 것부터 시작해봅시다.
 
 #### arg-exp
 
-`arg-exp` takes a symbol and creates an `aif` expression that checks for the presence of a parameter.
+`arg-exp`는 심볼을 받아서 매개변수의 존재를 확인하는 `aif` 표현식을 생성합니다.
 
 ```lisp
 (defun arg-exp (arg-sym)
@@ -784,15 +784,15 @@ HOUSE> (arg-exp 'room)
 HOUSE>
 ```
 
-We've been using forms like `aif` and `awhen` without understanding how they work, so let's take some time to explore them now.
+우리는 `aif`와 `awhen` 같은 형태들을 어떻게 작동하는지 이해하지 않고 사용해왔으므로, 이제 시간을 내어 탐구해봅시다.
 
-Recall that Lisp code is itself represented as a tree. That's what the parentheses are for; they show us how leaves and branches fit together. If we step back to what we were doing in the previous section, `make-closing-handler` calls a function called `arguments` to generate part of the Lisp tree it's constructing, which in turn calls some tree-manipulating helper functions, including `arg-exp`, to generate its return value.
+Lisp 코드 자체가 트리로 표현된다는 것을 상기해보세요. 괄호가 바로 그 목적을 위한 것입니다. 괄호는 잎과 가지들이 어떻게 맞춰지는지 보여줍니다. 이전 섹션에서 우리가 했던 일을 되돌아보면, `make-closing-handler`는 구축 중인 Lisp 트리의 일부를 생성하기 위해 `arguments`라는 함수를 호출하며, 이는 다시 `arg-exp`를 포함한 일부 트리 조작 도우미 함수들을 호출하여 반환 값을 생성합니다.
 
-That is, we've built a small system that takes a Lisp expression as input, and produces a different Lisp expression as output. Possibly the simplest way of conceptualizing this is as a simple Common–Lisp-to-Common–Lisp compiler that is specialized to the problem at hand.
+즉, 우리는 Lisp 표현식을 입력으로 받아서 다른 Lisp 표현식을 출력으로 생성하는 작은 시스템을 구축했습니다. 이를 개념화하는 가장 간단한 방법은 아마도 당면한 문제에 특화된 간단한 Common-Lisp-to-Common-Lisp 컴파일러로 보는 것일 것입니다.
 
-A widely used classification of such compilers is as _anaphoric macros_. This term comes from the linguistic concept of an _anaphor_, which is the use of one word as a substitute for a group of words that preceded it. `aif` and `awhen` are anaphoric macros, and they're the only ones that I tend to often use. There are many more availabile in the [`anaphora` package](http://www.cliki.net/Anaphora).
+이런 컴파일러들의 널리 사용되는 분류는 _아나포릭 매크로_입니다. 이 용어는 언어학적 개념인 _아나포라_에서 나온 것으로, 앞서 나온 단어 그룹을 대체하는 하나의 단어를 사용하는 것을 의미합니다. `aif`와 `awhen`은 아나포릭 매크로이며, 제가 자주 사용하는 유일한 것들입니다. [`anaphora` 패키지](http://www.cliki.net/Anaphora)에는 더 많은 것들이 사용 가능합니다.
 
-As far as I know, anaphoric macros were first defined by Paul Graham in an [OnLisp chapter](http://dunsmor.com/lisp/onlisp/onlisp_18.html). The use case he gives is a situation where you want to do some sort of expensive or semi-expensive check, then do something conditionally on the result. In the above context, we're using `aif` to do a check the result of an `alist` traversal.
+제가 아는 한, 아나포릭 매크로는 Paul Graham이 [OnLisp 챕터](http://dunsmor.com/lisp/onlisp/onlisp_18.html)에서 처음 정의했습니다. 그가 제시한 사용 사례는 어떤 종류의 비용이 많이 들거나 중간 정도 비용이 드는 검사를 수행한 후, 그 결과에 조건부로 무언가를 하고 싶은 상황입니다. 위 문맥에서 우리는 `alist` 순회 결과를 확인하기 위해 `aif`를 사용하고 있습니다.
 
 ```lisp
 (aif (cdr (assoc :room parameters))
@@ -802,9 +802,9 @@ As far as I know, anaphoric macros were first defined by Paul Graham in an [OnLi
 	     :assertion 'room)))
 ```
 
-This takes the `cdr` of looking up the symbol `:room` in the association list `parameters`. If that returns a non-nil value, `uri-decode` it, otherwise throw an error of the type `http-assertion-error`.
+이는 연관 리스트 `parameters`에서 심볼 `:room`을 찾는 것의 `cdr`을 가져옵니다. 그것이 nil이 아닌 값을 반환하면 `uri-decode`하고, 그렇지 않으면 `http-assertion-error` 타입의 오류를 던집니다.
 
-In other words, the above is equivalent to:
+다시 말해, 위는 다음과 동등합니다:
 
 ```lisp
 (let ((it (cdr (assoc :room parameters))))
@@ -815,9 +815,9 @@ In other words, the above is equivalent to:
 	      :assertion 'room))))
 ```
 
-Strongly-typed functional languages like Haskell often use a `Maybe` type in this situation. In Common Lisp, we capture the symbol `it` in the expansion as the name for the result of the check.
+Haskell과 같은 강타입 함수형 언어들은 이런 상황에서 종종 `Maybe` 타입을 사용합니다. Common Lisp에서는 확장에서 심볼 `it`을 검사 결과의 이름으로 캡처합니다.
 
-Understanding this, we should be able to see that `arg-exp` is generating a specific, repetitive, piece of the code tree that we eventually want to evaluate. In this case, the piece that checks for the presence of the given parameter among the handlers' `parameters`. Now, let's move onto...
+이를 이해하면, `arg-exp`가 결국 평가하고자 하는 코드 트리의 구체적이고 반복적인 조각을 생성한다는 것을 알 수 있어야 합니다. 이 경우, 핸들러의 `parameters` 중에서 주어진 매개변수의 존재를 확인하는 조각입니다. 이제 다음으로 넘어갑시다...
 
 #### type-expression
 
@@ -831,7 +831,7 @@ a particular, necessary type."))
 (defmethod type-expression (parameter type) nil)
 ```
 
-This is a generic function that generates new tree structures (coincidentally Lisp code), rather than just a function. The only thing the above tells you is that by default, a `type-expression` is `NIL`. Which is to say, we don't have one. If we encounter a `NIL`, we use the raw output of `arg-exp`, but that doesn't tell us much about the most common case. To see that, let's take a look at a built-in (to `:house`) `define-http-type` expression.
+이는 단순한 함수가 아닌 새로운 트리 구조들(우연히 Lisp 코드)을 생성하는 제네릭 함수입니다. 위가 알려주는 유일한 것은 기본적으로 `type-expression`이 `NIL`이라는 것입니다. 즉, 우리에게는 그런 것이 없다는 것입니다. `NIL`을 만나면 `arg-exp`의 원시 출력을 사용하지만, 이는 가장 일반적인 경우에 대해서는 많은 것을 알려주지 않습니다. 그것을 보기 위해, (`:house`에) 내장된 `define-http-type` 표현식을 살펴봅시다.
 
 ```lisp
 (define-http-type (:integer)
@@ -847,7 +847,7 @@ HOUSE> (type-expression 'blah :integer)
 HOUSE>
 ```
 
-`define-http-handler`[^readable] is one of the exported symbols for our framework. This lets our application programmers define their own types to simplify parsing above the handful of "builtins" that we give them (`:string`, `:integer`, `:keyword`, `:json`, `:list-of-keyword` and `:list-of-integer`).
+`define-http-handler`[^readable]는 우리 프레임워크의 내보낸 심볼 중 하나입니다. 이는 애플리케이션 프로그래머들이 우리가 제공하는 소수의 "내장" 타입들(`:string`, `:integer`, `:keyword`, `:json`, `:list-of-keyword`, `:list-of-integer`) 위에 파싱을 단순화하기 위해 자신만의 타입을 정의할 수 있게 해줍니다.
 
 ```lisp
 (defmacro define-http-type ((type) &key type-expression type-assertion)
@@ -863,9 +863,9 @@ HOUSE>
 
 [^readable]: This macro is difficult to read because it tries hard to make its output human-readable, by expanding `NIL`s away using `,@` where possible.
 
-It works by creating `type-expression` and `type-assertion` method definitions for the type being defined. We could let users of our framework do this manually without much trouble; however, adding this extra level of indirection gives us, the framework programmers, the freedom to change _how_ types are implemented without forcing our users to re-write their specifications. This isn't just an academic consideration; I've personally made radical changes to this part of the system when first building it, and was pleased to find that I had to make very few edits to the applications that depended on it.
+이는 정의되는 타입에 대한 `type-expression`과 `type-assertion` 메서드 정의들을 생성함으로써 작동합니다. 우리 프레임워크 사용자들이 이를 수동으로 수행하도록 할 수도 있지만, 이 추가적인 간접 수준을 추가함으로써 우리 프레임워크 프로그래머들은 사용자들이 명세를 다시 작성하도록 강요하지 않고도 타입이 _어떻게_ 구현되는지를 변경할 자유를 얻습니다. 이는 단순한 학문적 고려사항이 아닙니다. 저는 개인적으로 이 시스템을 처음 구축할 때 이 부분을 급진적으로 변경했으며, 그것에 의존하는 애플리케이션들을 매우 적게 편집하면 된다는 것을 발견하고 기뻤습니다.
 
-Let's take a look at the expansion of that integer definition to see how it works in detail:
+그 정수 정의의 확장을 살펴보면서 어떻게 작동하는지 자세히 보겠습니다:
 
 ```lisp
 (LET ((#:TP1288 :INTEGER))
@@ -875,11 +875,11 @@ Let's take a look at the expansion of that integer definition to see how it work
     `(NUMBERP ,PARAMETER)))
 ```
 
-As we said, it doesn't reduce code size by much, but it does prevent us from needing to care what the specific parameters of those methods are, or even that they're methods at all.
+앞서 말했듯이, 이는 코드 크기를 많이 줄이지는 않지만, 그 메서드들의 구체적인 매개변수가 무엇인지, 심지어 그것들이 메서드인지조차 신경 쓸 필요가 없게 해줍니다.
 
 #### type-assertion
 
-Now that we can define types, let's look at how we use `type-assertion` to validate that a parse satisfies our requirements. It, too, takes the form of a complementary `defgeneric`/`defmethod` pair just like `type-expression`:
+이제 타입을 정의할 수 있으므로, 파싱이 우리 요구사항을 만족하는지 검증하기 위해 `type-assertion`을 어떻게 사용하는지 살펴봅시다. 이 역시 `type-expression`과 마찬가지로 보완적인 `defgeneric`/`defmethod` 쌍의 형태를 취합니다:
 
 ```lisp
 (defgeneric type-assertion (parameter type)
@@ -907,15 +907,15 @@ NIL
 HOUSE>
 ```
 
-### All Together Now
+### 이제 모든 것을 함께
 
-We did it! We built a web framework on top of an event-driven webserver implementation. Our framework (and handler DSL) defines new applications by:
+해냈습니다! 이벤트 주도 웹서버 구현 위에 웹 프레임워크를 구축했습니다. 우리 프레임워크(및 핸들러 DSL)는 다음과 같은 방법으로 새로운 애플리케이션을 정의합니다:
 
-- Mapping URLs to handlers;
-- Defining handlers to enforce the type safety and validation rules on requests;
-- Optionally specifying new types for handlers as required.
+- URL을 핸들러에 매핑하기
+- 요청에 대한 타입 안전성과 검증 규칙을 강제하는 핸들러 정의하기
+- 필요에 따라 핸들러를 위한 새로운 타입을 선택적으로 지정하기
 
-Now we can describe our application like this:
+이제 우리는 다음과 같이 애플리케이션을 기술할 수 있습니다:
 
 ```lisp
 (defun len-between (min thing max)
@@ -946,4 +946,4 @@ Now we can describe our application like this:
 (start 4242)
 ```
 
-Once we write `interface.js` to provide the client-side interactivity, this will start an HTTP chat server on port `4242` and listen for incoming connections.
+클라이언트 측 상호작용을 제공하기 위해 `interface.js`를 작성하면, 이는 포트 `4242`에서 HTTP 채팅 서버를 시작하고 들어오는 연결을 대기할 것입니다.
