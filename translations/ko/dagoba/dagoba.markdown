@@ -1157,7 +1157,7 @@ we can just say `g.v('Forseti').cousins()`.
 
 We've introduced a bit of a pickle, though: while our `addAlias` function is resolving an alias it also has to resolve other aliases. What if `parents` called some other alias, and while we were resolving `cousins` we had to stop to resolve `parents` and then resolve its aliases and so on? What if one of `parents` aliases ultimately called `cousins`?
 
-This brings us in to the realm of dependency resolution[^dependencyresolution], a core component of modern package managers. There are a lot of fancy tricks for choosing ideal versions, tree shaking, general optimizations and the like, but the basic idea is fairly simple. We're going to make a graph of all the dependencies and their relationships, and then try to find a way to line up the vertices while making all the arrows go from left to right. If we can, then this particular sorting of the vertices is called a 'topological ordering', and we've proven that our dependency graph has no cycles: it is a Directed Acyclic Graph (DAG). If we fail to do so then our graph has at least one cycle.
+이는 우리를 현대 패키지 매니저의 핵심 구성 요소인 의존성 해결[^dependencyresolution]의 영역으로 이끈다. 이상적인 버전 선택, 트리 셰이킹, 일반적인 최적화 등을 위한 많은 멋진 기법들이 있지만, 기본 아이디어는 꽤 간단하다. 모든 의존성과 그 관계의 그래프를 만들고, 모든 화살표가 왼쪽에서 오른쪽으로 향하도록 정점들을 정렬하는 방법을 찾으려고 할 것이다. 그렇게 할 수 있다면, 이 특별한 정점들의 정렬을 '위상 순서'라고 부르며, 우리의 의존성 그래프에 순환이 없음을 증명한 것이다: 즉, 방향성 비순환 그래프(DAG)다. 그렇게 하지 못한다면 우리 그래프에는 적어도 하나의 순환이 있다.
 
 [^dependencyresolution]: You can learn more about dependency resolution in the Contingent chapter of this book.
 
@@ -1172,13 +1172,13 @@ On the other hand, we expect that our queries will generally be rather short (10
 
 [^ponyexpress]: Though only in operation for 18 months due to the arrival of the transcontinental telegraph and the outbreak of the American Civil War, the Pony Express is still remembered today for delivering mail coast to coast in just ten days.
 
-To alleviate this dismal performance most databases index over oft-queried fields, which turns an $O(n)$ search into an $O(log n)$ search. This gives considerably better search performance, but at the cost of some write performance and a lot of space&mdash;indices can easily double the size of a database. Careful balancing of the space/time tradeoffs of indices is part of the perpetual tuning process for most databases.
+이런 암울한 성능을 완화하기 위해 대부분의 데이터베이스는 자주 질의되는 필드에 대해 인덱스를 만들어, $O(n)$ 검색을 $O(log n)$ 검색으로 바꾼다. 이는 상당히 나은 검색 성능을 제공하지만, 일부 쓰기 성능과 많은 공간을 대가로 한다&mdash;인덱스는 쉽게 데이터베이스의 크기를 두 배로 늘릴 수 있다. 인덱스의 공간/시간 트레이드오프의 신중한 균형은 대부분 데이터베이스의 지속적인 튜닝 프로세스의 일부다.
 
 그래프 데이터베이스는 정점과 간선 사이에 직접 연결을 만들어서 이 문제를 우회하므로, 그래프 순회는 그냥 포인터 점프다; 모든 항목을 스캔할 필요도, 인덱스도, 추가 작업도 전혀 없다. 이제 친구 찾기는 그래프의 총 사람 수와 관계없이 같은 비용이며, 추가 공간 비용이나 쓰기 시간 비용도 없다. 이 접근법의 한 가지 단점은 전체 그래프가 같은 머신의 메모리에 있을 때 포인터가 최고로 작동한다는 것이다. 여러 머신에 걸쳐 그래프 데이터베이스를 효과적으로 샤딩하는 것은 여전히 활발한 연구 영역이다[^graphdbsharding].
 
 [^graphdbsharding]: Sharding a graph database requires partitioning the graph. [Optimal graph partitioning is NP-hard](http://dl.acm.org/citation.cfm?doid=1007912.1007931), even for simple graphs like trees and grids, and good approximations also have exponential [asymptotic complexity](http://arxiv.org/pdf/1311.3144v2.pdf).
 
-We can see this at work in the microcosm of Dagoba if we replace the functions for finding edges. Here's a naive version that searches through all the edges in linear time. It's similar to our very first implementation, but uses all the structures we've since built.
+간선을 찾는 함수들을 교체해보면 Dagoba의 소우주에서 이것이 작동하는 것을 볼 수 있다. 다음은 모든 간선을 선형 시간으로 검색하는 순진한 버전이다. 우리의 최초 구현과 비슷하지만, 그 이후 구축한 모든 구조들을 사용한다.
 
 ```javascript
 Dagoba.G.findInEdges  = function(vertex) {
@@ -1189,21 +1189,21 @@ Dagoba.G.findOutEdges = function(vertex) {
 }
 ```
 
-We can add an index for edges, which gets us most of the way there with small graphs but has all the classic indexing issues for large ones.
+간선에 대한 인덱스를 추가할 수 있는데, 이는 작은 그래프에서는 거의 목표에 도달하게 해주지만 큰 그래프에서는 모든 전형적인 인덱싱 문제들을 갖는다.
 
 ```javascript
 Dagoba.G.findInEdges  = function(vertex) { return this.inEdgeIndex [vertex._id] }
 Dagoba.G.findOutEdges = function(vertex) { return this.outEdgeIndex[vertex._id] }
 ```
 
-And here we have our old friends back again: pure, sweet index-free adjacency.
+그리고 여기서 우리는 옛 친구들을 다시 만난다: 순수하고 달콤한 인덱스-프리 인접성.
 
 ```javascript
 Dagoba.G.findInEdges  = function(vertex) { return vertex._in  }
 Dagoba.G.findOutEdges = function(vertex) { return vertex._out }
 ```
 
-Run these yourself to experience the graph database difference [^jslistfilter].
+그래프 데이터베이스의 차이를 경험하려면 직접 실행해보라[^jslistfilter].
 
 [^jslistfilter]: In modern JavaScript engines filtering a list is quite fast&mdash;for small graphs the naive version can actually be faster than the index-free version due to the underlying data structures and the way the code is JIT compiled. Try it with different sizes of graphs to see how the two approaches scale.
 
@@ -1214,11 +1214,11 @@ Run these yourself to experience the graph database difference [^jslistfilter].
 
 우리의 자연스러운 경향은 `JSON.stringify(graph)`와 같은 것을 하는 것인데, 이는 "TypeError: Converting circular structure to JSON"이라는 끔찍하게 도움이 되는 오류를 생성한다. 그래프 구축 과정에서 정점들이 간선들에 연결되었고, 간선들은 모두 정점들에 연결되었으므로, 이제 모든 것이 다른 모든 것을 참조한다. 그러면 어떻게 우리의 멋지고 깔끔한 목록들을 다시 추출할 수 있을까? JSON 교체 함수가 구해준다.
 
-The `JSON.stringify` function takes a value to stringify, but it also takes two additional parameters: a replacer function and a whitespace number [^protip]. The replacer allows you to customize how the stringification proceeds.
+`JSON.stringify` 함수는 문자열화할 값을 받지만, 두 개의 추가 매개변수도 받는다: replacer 함수와 공백 숫자[^protip]. replacer는 문자열화가 진행되는 방식을 커스터마이징할 수 있게 해준다.
 
 [^protip]: Pro tip: Given a deep tree `deep_tree`, running `JSON.stringify(deep_tree, 0, 2)` in the JS console is a quick way to make it human readable.
 
-We need to treat the vertices and edges a bit differently, so we're going to manually merge the two sides into a single JSON string.
+정점과 간선을 조금 다르게 처리해야 하므로, 두 쪽을 단일 JSON 문자열로 수동으로 병합할 것이다.
 
 ```javascript
 Dagoba.jsonify = function(graph) {
@@ -1228,7 +1228,7 @@ Dagoba.jsonify = function(graph) {
 }
 ```
 
-And these are the replacers for vertices and edges.
+그리고 이것들이 정점과 간선을 위한 replacer들이다.
 
 ```javascript
 Dagoba.cleanVertex = function(key, value) {
@@ -1240,9 +1240,9 @@ Dagoba.cleanEdge = function(key, value) {
 }
 ```
 
-The only difference between them is what they do when a cycle is about to be formed: for vertices, we skip the edge list entirely. For edges, we replace each vertex with its ID. That gets rid of all the cycles we created while building the graph.
+그들 사이의 유일한 차이는 순환이 형성되려고 할 때 무엇을 하는가다: 정점의 경우, 간선 목록을 완전히 건너뛴다. 간선의 경우, 각 정점을 그것의 ID로 대체한다. 이렇게 하면 그래프를 구축하면서 생성한 모든 순환을 제거할 수 있다.
 
-We're manually manipulating JSON in `Dagoba.jsonify`, which generally isn't recommended as the JSON format is rather persnickety. Even in a dose this small it's easy to miss something and hard to visually confirm correctness.
+`Dagoba.jsonify`에서 JSON을 수동으로 조작하고 있는데, 이는 JSON 포맷이 꽤 까다롭기 때문에 일반적으로 권장되지 않는다. 이처럼 작은 양이라도 무언가를 놓치기 쉽고 정확성을 시각적으로 확인하기 어렵다.
 
 We could merge the two replacer functions into a single function, and use that new replacer function over the whole graph by doing `JSON.stringify(graph, my_cool_replacer)`. This frees us from having to manually massage the JSON output, but the resulting code may be quite a bit messier. Try it yourself and see if you can come up with a well-factored solution that avoids hand-coded JSON. (Bonus points if it fits in a tweet.)
 
@@ -1257,9 +1257,9 @@ Fortunately, we're building an *in-memory* database, so we don't have to worry a
 Dagoba.G.toString = function() { return Dagoba.jsonify(this) }
 ```
 
-In JavaScript an object's `toString` function is called whenever that object is coerced into a string. So if `g` is a graph, then `g+''` will be the graph's serialized JSON string.
+JavaScript에서 객체의 `toString` 함수는 그 객체가 문자열로 강제 변환될 때마다 호출된다. 따라서 `g`가 그래프라면, `g+''`는 그래프의 직렬화된 JSON 문자열이 될 것이다.
 
-The `fromString` function isn't part of the language specification, but it's handy to have around.
+`fromString` 함수는 언어 스펙의 일부가 아니지만, 갖고 있으면 편리하다.
 
 ```javascript
 Dagoba.fromString = function(str) {             // another graph constructor
@@ -1283,11 +1283,11 @@ Dagoba.depersist = function (name) {
 }
 ```
 
-We preface the name with a faux namespace to avoid polluting the `localStorage` properties of the domain, as it can get quite crowded in there. There's also usually a low storage limit, so for larger graphs we'd probably want to use a Blob of some sort.
+도메인의 `localStorage` 속성을 오염시키는 것을 피하기 위해 이름에 가짜 네임스페이스를 접두사로 붙인다. 그곳은 꽤 복잡해질 수 있기 때문이다. 또한 보통 낮은 저장 제한이 있으므로, 더 큰 그래프의 경우 어떤 종류의 Blob을 사용하고 싶을 것이다.
 
-There are also potential issues if multiple browser windows from the same domain are persisting and depersisting simultaneously. The `localStorage` space is shared between those windows, and they're potentially on different event loops, so there's the possibility of one carelessly overwriting the work of another. The spec says there should be a mutex required for read/write access to `localStorage`, but it's inconsistently implemented between different browsers, and even with it a simple implementation like ours could still encounter issues.
+같은 도메인의 여러 브라우저 창이 동시에 지속화와 비지속화를 수행한다면 잠재적인 문제들도 있다. `localStorage` 공간은 그런 창들 사이에 공유되고, 그들은 잠재적으로 다른 이벤트 루프에 있으므로, 하나가 부주의하게 다른 것의 작업을 덮어쓸 가능성이 있다. 스펙에 따르면 `localStorage`에 대한 읽기/쓰기 접근에 뮤텍스가 필요해야 한다고 하지만, 다양한 브라우저 간에 일관성 없게 구현되어 있고, 그것이 있어도 우리와 같은 간단한 구현은 여전히 문제에 직면할 수 있다.
 
-If we wanted our persistence implementation to be multi-window–concurrency aware, then we could make use of the storage events that are fired when `localStorage` is changed to update our local graph accordingly.
+우리의 지속성 구현이 다중 창 동시성을 인식하게 하고 싶다면, `localStorage`가 변경될 때 발생하는 스토리지 이벤트를 활용하여 우리의 로컬 그래프를 그에 따라 업데이트할 수 있다.
 
 
 ## 업데이트
@@ -1296,9 +1296,9 @@ Our `out` pipetype copies the vertex's out-going edges and pops one off each tim
 
 누군가가 질의 중간에 우리가 방문한 간선을 삭제한다면, 간선 목록의 크기가 바뀌고, 카운터가 맞지 않아 간선을 건너뛰게 될 것이다. 이를 해결하기 위해 질의에 관련된 정점들을 잠글 수 있지만, 그러면 정기적으로 그래프를 업데이트할 능력이나 요청에 따라 더 많은 결과에 응답하는 장수명 질의 객체의 능력을 잃게 될 것이다. 단일 스레드 이벤트 루프에 있음에도 불구하고, 우리 질의는 여러 비동기 재진입에 걸칠 수 있으므로, 이런 동시성 우려는 매우 실질적인 문제다.
 
-So we'll pay the performance price to copy the edge list. There's still a problem, though, in that long-lived queries may not see a completely consistent chronology. We will traverse every edge belonging to a vertex at the moment we visit it, but we visit vertices at different clock times during our query. Suppose we save a query like `var q = g.v('Odin').children().children().take(2)` and then call `q.run()` to gather two of Odin's grandchildren. Some time later we need to pull another two grandchildren, so we call `q.run()` again. If Odin has had a new grandchild in the intervening time, we may or may not see it, depending on whether the parent vertex was visited the first time we ran the query.
+따라서 우리는 간선 목록을 복사하는 성능 대가를 지불할 것이다. 하지만 여전히 문제가 있는데, 장수명 질의가 완전히 일관된 연대기를 보지 못할 수 있다는 것이다. 우리가 방문하는 순간에 정점에 속한 모든 간선을 순회할 것이지만, 질의 중에 다른 클럭 시간에 정점들을 방문한다. `var q = g.v('Odin').children().children().take(2)`와 같은 질의를 저장하고 `q.run()`을 호출하여 오딘의 손자들 중 둘을 수집한다고 가정해보자. 나중에 또 다른 두 손자를 가져와야 하므로 `q.run()`을 다시 호출한다. 그 사이에 오딘에게 새로운 손자가 생겼다면, 질의를 처음 실행했을 때 부모 정점을 방문했는지 여부에 따라 그것을 보게 될 수도 있고 아닐 수도 있다.
 
-One way to fix this non-determinism is to change the update handlers to add versioning to the data. We'll then change the driver loop to pass the graph's current version in to the query, so we're always seeing a consistent view of the world as it existed when the query was first initialized. Adding versioning to our database also opens the door to true transactions, and automated rollback/retries in an STM-like fashion.
+이 비결정성을 수정하는 한 가지 방법은 업데이트 핸들러를 변경하여 데이터에 버전을 추가하는 것이다. 그런 다음 드라이버 루프를 변경하여 그래프의 현재 버전을 질의에 전달하므로, 질의가 처음 초기화되었을 때 존재했던 세계의 일관된 뷰를 항상 보게 된다. 데이터베이스에 버전 관리를 추가하는 것은 또한 진정한 트랜잭션과 STM 같은 방식의 자동화된 롤백/재시도의 문을 열어준다.
 
 
 ## 미래 방향성
@@ -1337,17 +1337,17 @@ after the query transformers have all run. We could run the `times` transformer 
     g.v('Thor').out().all().out().all().out().all().run()
 ```
 
-Then run the `all` transformer and have it transform each `all` into a uniquely labeled `as`, and put a `merge` after the last `as`.
+그런 다음 `all` 트랜스포머를 실행하고 각 `all`을 고유하게 레이블된 `as`로 변환하게 하고, 마지막 `as` 뒤에 `merge`를 넣는다.
 
 There are a few problems with this, though. For one, this `as`/`merge` technique only works if every pathway is present in the graph: if we're missing an entry for one of Thor's great-grandparents then we will skip valid entries. For another, what happens if we want to do this to just part of a query and not the whole thing? What if there are multiple `all`s?
 
-To solve that first problem we're going to have to treat `all`s as something more than just as/merge. We need each parent gremlin to actually skip the intervening steps. We can think of this as a kind of teleportation&mdash;jumping from one part of the pipeline directly to another&mdash;or we can think of it as a certain kind of branching pipeline, but either way it complicates our model somewhat. Another approach would be to think of the gremlin as passing through the intervening pipes in a sort of suspended animation, until awoken by a special pipe. Scoping the suspending/unsuspending pipes may be tricky, however.
+그 첫 번째 문제를 해결하기 위해서는 `all`들을 단순한 as/merge 이상의 것으로 처리해야 할 것이다. 각 부모 그렘린이 실제로 중간 단계들을 건너뛰도록 해야 한다. 이것을 일종의 순간이동&mdash;파이프라인의 한 부분에서 다른 부분으로 직접 점프하는 것&mdash;으로 생각할 수 있고, 또는 특정 종류의 분기 파이프라인으로 생각할 수도 있지만, 어느 쪽이든 우리 모델을 어느 정도 복잡하게 만든다. 다른 접근법은 그렘린이 특별한 파이프에 의해 깨어날 때까지 일종의 정지 애니메이션 상태로 중간 파이프들을 통과하는 것으로 생각하는 것이다. 하지만 정지/해제 파이프들의 범위를 정하는 것은 까다로울 수 있다.
 
-The next two problems are easier. To modify just part of a query we'll wrap that portion in special start/end steps, like `g.v('Thor').out().start().in().out().end().times(4).run()`. Actually, if the interpreter knows about these special pipetypes we don't need the end step, because the end of a sequence is always a special pipetype. We'll call these special pipetypes "adverbs", because they modify regular pipetypes like adverbs modify verbs.
+다음 두 문제는 더 쉽다. 질의의 일부만 수정하려면 `g.v('Thor').out().start().in().out().end().times(4).run()`처럼 특별한 시작/끝 단계로 그 부분을 감쌀 것이다. 실제로, 인터프리터가 이런 특별한 파이프타입들을 알고 있다면 끝 단계가 필요 없는데, 시퀀스의 끝은 항상 특별한 파이프타입이기 때문이다. 이런 특별한 파이프타입들을 "부사"라고 부를 것인데, 부사가 동사를 수식하듯이 일반적인 파이프타입들을 수식하기 때문이다.
 
-To handle multiple `all`s we need to run all `all` transformers twice: once before `times`, to mark all `all`s uniquely, and again after `times` to re-mark all marked `all`s uniquely.
+여러 `all`들을 처리하려면 모든 `all` 트랜스포머를 두 번 실행해야 한다: `times` 전에 한 번은 모든 `all`들을 고유하게 표시하고, `times` 후에 다시 한 번은 표시된 모든 `all`들을 고유하게 재표시하기 위해서다.
 
-There's still the issue of searching through an unbounded number of ancestors&mdash;for example, how do we find out which of Ymir's descendants are scheduled to survive Ragnarök? We could make individual queries like `g.v('Ymir').in().filter({survives: true})` and <latex>\newline</latex> `g.v('Ymir').in().in().in().in().filter({survives: true})`, and manually collect the results ourselves, but that's pretty awful.
+여전히 무제한 수의 조상들을 검색하는 문제가 있다&mdash;예를 들어, 이미르의 후손들 중 라그나뢰크에서 생존하도록 예정된 것들을 어떻게 찾을까? `g.v('Ymir').in().filter({survives: true})`와 <latex>\newline</latex> `g.v('Ymir').in().in().in().in().filter({survives: true})`와 같은 개별 질의들을 만들어서 결과를 수동으로 수집할 수 있지만, 그것은 꽤 끔찍하다.
 
 We'd like to use an adverb like this:
 
