@@ -415,10 +415,10 @@ Python의 유연성의 핵심은
 A list is careful to maintain order,
 but it is not meaningful to talk about an absolute order
 for the edges in a graph.
-And a list would be perfectly happy to hold several copies
-of exactly the same edge,
-even though we only want it to be possible
-to draw a single arrow between `tutorial.rst` and `tutorial.html`.
+그리고 리스트는 정확히 동일한 엣지의 여러 사본을
+완벽하게 기꺼이 보관하게 되지만,
+우리는 `tutorial.rst`와 `tutorial.html` 사이에
+단일 화살표만 그어질 수 있기를 원합니다.
 The correct choice is thus the set,
 which would have us represent \aosafigref{500l.contingent.graph} as:
 
@@ -458,16 +458,16 @@ Contingent는 변경된 각 노드의 들어오는 엣지들을
 재구축하여 잠재적으로 오래된 엣지들을 제거하고
 이번에는 작업이 어떤 자원들을 사용하는지 다시 학습합니다.
 
-Our set-of-tuples does not make answering
-either of these questions easy.
-If we needed to know the relationship between `api.html`
-and the rest of the graph,
-we would need to traverse the entire set
-looking for edges that start or end at the `api.html` node.
+우리의 튜플 집합은 이러한 질문들 중
+어느 것도 쉽게 답할 수 있게 해주지 않습니다.
+만약 `api.html`과 그래프의 나머지 부분 사이의
+관계를 알아야 한다면,
+`api.html` 노드에서 시작하거나 끝나는 엣지들을 찾으면서
+전체 집합을 순회해야 할 것입니다.
 
-An associative data structure like Python's dict
-would make these chores easier
-by allowing direct lookup of all the edges from a particular node:
+Python의 딕셔너리와 같은 연관 데이터 구조는
+특정 노드로부터의 모든 엣지를 직접 조회할 수 있게 하여
+이러한 작업들을 더 쉽게 만들어줄 것입니다:
 
 ```python
     {'tutorial.rst': {('tutorial.rst', 'tutorial.html')},
@@ -478,14 +478,15 @@ by allowing direct lookup of all the edges from a particular node:
      'api.html': {('api.rst', 'api.html')}}
 ```
 
-Looking up the edges of a particular node would now be blazingly fast,
-at the cost of having to store every edge twice:
-once in a set of incoming edges,
-and once in a set of outgoing edges.
-But the edges in each set would have to be examined manually
-to see which are incoming and which are outgoing.
-It is also slightly redundant to keep naming the node
-over and over again in its set of edges.
+특정 노드의 엣지들을 조회하는 것은 이제 매우 빠르겠지만,
+모든 엣지를 두 번 저장해야 하는 비용이 따릅니다:
+한 번은 들어오는 엣지의 집합에,
+그리고 한 번은 나가는 엣지의 집합에.
+하지만 각 집합의 엣지들은 어떤 것이 들어오는 것이고
+어떤 것이 나가는 것인지 확인하기 위해
+수동으로 검토되어야 합니다.
+또한 엣지 집합에서 노드를
+반복해서 언급하는 것은 약간 중복적입니다.
 
 이 두 가지 반대 의견에 대한 해결책은
 들어오는 엣지와 나가는 엣지를
@@ -508,22 +509,23 @@ over and over again in its set of edges.
         }
 ```
 
-Notice that `outgoing` represents, directly in Python syntax,
-exactly what we drew in \aosafigref{500l.contingent.graph} earlier:
-the source documents on the left
-will be transformed by the build system into the
-output documents on the right.
-For this simple example each source points to only one output —
-all the output sets have only one element —
-but we will see examples shortly where a single input node
-has multiple downstream consequences.
+`outgoing`이 Python 문법으로 직접
+앞서 \aosafigref{500l.contingent.graph}에서 그렸던 것을
+정확히 표현한다는 점에 주목하세요:
+왼쪽의 소스 문서들이
+빌드 시스템에 의해 오른쪽의
+출력 문서들로 변환될 것입니다.
+이 간단한 예제에서는 각 소스가 하나의 출력만을 가리키며 —
+모든 출력 집합이 하나의 요소만을 갖습니다 —
+하지만 단일 입력 노드가
+여러 다운스트림 결과를 갖는 예제를 곧 보게 될 것입니다.
 
-Every edge in this dictionary-of-sets data structure
-does get represented twice,
-once as an outgoing edge from one node
+이 딕셔너리-집합 데이터 구조의 모든 엣지는
+실제로 두 번 표현됩니다.
+한 번은 한 노드에서 나가는 엣지로
 (`tutorial.rst` → `tutorial.html`)
-and again as an incoming edge to the other
-(`tutorial.html` ← `tutorial.rst`).
+그리고 다시 한 번은 다른 노드로 들어오는 엣지로
+(`tutorial.html` ← `tutorial.rst`) 표현됩니다.
 이 두 표현은 정확히 동일한 관계를 포착하지만,
 엣지의 양 끝에 있는 두 노드의
 반대 관점에서 표현합니다.
@@ -543,72 +545,71 @@ and again as an incoming edge to the other
 대부분의 인기 있는 프로그래밍 언어들이
 클래스를 정의하고 사용하기 위한 전용 문법을 포함하고 있습니다.
 
-But it turns out that classes are often orthogonal
-to the question of data structure design.
-Rather than offering us an entirely alternative data modeling paradigm,
-classes simply repeat data structures that we have already seen:
+하지만 클래스는 종종 데이터 구조 설계의 문제와
+직교한다는 것이 밝혀졌습니다.
+완전히 다른 데이터 모델링 패러다임을 제공하는 대신,
+클래스는 우리가 이미 봤던 데이터 구조들을 단순히 반복합니다:
 
-* A class instance is *implemented* as a dict.
-* A class instance is *used* like a mutable tuple.
+* 클래스 인스턴스는 딕셔너리로 *구현*됩니다.
+* 클래스 인스턴스는 변경 가능한 튜플처럼 *사용*됩니다.
 
-The class offers key lookup through a prettier syntax,
-where you get to say `graph.incoming`
-instead of `graph["incoming"]`.
-But, in practice, class instances are almost never used
-as generic key-value stores.
-Instead, they are used to organize related but heterogeneous data
-by attribute name,
-with implementation details encapsulated behind
-a consistent and memorable interface.
+클래스는 더 예쁜 문법을 통한 키 조회를 제공하여,
+`graph["incoming"]` 대신
+`graph.incoming`이라고 말할 수 있게 해줍니다.
+하지만 실제로, 클래스 인스턴스는 범용 키-값 저장소로
+거의 사용되지 않습니다.
+대신, 구현 세부사항이 일관되고 기억하기 쉬운 인터페이스 뒤에
+캡슐화된 상태로
+속성 이름에 따라 관련되지만 이질적인 데이터를
+정리하는 데 사용됩니다.
 
-So instead of putting a hostname and a port number together in a tuple
-and having to remember which came first and which came second,
-you create an `Address` class
-whose instances each have a `host` and a `port` attribute.
-You can then pass `Address` objects around
-where otherwise you would have had anonymous tuples.
+따라서 호스트명과 포트 번호를 튜플에 함께 넣고
+어느 것이 먼저이고 어느 것이 두 번째인지 기억해야 하는 대신,
+각 인스턴스가 `host`와 `port` 속성을 갖는
+`Address` 클래스를 생성합니다.
+그런 다음 익명 튜플을 사용했을 곳에서
+`Address` 객체를 전달할 수 있습니다.
 코드는 읽기 쉽고 쓰기도 쉬워집니다.
 하지만 클래스 인스턴스를 사용한다고 해서
 위에서 데이터 설계를 할 때 직면했던 질문들이
 실제로 바뀌는 것은 아닙니다;
 단지 더 예쁘고 덜 익명인 컨테이너를 제공할 뿐입니다.
 
-The true value of classes, then,
-is not that they change the science of data design.
-The value of classes
-is that they let you *hide* your data design from the rest of a program!
+따라서 클래스의 진정한 가치는
+데이터 설계의 과학을 바꾸는 것이 아닙니다.
+클래스의 가치는
+프로그램의 나머지 부분으로부터 데이터 설계를
+*숨길* 수 있게 해주는 것입니다!
 
-Successful application design
-hinges upon our ability to exploit
-the powerful built-in data structures Python offers us
-while minimizing the volume of details we are required to
-keep in our heads at any one time.
-Classes provide the mechanism for resolving this apparent quandary:
-used effectively, a class provides a facade
-around some small subset of the system's overall design.
-When working within one subset — a `Graph`, for example —
-we can forget the implementation details of other subsets
-as long as we can remember their interfaces.
-In this way, programmers often find themselves navigating
-among several levels of abstraction
-in the course of writing a system,
-now working with the specific data model and implementation details
-for a particular subsystem,
-now connecting higher-level concepts through their interfaces.
+성공적인 애플리케이션 설계는
+Python이 제공하는 강력한 내장 데이터 구조를 활용하면서
+동시에 한 번에 머릿속에 담아야 하는
+세부사항의 양을 최소화하는 능력에 달려 있습니다.
+클래스는 이런 명백한 딜레마를 해결하는 메커니즘을 제공합니다:
+효과적으로 사용될 때, 클래스는 시스템의 전체 설계 중
+일부 작은 부분집합 주위에 파사드를 제공합니다.
+한 부분집합 — 예를 들어 `Graph` — 내에서 작업할 때,
+인터페이스만 기억할 수 있다면
+다른 부분집합들의 구현 세부사항은 잊을 수 있습니다.
+이런 방식으로, 프로그래머들은 시스템을 작성하는 과정에서
+여러 추상화 수준 사이를 탐색하게 되며,
+때로는 특정 서브시스템의 구체적인 데이터 모델과
+구현 세부사항을 다루고,
+때로는 인터페이스를 통해 고수준 개념들을 연결합니다.
 
-For example, from the outside,
-code can simply ask for a new `Graph` instance:
+예를 들어, 외부에서는
+코드가 단순히 새로운 `Graph` 인스턴스를 요청할 수 있습니다:
 
 ```python
 >>> from contingent import graphlib
 >>> g = graphlib.Graph()
 ```
 
-without needing to understand the details of how `Graph` works.
-Code that is simply using the graph
-sees only interface verbs — the method calls —
-when manipulating a graph,
-as when an edge is added or some other operation performed:
+`Graph`가 어떻게 작동하는지에 대한 세부사항을 이해할 필요가 없습니다.
+그래프를 단순히 사용하는 코드는
+엣지를 추가하거나 다른 작업을 수행할 때처럼
+그래프를 조작할 때
+인터페이스 동사 — 메서드 호출 — 만을 봅니다:
 
 ```python
 >>> g.add_edge('index.rst', 'index.html')
@@ -616,13 +617,13 @@ as when an edge is added or some other operation performed:
 >>> g.add_edge('api.rst', 'api.html')
 ```
 
-Careful readers will have noticed that we added edges to our graph
-without explicitly creating “node” and “edge” objects,
-and that the nodes themselves in these early examples
-are simply strings.
-Coming from other languages and traditions,
-one might have expected to see
-user-defined classes and interfaces for everything in the system:
+주의 깊은 독자들은 우리가 "노드"와 "엣지" 객체를
+명시적으로 생성하지 않고 그래프에 엣지를 추가했으며,
+이 초기 예제들에서 노드 자체가
+단순히 문자열이라는 점을 알아차렸을 것입니다.
+다른 언어와 전통에서 오는 사람들은
+시스템의 모든 것에 대해 사용자 정의 클래스와
+인터페이스를 보기를 기대했을 수도 있습니다:
 
 ```java
     Graph g = new ConcreteGraph();
@@ -632,23 +633,23 @@ user-defined classes and interfaces for everything in the system:
     g.addEdge(indexEdge);
 ```
 
-The Python language and community explicitly and intentionally emphasize
-using simple, generic data structures to solve problems,
-instead of creating custom classes for every minute detail
-of the problem we want to tackle.
-This is one facet of the notion of “Pythonic” solutions:
-Pythonic solutions try to
-minimize syntactic overhead
-and leverage Python's powerful built-in tools
-and extensive standard library.
+Python 언어와 커뮤니티는 명시적으로 그리고 의도적으로
+해결하고자 하는 문제의 모든 세부사항에 대해
+사용자 정의 클래스를 만드는 대신
+문제 해결에 간단하고 범용적인 데이터 구조를
+사용하는 것을 강조합니다.
+이것은 "파이썬다운" 솔루션 개념의 한 면입니다:
+파이썬다운 솔루션은 문법적 오버헤드를 최소화하고
+Python의 강력한 내장 도구와
+광범위한 표준 라이브러리를 활용하려고 노력합니다.
 
-With these considerations in mind,
-let’s return to the `Graph` class,
-examining its design and implementation to see
-the interplay between data structures and class interfaces.
-When a new `Graph` instance is constructed,
-a pair of dictionaries has already been built
-to store edges using the logic we outlined in the previous section:
+이러한 고려사항들을 염두에 두고,
+데이터 구조와 클래스 인터페이스 간의 상호작용을 보기 위해
+`Graph` 클래스로 돌아가서
+그 설계와 구현을 살펴봅시다.
+새로운 `Graph` 인스턴스가 생성될 때,
+이전 섹션에서 설명한 로직을 사용하여 엣지를 저장하기 위한
+딕셔너리 쌍이 이미 구축되어 있습니다:
 
 ```python
 class Graph:
