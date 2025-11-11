@@ -271,60 +271,59 @@ classes, methods, and functions.
 
 ## 빌드 시스템과 일관성
 
-The problem outlined above is not specific to Sphinx.
-Not only does it haunt other document systems, like LaTeX,
-but it can even plague projects
-that are simply trying to direct compilation steps
-with the venerable `make` utility,
-if their assets happen to cross-reference in interesting ways.
+위에서 설명한 문제는 Sphinx만의 것이 아닙니다.
+LaTeX와 같은 다른 문서 시스템들을 괴롭힐 뿐만 아니라,
+자산들이 우연히 흥미로운 방식으로 상호 참조하게 되면,
+유서 깊은 `make` 유틸리티로 단순히 컴파일 단계를
+지시하려고 하는 프로젝트들까지도 괴롭힐 수 있습니다.
 
-As the problem is ancient and universal,
-its solution is of equally long lineage:
+이 문제는 오래되고 보편적이므로,
+그 해결책 역시 똑같이 오랜 계보를 갖고 있습니다:
 
 ```bash
    $ rm -r _build/
    $ make html
 ```
 
-If you remove all of the output,
-you are guaranteed a complete rebuild!
-Some projects even alias `rm` `-r` to a target named `clean`
-so that only a quick `make` `clean` is necessary to wipe the slate.
+모든 출력을 제거하면,
+완전한 재빌드가 보장됩니다!
+일부 프로젝트들은 `rm` `-r`을 `clean`이라는 타겟으로 별칭을 만들어서
+빠른 `make` `clean`만으로도 슬레이트를 깨끗이 지울 수 있게 합니다.
 
-By eliminating every copy of every intermediate or output asset,
-a hefty `rm` `-r` is able to force the build to start over again
-with nothing cached — with no memory of its earlier state
-that could possibly lead to a stale product.
+모든 중간 또는 출력 자산의 모든 사본을 제거함으로써,
+강력한 `rm` `-r`은 아무것도 캐시되지 않은 상태로 —
+오래된 제품으로 이어질 수 있는 이전 상태의 메모리 없이 —
+빌드를 다시 시작하도록 강제할 수 있습니다.
 
-But could we develop a better approach?
+하지만 더 나은 접근법을 개발할 수 있을까요?
 
-What if your build system were a persistent process
-that noticed every chapter title, every section title,
-and every cross-referenced phrase
-as it passed from the source code of one document
-into the text of another?
-Its decisions about whether to rebuild other documents
-after a change to a single source file could be precise,
-instead of mere guesses,
-and correct,
-instead of leaving the output in an inconsistent state.
+빌드 시스템이 한 문서의 소스 코드에서
+다른 문서의 텍스트로 전달되는
+모든 장 제목, 모든 섹션 제목,
+그리고 모든 상호 참조 구문을 감지하는
+지속적인 프로세스라면 어떨까요?
+단일 소스 파일의 변경 후 다른 문서들을
+재빌드할지 여부에 대한 결정이
+단순한 추측 대신 정확할 수 있고,
+출력을 일관성 없는 상태로 남겨두는 대신
+올바를 수 있을 것입니다.
 
-The result would be a system like the old static `make` tool,
-but which learned the dependencies between files as they were built —
-that added and removed dependencies dynamically
-as cross references were added, updated, and deleted.
+그 결과는 오래된 정적 `make` 도구와 같지만
+파일들이 빌드될 때 파일 간의 의존성을 학습하는 —
+상호 참조가 추가, 업데이트, 삭제됨에 따라
+의존성을 동적으로 추가하고 제거하는 — 시스템이 될 것입니다.
 
-In the sections that follow we will construct such a tool,
-named Contingent,
-in Python.
-Contingent guarantees correctness in the presence of dynamic dependencies
-while performing the fewest possible rebuild steps.
-While it can be applied to any problem domain,
-we will run it against a small version of the problem outlined above.
+다음 섹션들에서 우리는 Python으로
+Contingent라고 명명된 그러한 도구를
+구축할 것입니다.
+Contingent는 가능한 한 가장 적은 재빌드 단계를 수행하면서
+동적 의존성이 존재하는 상황에서 정확성을 보장합니다.
+어떤 문제 영역에도 적용할 수 있지만,
+위에서 설명한 문제의 작은 버전에 대해 실행할 것입니다.
 
 ## 그래프를 만들기 위한 작업 연결
 
-Any build system needs a way to link inputs and outputs.
+모든 빌드 시스템에는 입력과 출력을 연결하는 방법이 필요합니다.
 The three markup texts in our discussion above,
 for example,
 each produce a corresponding HTML output file.
