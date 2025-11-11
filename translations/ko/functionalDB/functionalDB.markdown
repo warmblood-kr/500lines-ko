@@ -1,86 +1,86 @@
-title: An Archaeology-Inspired Database
+title: 고고학에서 영감을 받은 데이터베이스
 author: Yoav Rubin
 <markdown>
-_Yoav Rubin is a Senior Software Engineer at Microsoft, and prior to that was a Research Staff Member and a Master Inventor at IBM Research. He works now in the domain of data security in the cloud, and in the past his work focused on developing cloud or web based development environments. Yoav holds an M.Sc. in Medical Research in the field of Neuroscience and B.Sc in Information Systems Engineering. He goes by [\@yoavrubin](https://twitter.com/yoavrubin) on Twitter, and occasionally blogs at [http://yoavrubin.blogspot.com](http://yoavrubin.blogspot.com)._
+_Yoav Rubin은 Microsoft의 선임 소프트웨어 엔지니어이며, 이전에는 IBM Research에서 연구원 및 마스터 인벤터로 활동했습니다. 현재 클라우드 데이터 보안 분야에서 일하고 있으며, 과거에는 클라우드 또는 웹 기반 개발 환경 구축에 집중했습니다. Yoav는 신경과학 분야의 의학 연구 석사 학위와 정보 시스템 공학 학사 학위를 보유하고 있습니다. Twitter에서는 [\@yoavrubin](https://twitter.com/yoavrubin)으로 활동하며, 때때로 [http://yoavrubin.blogspot.com](http://yoavrubin.blogspot.com)에서 블로그를 작성합니다._
 </markdown>
-## Introduction 
+## 소개
 
-Software development is often viewed as a rigorous process, where the inputs are requirements and the output is the working product. However, software developers are people, with their own perspectives and biases which color the outcome of their work. 
+소프트웨어 개발은 종종 엄격한 프로세스로 여겨지며, 입력은 요구사항이고 출력은 작동하는 제품입니다. 하지만 소프트웨어 개발자들도 사람이며, 그들만의 관점과 편견을 가지고 있어서 이것이 작업 결과에 영향을 미칩니다.
 
-In this chapter, we will explore how a change in a common perspective affects the design and implementation of a well-studied type of software: a database.
+이 장에서는 일반적인 관점의 변화가 잘 연구된 소프트웨어 유형인 데이터베이스의 설계와 구현에 어떤 영향을 미치는지 살펴보겠습니다.
 
-Database systems are designed to store and query data. This is something that all information workers do; however, the systems themselves were designed by computer scientists. As a result, modern database systems are highly influenced by computer scientists’ definition of what data is, and what can be done with it. 
+데이터베이스 시스템은 데이터를 저장하고 쿼리하도록 설계됩니다. 이는 모든 정보 작업자가 하는 일이지만, 시스템 자체는 컴퓨터 과학자들에 의해 설계되었습니다. 그 결과, 현대의 데이터베이스 시스템은 데이터가 무엇이고 데이터로 무엇을 할 수 있는지에 대한 컴퓨터 과학자들의 정의에 크게 영향을 받습니다.
 
-For example, most modern databases implement updates by overwriting old data in-place instead of appending the new data and keeping the old. This mechanism, nicknamed "place-oriented programming" by [Rich Hickey](http://www.infoq.com/presentations/Value-Values), saves storage space but makes it impossible to retrieve the entire history of a particular record. This design decision reflects the computer scientist’s perspective that "history" is less important than the price of its storage. 
+예를 들어, 대부분의 현대 데이터베이스는 새 데이터를 추가하고 기존 데이터를 유지하는 대신 기존 데이터를 제자리에서 덮어쓰는 방식으로 업데이트를 구현합니다. [Rich Hickey](http://www.infoq.com/presentations/Value-Values)가 "장소 지향 프로그래밍"이라고 명명한 이 메커니즘은 저장 공간을 절약하지만 특정 레코드의 전체 히스토리를 검색하는 것을 불가능하게 만듭니다. 이러한 설계 결정은 "히스토리"가 저장 비용보다 덜 중요하다는 컴퓨터 과학자의 관점을 반영합니다.
 
-If you were to instead ask an archaeologist where the old data can be found, the answer would be "hopefully, it's just buried underneath".
+반면에 고고학자에게 기존 데이터가 어디에서 찾을 수 있는지 물어본다면, 답은 "바라건대, 그냥 아래에 묻혀 있을 것입니다"일 것입니다.
 
-(Disclaimer: My understanding of the views of a typical archaeologist is based on visiting a few museums, reading several Wikipedia articles, and watching the entire Indiana Jones series.)
+(면책조항: 일반적인 고고학자의 견해에 대한 제 이해는 몇 개의 박물관 방문, 여러 위키피디아 글 읽기, 그리고 인디아나 존스 시리즈 전체 시청에 기반합니다.)
 
-### Designing a Database Like an Archaeologist
+### 고고학자처럼 데이터베이스 설계하기
 
-If we were to ask our friendly archaeologist to design a database, we might expect the requirements to reflect what would be found at an excavation site:
+우리의 친근한 고고학자에게 데이터베이스를 설계해 달라고 요청한다면, 요구사항이 발굴 현장에서 발견되는 것들을 반영할 것으로 예상할 수 있습니다:
 
-* All data is found and catalogued at the site.
-* Digging deeper will expose the state of things in times past.
-* Artifacts found at the same layer are from the same period.
-* Each artifact will consist of state that it accumulated in different periods.
+* 모든 데이터는 현장에서 발견되고 분류됩니다.
+* 더 깊이 파면 과거의 상태가 드러날 것입니다.
+* 같은 층에서 발견된 유물들은 같은 시대의 것입니다.
+* 각 유물은 서로 다른 시대에 축적된 상태로 구성될 것입니다.
 
-For example, a wall may have Roman symbols on it on one layer, and in a lower layer there may be Greek symbols. Both these observations are recorded as part of the wall's state.
+예를 들어, 벽 한 층에는 로마 기호가 있을 수 있고, 아래층에는 그리스 기호가 있을 수 있습니다. 이 두 관찰 결과 모두 벽의 상태의 일부로 기록됩니다.
 
-This analogy is visualized in \aosafigref{500l.functionaldb.exc}:
+이 비유는 \aosafigref{500l.functionaldb.exc}에서 시각화됩니다:
 
-* The entire circle is the excavation site.
-* Each ring is a _layer_ (here numbered from 0 to 4).
-* Each slice is a labeled artifact (‘A’ through ‘E’).
-* Each artifact has a ‘symbol’ attribute (where a blank means that no update was made).
-* Solid arrows denote a change in symbol between layers 
-* Dotted arrows are arbitrary relationships of interest between artifacts (e.g., from ‘E’ to ‘A’).
+* 전체 원은 발굴 현장입니다.
+* 각 고리는 _층_입니다 (여기서는 0부터 4까지 번호가 매겨집니다).
+* 각 조각은 라벨이 붙은 유물입니다 ('A'부터 'E'까지).
+* 각 유물은 '기호' 속성을 가집니다 (빈 칸은 업데이트가 이루어지지 않았음을 의미합니다).
+* 실선 화살표는 층 간의 기호 변화를 나타냅니다
+* 점선 화살표는 유물 간의 관심 있는 임의의 관계입니다 (예: 'E'에서 'A'로).
 
-\aosafigure[240pt]{functionalDB-images/image_0.png}{The Excavation Site}{500l.functionaldb.exc}
+\aosafigure[240pt]{functionalDB-images/image_0.png}{발굴 현장}{500l.functionaldb.exc}
 
-If we translate the archaeologist's language into terms a database designer would use:
+고고학자의 언어를 데이터베이스 설계자가 사용하는 용어로 번역하면:
 
-* The excavation site is a _database_.
-* Each artifact is an _entity_ with a corresponding _ID_.
-* Each entity has a set of _attributes_, which may change over time.
-* Each attribute has a specific _value_ at a specific time.
+* 발굴 현장은 _데이터베이스_입니다.
+* 각 유물은 해당 _ID_를 가진 _엔티티_입니다.
+* 각 엔티티는 시간이 지남에 따라 변할 수 있는 _속성_들의 집합을 가집니다.
+* 각 속성은 특정 시간에 특정 _값_을 가집니다.
 
-This may look very different from the kinds of databases you are used to working with. This design is sometimes referred to as "functional database", since it uses ideas from the domain of functional programming. The rest of the chapter describes how to implement such a database.
+이것은 여러분이 작업하는 데 익숙한 데이터베이스와는 매우 다르게 보일 수 있습니다. 이 설계는 함수형 프로그래밍 영역의 아이디어를 사용하기 때문에 때때로 "함수형 데이터베이스"라고 불립니다. 이 장의 나머지 부분에서는 그러한 데이터베이스를 구현하는 방법을 설명합니다.
 
-Since we are building a functional database, we will be using a functional programming language called Clojure.
+함수형 데이터베이스를 구축하고 있으므로, Clojure라는 함수형 프로그래밍 언어를 사용할 것입니다.
 
-Clojure has several qualities that make it a good implementation language for a functional database, such as out-of-the-box immutability, higher order functions, and metaprogramming facilities. But ultimately, the reason Clojure was chosen was its emphasis on clean, rigorous design, which few programming languages possess. 
+Clojure는 기본 제공되는 불변성, 고차 함수, 메타프로그래밍 기능과 같이 함수형 데이터베이스의 좋은 구현 언어가 되는 여러 특성을 가지고 있습니다. 하지만 궁극적으로 Clojure가 선택된 이유는 깨끗하고 엄밀한 설계에 대한 강조 때문이며, 이는 몇 안 되는 프로그래밍 언어가 가진 특징입니다. 
 
-## Laying the Foundation
+## 기초 다지기
 
-Let’s start by declaring the core constructs that make up our database. 
+데이터베이스를 구성하는 핵심 구조체들을 선언하는 것부터 시작해보겠습니다.
 
 ```clojure
 (defrecord Database [layers top-id curr-time])
 ```
 
-A database consists of:
+데이터베이스는 다음으로 구성됩니다:
 
-1. Layers of entities, each with its own unique timestamp (the rings in Figure 1).
-2. A top-id value which is the next available unique ID.
-3. The time at which the database was last updated.
+1. 각각 고유한 타임스탬프를 가진 엔티티 층들 (그림 1의 고리들).
+2. 다음으로 사용 가능한 고유 ID인 top-id 값.
+3. 데이터베이스가 마지막으로 업데이트된 시간.
 
 
 ```clojure
 (defrecord Layer [storage VAET AVET VEAT EAVT])
 ```
 
-Each layer consists of: 
+각 층은 다음으로 구성됩니다:
 
-1. A data store for entities.
-2. Indexes that are used to speed up queries to the database. (These indexes and the meaning of their names will be explained later.) 
+1. 엔티티를 위한 데이터 저장소.
+2. 데이터베이스 쿼리 속도를 높이는 데 사용되는 인덱스들. (이러한 인덱스들과 그 이름의 의미는 나중에 설명됩니다.)
 
-In our design, a single conceptual ‘database’ may consist of many `Database` instances, each of which represents a snapshot of the database at `curr-time`. A `Layer` may share the exact same entity with another `Layer` if the entity’s state hasn’t changed between the times that they represent.
+우리의 설계에서, 하나의 개념적 '데이터베이스'는 여러 `Database` 인스턴스로 구성될 수 있으며, 각각은 `curr-time`에서의 데이터베이스 스냅샷을 나타냅니다. `Layer`는 엔티티의 상태가 그들이 나타내는 시간 사이에 변경되지 않았다면 다른 `Layer`와 정확히 같은 엔티티를 공유할 수 있습니다.
 
-### Entities
+### 엔티티
 
-Our database wouldn't be of any use without entities to store, so we define those next. As discussed before, an entity has an ID and a list of attributes; we create them using the `make-entity` function.
+저장할 엔티티가 없다면 데이터베이스는 쓸모가 없으므로, 다음으로 엔티티를 정의합니다. 앞서 논의한 대로, 엔티티는 ID와 속성 목록을 가지며, `make-entity` 함수를 사용하여 생성합니다.
 
 ```clojure
 (defrecord Entity [id attrs])
@@ -90,17 +90,17 @@ Our database wouldn't be of any use without entities to store, so we define thos
    ([id] (Entity.  id {})))
 ```
 
-Note that if no ID is given, the entity’s ID is set to be `:db/no-id-yet`, which means that something else is responsible for giving it an ID. We’ll see how that works later.
+ID가 주어지지 않으면 엔티티의 ID는 `:db/no-id-yet`으로 설정되며, 이는 다른 무언가가 ID를 부여하는 책임을 진다는 의미입니다. 이것이 어떻게 작동하는지는 나중에 보겠습니다.
 
-#### Attributes
+#### 속성
 
-Each attribute consists of its name, value, and the timestamps of its most recent update as well as the one before that. Each attribute also has two fields that describe its `type` and `cardinality`.
+각 속성은 이름, 값, 그리고 가장 최근 업데이트의 타임스탬프와 그 이전 타임스탬프로 구성됩니다. 각 속성은 또한 `type`과 `cardinality`를 설명하는 두 필드를 가집니다.
 
-In the case that an attribute is used to represent a relationship to another entity, its `type` will be `:db/ref` and its value will be the ID of the related entity. This simple type system also acts as an extension point. Users are free to define their own types and leverage them to provide additional semantics for their data.
+속성이 다른 엔티티와의 관계를 나타내는 데 사용되는 경우, 그 `type`은 `:db/ref`이고 값은 관련된 엔티티의 ID가 됩니다. 이 간단한 타입 시스템은 확장 지점 역할도 합니다. 사용자는 자유롭게 자신만의 타입을 정의하고 이를 활용하여 데이터에 추가적인 의미를 제공할 수 있습니다.
 
-An attribute's `cardinality` specifies whether the attribute represents a single value or a set of values. We use this field to determine the set of operations that are permitted on this attribute.
+속성의 `cardinality`는 속성이 단일 값을 나타내는지 값들의 집합을 나타내는지를 지정합니다. 이 필드를 사용하여 이 속성에 허용되는 연산 집합을 결정합니다.
 
-Creating an attribute is done using the `make-attr` function. 
+속성 생성은 `make-attr` 함수를 사용하여 수행됩니다. 
 
 ```clojure
 (defrecord Attr [name value ts prev-ts])
@@ -112,15 +112,15 @@ Creating an attribute is done using the `make-attr` function.
     (with-meta (Attr. name value -1 -1) {:type type :cardinality cardinality})))
 ```
 
-There are a couple of interesting patterns used in this constructor function: 
+이 생성자 함수에서 사용된 몇 가지 흥미로운 패턴들이 있습니다:
 
-* We use Clojure’s _Design by Contract_ pattern to validate that the cardinality parameter is a permissible value.
-* We use Clojure’s destructuring mechanism to provide a default value of `:db/single` if one is not given.
-* We use Clojure’s metadata capabilities to distinguish between an attribute's data (name, value and timestamps) and its metadata (type and cardinality). In Clojure, metadata handling is done using the functions `with-meta` (to set) and `meta` (to read).
+* cardinality 매개변수가 허용 가능한 값인지 검증하기 위해 Clojure의 _계약에 의한 설계(Design by Contract)_ 패턴을 사용합니다.
+* 값이 주어지지 않은 경우 `:db/single`의 기본값을 제공하기 위해 Clojure의 구조분해(destructuring) 메커니즘을 사용합니다.
+* 속성의 데이터(이름, 값, 타임스탬프)와 메타데이터(타입, 카디널리티)를 구분하기 위해 Clojure의 메타데이터 기능을 사용합니다. Clojure에서 메타데이터 처리는 `with-meta`(설정) 및 `meta`(읽기) 함수를 사용하여 수행됩니다.
 
-Attributes only have meaning if they are part of an entity. We make this connection with the `add-attr` function, which adds a given attribute to an entity's attribute map (called `:attrs`). 
+속성은 엔티티의 일부인 경우에만 의미를 가집니다. `add-attr` 함수로 이 연결을 만들며, 이 함수는 주어진 속성을 엔티티의 속성 맵(`:attrs`라고 함)에 추가합니다.
 
-Note that instead of using the attribute’s name directly, we first convert it into a keyword to adhere to Clojure’s idiomatic usage of maps.
+속성의 이름을 직접 사용하는 대신, Clojure의 관용적인 맵 사용법을 준수하기 위해 먼저 키워드로 변환한다는 점에 주목하세요.
 
 ```clojure
 (defn add-attr [ent attr]
@@ -128,11 +128,11 @@ Note that instead of using the attribute’s name directly, we first convert it 
       (assoc-in ent [:attrs attr-id] attr)))
 ```
 
-### Storage
+### 저장소
 
-So far we have talked a lot about _what_ we are going to store, without thinking about _where_ we are going to store it. In this chapter, we resort to the simplest storage mechanism: storing the data in memory. This is certainly not reliable, but it simplifies development and debugging and allows us to focus on more interesting parts of the program. 
+지금까지 우리는 _무엇을_ 저장할지에 대해서는 많이 이야기했지만, _어디에_ 저장할지에 대해서는 생각하지 않았습니다. 이 장에서는 가장 간단한 저장 메커니즘인 메모리 내 데이터 저장을 사용합니다. 이는 확실히 신뢰할 수 없지만, 개발과 디버깅을 단순화하고 프로그램의 더 흥미로운 부분에 집중할 수 있게 해줍니다.
 
-We will access the storage via a simple _protocol_, which will make it possible to define additional storage providers for a database owner to select from.
+간단한 _프로토콜_을 통해 저장소에 접근할 것이며, 이를 통해 데이터베이스 소유자가 선택할 수 있는 추가적인 저장소 제공자를 정의할 수 있게 됩니다.
 
 ```clojure
 (defprotocol Storage
@@ -141,7 +141,7 @@ We will access the storage via a simple _protocol_, which will make it possible 
    (drop-entity [storage entity]))
 ```
 
-\noindent And here's our in-memory implementation of the protocol, which uses a map as the store:
+\noindent 그리고 여기에 맵을 저장소로 사용하는 프로토콜의 인메모리 구현이 있습니다:
 
 ```clojure
 (defrecord InMemory [] Storage
@@ -150,66 +150,66 @@ We will access the storage via a simple _protocol_, which will make it possible 
    (drop-entity [storage entity] (dissoc storage (:id entity))))
 ```
 
-### Indexing the Data
+### 데이터 인덱싱
 
-Now that we've defined the basic elements of our database, we can start thinking about how we're going to query it. By virtue of how we've structured our data, any query is necessarily going to be interested in at least one of an entity's ID, and the name and value of some of its attributes. This triplet of `(entity-id, attribute-name, attribute-value)` is important enough to our query process that we give it an explicit name: a _datom_.
+데이터베이스의 기본 요소들을 정의했으므로, 이제 쿼리하는 방법에 대해 생각해볼 수 있습니다. 데이터를 구조화한 방식의 특성상, 모든 쿼리는 필연적으로 엔티티의 ID와 그 속성들 중 일부의 이름과 값 중 적어도 하나에 관심을 가질 것입니다. `(entity-id, attribute-name, attribute-value)`의 이 삼중항(triplet)은 쿼리 과정에 충분히 중요해서 명시적인 이름을 부여합니다: _datom_.
 
-Datoms are important because they represent facts, and our database accumulates facts. 
+Datom은 사실(fact)을 나타내기 때문에 중요하며, 우리의 데이터베이스는 사실을 축적합니다.
 
-If you've used a database system before, you are probably already familiar with the concept of an _index_, which is a supporting data structure that consumes extra space in order to decrease the average query time.  In our database, an index is a three-leveled structure which stores the components of a datom in a specific order. Each index derives its name from the order it stores the datom's components in.
+이전에 데이터베이스 시스템을 사용해본 적이 있다면, 평균 쿼리 시간을 줄이기 위해 추가 공간을 소비하는 보조 데이터 구조인 _인덱스_의 개념에 이미 익숙할 것입니다. 우리 데이터베이스에서 인덱스는 datom의 구성 요소를 특정 순서로 저장하는 3단계 구조입니다. 각 인덱스는 datom의 구성 요소를 저장하는 순서에서 그 이름을 파생합니다.
 
-For example, let’s look at at the index sketched in \aosafigref{500l.functionaldb.eavt}:
+예를 들어, \aosafigref{500l.functionaldb.eavt}에 스케치된 인덱스를 살펴보겠습니다:
 
-* The first level stores entity-IDs 
-* The second level stores the related attribute-names 
-* The third level stores the related value 
+* 첫 번째 단계는 엔티티 ID를 저장합니다
+* 두 번째 단계는 관련된 속성 이름을 저장합니다
+* 세 번째 단계는 관련된 값을 저장합니다
 
-This index is named EAVT, as the top level map holds Entity IDs, the second level holds Attribute names, and the leaves hold Values. The "T" comes from the fact that each layer in the database has its own indexes, hence the index itself is relevant for a specific Time. 
+이 인덱스는 최상위 맵이 엔티티 ID를 보유하고, 두 번째 단계가 속성 이름을 보유하며, 리프가 값을 보유하므로 EAVT라고 명명됩니다. "T"는 데이터베이스의 각 층이 자체 인덱스를 가진다는 사실에서 비롯되며, 따라서 인덱스 자체가 특정 시간과 관련이 있습니다. 
 
 \aosafigure[240pt]{functionalDB-images/image_1.png}{EAVT}{500l.functionaldb.eavt}
 
-\aosafigref{500l.functionaldb.avet} shows an index that would be called AVET since:
+\aosafigref{500l.functionaldb.avet}는 다음과 같은 이유로 AVET라고 불리는 인덱스를 보여줍니다:
 
-* The first level map holds attribute-name.
-* The second level map holds the values (of the attributes).
-* The third level set holds the entity-IDs (of the entities whose attribute is at the first level).
+* 첫 번째 단계 맵은 속성 이름을 보유합니다.
+* 두 번째 단계 맵은 (속성의) 값을 보유합니다.
+* 세 번째 단계 집합은 (첫 번째 단계에 속성이 있는 엔티티의) 엔티티 ID를 보유합니다.
 
 \aosafigure[240pt]{functionalDB-images/image_2.png}{AVET}{500l.functionaldb.avet}
 
-Our indexes are implemented as a map of maps, where the keys of the root map act as the first level, each such key points to a map whose keys act as the index’s second-level and the values are the index’s third level. Each element in the third level is a set, holding the leaves of the index.
+우리의 인덱스는 맵의 맵으로 구현되며, 루트 맵의 키들이 첫 번째 단계 역할을 하고, 각 키는 인덱스의 두 번째 단계 역할을 하는 키들을 가진 맵을 가리키며, 값들은 인덱스의 세 번째 단계입니다. 세 번째 단계의 각 요소는 인덱스의 리프를 보유하는 집합입니다.
 
-Each index stores the components of a datom as some permutation of its canonical 'EAV' ordering (entity_id, attribute-name, attribute-value). However, when we are working with datoms _outside_ of the index, we expect them to be in canonical format. We thus provide each index with functions `from-eav` and `to-eav` to convert to and from these orderings.
+각 인덱스는 datom의 구성 요소를 정규 'EAV' 순서(entity_id, attribute-name, attribute-value)의 어떤 순열로 저장합니다. 그러나 인덱스 _외부에서_ datom과 작업할 때는 정규 형식이어야 합니다. 따라서 각 인덱스에 이러한 순서로 변환하고 되돌리는 `from-eav` 및 `to-eav` 함수를 제공합니다.
 
-In most database systems, indexes are an optional component; for example, in an RDBMS (Relational Database Management System) like PostgreSQL or MySQL, you will choose to add indexes only to certain columns in a table. We provide each index with a `usage-pred` function that determines for an attribute whether it should be included in this index or not. 
+대부분의 데이터베이스 시스템에서 인덱스는 선택적 구성 요소입니다. 예를 들어, PostgreSQL이나 MySQL과 같은 RDBMS(관계형 데이터베이스 관리 시스템)에서는 테이블의 특정 컬럼에만 인덱스를 추가하도록 선택할 것입니다. 우리는 각 인덱스에 속성이 이 인덱스에 포함되어야 하는지 여부를 결정하는 `usage-pred` 함수를 제공합니다. 
 
 ```clojure
 (defn make-index [from-eav to-eav usage-pred]
     (with-meta {} {:from-eav from-eav :to-eav to-eav :usage-pred usage-pred}))
- 
+
  (defn from-eav [index] (:from-eav (meta index)))
  (defn to-eav [index] (:to-eav (meta index)))
  (defn usage-pred [index] (:usage-pred (meta index)))
 ```
 
-In our database there are four indexes: EAVT (see \aosafigref{500l.functionaldb.eavt}), AVET (see \aosafigref{500l.functionaldb.avet}), VEAT and VAET. We can access these as a vector of values returned from the `indexes` function.
+우리 데이터베이스에는 네 개의 인덱스가 있습니다: EAVT(\aosafigref{500l.functionaldb.eavt} 참조), AVET(\aosafigref{500l.functionaldb.avet} 참조), VEAT, VAET. 이들은 `indexes` 함수에서 반환되는 값들의 벡터로 접근할 수 있습니다.
 
 ```clojure
 (defn indexes[] [:VAET :AVET :VEAT :EAVT])
 ```
 
-To demonstrate how all of this comes together, the result of indexing the following five entities is visualized in \aosatblref{500l.functionaldb.indextable}.
+모든 것이 어떻게 함께 작동하는지 보여주기 위해, 다음 다섯 엔티티를 인덱싱한 결과가 \aosatblref{500l.functionaldb.indextable}에서 시각화됩니다.
 
-1. Julius Caesar (also known as JC) lives in Rome
-2. Brutus (also known as B) lives in Rome
-3. Cleopatra (also known as Cleo) lives in Egypt
-4. Rome’s river is the Tiber
-5. Egypt’s river is the Nile
+1. 율리우스 카이사르(줄여서 JC)는 로마에 거주합니다
+2. 브루투스(줄여서 B)는 로마에 거주합니다
+3. 클레오파트라(줄여서 Cleo)는 이집트에 거주합니다
+4. 로마의 강은 티베르강입니다
+5. 이집트의 강은 나일강입니다
  
 <markdown>
 <table>
   <tr>
-    <td>EAVT index</td>
-    <td>AVET index</td>
+    <td>EAVT 인덱스</td>
+    <td>AVET 인덱스</td>
   </tr>
   <tr>
     <td><ul>
@@ -241,8 +241,8 @@ To demonstrate how all of this comes together, the result of indexing the follow
 </ul></td>
   </tr>
   <tr>
-    <td>VEAT index</td>
-    <td>VAET index</td>
+    <td>VEAT 인덱스</td>
+    <td>VAET 인덱스</td>
   </tr>
   <tr>
     <td><ul>
@@ -310,13 +310,13 @@ Nile $\Rightarrow$ \{Egypt $\Rightarrow$ \{river\}\}                            
 
 \newpage
 
-### Database
+### 데이터베이스
 
-We now have all the components we need to construct our database. Initializing our database means:
+이제 데이터베이스를 구성하는 데 필요한 모든 구성 요소를 갖추었습니다. 데이터베이스 초기화는 다음을 의미합니다:
 
-* creating an initial empty layer with no data 
-* creating a set of empty indexes
-* setting its `top-id` and `curr-time` to be 0
+* 데이터가 없는 초기 빈 층 생성
+* 빈 인덱스 집합 생성
+* `top-id`와 `curr-time`을 0으로 설정
 
 ```clojure
 (defn ref? [attr] (= :db/ref (:type (meta attr))))
@@ -324,24 +324,24 @@ We now have all the components we need to construct our database. Initializing o
 (defn always[& more] true)
 
 (defn make-db []
-   (atom 
+   (atom
        (Database. [(Layer.
                    (fdb.storage.InMemory.) ; storage
-                   (make-index #(vector %3 %2 %1) #(vector %3 %2 %1) #(ref? %));VAET                     
-                   (make-index #(vector %2 %3 %1) #(vector %3 %1 %2) always);AVET                        
-                   (make-index #(vector %3 %1 %2) #(vector %2 %3 %1) always);VEAT                       
+                   (make-index #(vector %3 %2 %1) #(vector %3 %2 %1) #(ref? %));VAET
+                   (make-index #(vector %2 %3 %1) #(vector %3 %1 %2) always);AVET
+                   (make-index #(vector %3 %1 %2) #(vector %2 %3 %1) always);VEAT
                    (make-index #(vector %1 %2 %3) #(vector %1 %2 %3) always);EAVT
                   )] 0 0)))
 ```
-There is one snag, though: all collections in Clojure are immutable. Since write operations are pretty critical in a database, we define our structure to be an *Atom*, which is a Clojure reference type that provides the capability of atomic writes. 
+하지만 한 가지 문제가 있습니다: Clojure의 모든 컬렉션은 불변입니다. 쓰기 연산은 데이터베이스에서 매우 중요하므로, 우리는 구조를 *Atom*으로 정의합니다. 이는 원자적 쓰기 기능을 제공하는 Clojure 참조 타입입니다.
 
-You may be wondering why we use the `always` function for the AVET, VEAT and EAVT indexes, and the `ref?` predicate for the VAET index. This is because these indexes are used in different scenarios, which we’ll see later when we explore queries in depth.
+AVET, VEAT, EAVT 인덱스에는 `always` 함수를 사용하고 VAET 인덱스에는 `ref?` 술어를 사용하는 이유가 궁금할 것입니다. 이는 이러한 인덱스들이 서로 다른 시나리오에서 사용되기 때문이며, 이는 나중에 쿼리를 자세히 살펴볼 때 보게 될 것입니다.
 
-### Basic Accessors
+### 기본 접근자
 
-Before we can build complex querying facilities for our database, we need to provide a lower-level API that different parts of the system can use to retrieve the components we've built by their associated identifiers from any point in time. Consumers of the database can also use this API; however, it is more likely that they will be using the more fully-featured components built on top of it.
+데이터베이스를 위한 복잡한 쿼리 기능을 구축하기 전에, 시스템의 다른 부분들이 어느 시점에서든 연관된 식별자로 우리가 구축한 구성 요소들을 검색할 수 있도록 하는 하위 수준 API를 제공해야 합니다. 데이터베이스의 소비자들도 이 API를 사용할 수 있지만, 그들은 그 위에 구축된 더 완전한 기능을 가진 구성 요소들을 사용할 가능성이 높습니다.
 
-This lower-level API is composed of the following four accessor functions:
+이 하위 수준 API는 다음 네 개의 접근자 함수로 구성됩니다:
 
 ```clojure
 (defn entity-at
@@ -361,13 +361,13 @@ This lower-level API is composed of the following four accessor functions:
    ([db kind ts] (kind ((:layers db) ts))))
 ```
 
-Since we treat our database just like any other value, each of these functions take a database as an argument. Each element is retrieved by its associated identifier, and optionally the timestamp of interest. This timestamp is used to find the corresponding layer that our lookup should be applied to.
+우리는 데이터베이스를 다른 값과 마찬가지로 취급하므로, 이러한 함수들 각각은 데이터베이스를 인수로 받습니다. 각 요소는 연관된 식별자로 검색되며, 선택적으로 관심 있는 타임스탬프를 사용합니다. 이 타임스탬프는 조회를 적용할 해당 층을 찾는 데 사용됩니다.
 
-#### Evolution
+#### 진화
 
-A first usage of the basic accessors is to provide a "read-into-the-past" API. This is possible as, in our database, an update operation is done by appending a new layer (as opposed to overwriting). Therefore we can use the `prev-ts` property to look at the attribute at that layer, and continue looking deeper into history to observe how the attribute’s value evolved throughout time.  
+기본 접근자의 첫 번째 사용법은 "과거로의 읽기" API를 제공하는 것입니다. 이는 우리 데이터베이스에서 업데이트 연산이 (덮어쓰기와 반대로) 새 층을 추가하여 수행되기 때문에 가능합니다. 따라서 `prev-ts` 속성을 사용하여 해당 층에서 속성을 살펴보고, 속성의 값이 시간에 따라 어떻게 진화했는지 관찰하기 위해 히스토리 깊숙이 계속 들여다볼 수 있습니다.
 
-The function `evolution-of` does exactly that. It returns a sequence of pairs, each consisting of the timestamp and value of an attribute’s update.
+`evolution-of` 함수는 정확히 그런 일을 합니다. 이는 각각 속성의 업데이트 타임스탬프와 값으로 구성된 쌍들의 시퀀스를 반환합니다.
 ```clojure
 (defn evolution-of [db ent-id attr-name]
    (loop [res [] ts (:curr-time db)]
@@ -375,45 +375,45 @@ The function `evolution-of` does exactly that. It returns a sequence of pairs, e
          (let [attr (attr-at db ent-id attr-name ts)]
            (recur (conj res {(:ts attr) (:value attr)})  (:prev-ts attr))))))
 ```
-## Data Behavior and Life Cycle
+## 데이터 동작 및 생명 주기
 
-So far, our discussion has focused on the structure of our data: what the core components are and how they are aggregated together. It's time to explore the dynamics of our system: how data is changed over time through the add--update--remove _data lifecycle_. 
+지금까지 우리의 논의는 데이터의 구조에 초점을 맞췄습니다: 핵심 구성 요소가 무엇이며 어떻게 함께 집계되는지. 이제 시스템의 역학을 탐구할 때입니다: 추가-업데이트-제거 _데이터 생명주기_를 통해 시간이 지남에 따라 데이터가 어떻게 변경되는지.
 
-As we've already discussed, data in an archaeologist's world never actually changes. Once it is created, it exists forever and can only be hidden from the world by data in a newer layer. The term "hidden" is crucial here. Older data does not "disappear"&mdash;it is buried, and can be revealed again by exposing an older layer. Conversely, updating data means obscuring the old by adding a new layer on top of it with something else. We can thus "delete" data by adding a layer of "nothing" on top of it. 
+이미 논의했듯이, 고고학자의 세계에서 데이터는 실제로 변경되지 않습니다. 한번 생성되면 영원히 존재하며, 새로운 층의 데이터에 의해 세상으로부터 숨겨질 뿐입니다. 여기서 "숨겨진다"는 용어가 중요합니다. 오래된 데이터는 "사라지지" 않습니다&mdash;그것은 묻혀 있으며, 오래된 층을 노출시킴으로써 다시 드러낼 수 있습니다. 반대로, 데이터를 업데이트한다는 것은 그 위에 다른 것을 가진 새 층을 추가하여 기존 것을 가리는 것을 의미합니다. 따라서 그 위에 "아무것도 없는" 층을 추가함으로써 데이터를 "삭제"할 수 있습니다.
 
-This means that when we talk about data lifecycle, we are really talking about adding layers to our data over time. 
+이것은 데이터 생명주기에 대해 이야기할 때, 실제로는 시간이 지남에 따라 데이터에 층을 추가하는 것에 대해 이야기하고 있다는 뜻입니다. 
 
-### The Bare Necessities
+### 기본 필수 요소
 
-The data lifecycle consists of three basic operations:
+데이터 생명주기는 세 가지 기본 연산으로 구성됩니다:
 
-* adding an entity with the `add-entity` function
-* removing an entity with the `remove-entity` function
-* updating an entity with the `update-entity` function
+* `add-entity` 함수를 사용한 엔티티 추가
+* `remove-entity` 함수를 사용한 엔티티 제거
+* `update-entity` 함수를 사용한 엔티티 업데이트
 
-Remember that, even though these functions provide the illusion of mutability, all that we are really doing in each case is adding another layer to the data. Also, since we are using Clojure's persistent data structures, from the caller's perspective we pay the same price for these operations as for an "in-place" change (i.e., negligible performance overhead), while maintaining immutability for all other users of the data structure.
+이러한 함수들이 가변성의 착각을 제공하더라도, 각 경우에 실제로 하고 있는 일은 데이터에 다른 층을 추가하는 것뿐이라는 점을 기억하세요. 또한 Clojure의 영속 데이터 구조를 사용하고 있으므로, 호출자의 관점에서는 "제자리" 변경과 동일한 비용을 지불하지만 (즉, 무시할 수 있는 성능 오버헤드), 데이터 구조의 다른 모든 사용자에게는 불변성을 유지합니다.
 
-#### Adding an Entity
+#### 엔티티 추가
 
-Adding an entity requires us to do three things:
+엔티티를 추가하려면 세 가지 작업을 해야 합니다:
 
-* prepare the entity for addition (by giving it an ID and a timestamp)
-* place the entity in storage 
-* update indexes as necessary
+* 추가를 위한 엔티티 준비 (ID와 타임스탬프 부여)
+* 엔티티를 저장소에 배치
+* 필요에 따라 인덱스 업데이트
 
-These steps are performed in the `add-entity` function.
+이러한 단계들은 `add-entity` 함수에서 수행됩니다.
 
 ```clojure
 (defn add-entity [db ent]
    (let [[fixed-ent next-top-id] (fix-new-entity db ent)
-         layer-with-updated-storage (update-in 
+         layer-with-updated-storage (update-in
                             (last (:layers db)) [:storage] write-entity fixed-ent)
          add-fn (partial add-entity-to-index fixed-ent)
          new-layer (reduce add-fn layer-with-updated-storage (indexes))]
     (assoc db :layers (conj (:layers db) new-layer) :top-id next-top-id)))
 ```
-Preparing an entity is done by calling the `fix-new-entity` function and its auxiliary functions `next-id`, `next-ts` and `update-creation-ts`. 
-These latter two helper functions are responsible for finding the next timestamp of the database (done by `next-ts`), and updating the creation timestamp of the given entity (done by `update-creation-ts`). Updating the creation timestamp of an entity means going over the attributes of the entity and updating their `:ts` fields.
+엔티티 준비는 `fix-new-entity` 함수와 그 보조 함수들인 `next-id`, `next-ts`, `update-creation-ts`를 호출하여 수행됩니다.
+후자의 두 헬퍼 함수는 데이터베이스의 다음 타임스탬프 찾기(`next-ts`가 수행)와 주어진 엔티티의 생성 타임스탬프 업데이트(`update-creation-ts`가 수행)를 담당합니다. 엔티티의 생성 타임스탬프 업데이트는 엔티티의 속성들을 살펴보고 그들의 `:ts` 필드를 업데이트하는 것을 의미합니다.
 
 ```clojure
 (defn- next-ts [db] (inc (:curr-time db)))
@@ -434,13 +434,13 @@ These latter two helper functions are responsible for finding the next timestamp
          new-ts               (next-ts db)]
        [(update-creation-ts (assoc ent :id ent-id) new-ts) next-top-id]))
 ```
-To add the entity to storage, we locate the most recent layer in the database and update the storage in that layer with a new layer, the results of which are stored in `layer-with-updated-storage`. 
+엔티티를 저장소에 추가하기 위해, 데이터베이스의 가장 최근 층을 찾아 해당 층의 저장소를 새 층으로 업데이트하며, 그 결과를 `layer-with-updated-storage`에 저장합니다.
 
-Finally, we must update the indexes. This means, for each of the indexes (done by the combination of `reduce` and the `partial`-ed `add-entity-to-index` at the `add-entity` function):
+마지막으로, 인덱스를 업데이트해야 합니다. 이는 각 인덱스에 대해 (`add-entity` 함수에서 `reduce`와 `partial`된 `add-entity-to-index`의 조합으로 수행됩니다):
 
-* Find the attributes that should be indexed (see the combination of `filter` with the index’s `usage-pred` that operates on the attributes in `add-entity-to-index`) 
-* Build an index-path from the the entity’s ID (see the combination of the `partial`-ed \newline `update-entry-in-index` with `from-eav` at the `update-attr-in-index` function)
-* Add that path to the index (see the `update-entry-in-index` function)
+* 인덱싱되어야 하는 속성들 찾기 (`add-entity-to-index`에서 속성들에 작동하는 인덱스의 `usage-pred`와 `filter`의 조합 참조)
+* 엔티티의 ID로부터 인덱스 경로 구축 (`update-attr-in-index` 함수에서 `from-eav`와 `partial`된 `update-entry-in-index`의 조합 참조)
+* 해당 경로를 인덱스에 추가 (`update-entry-in-index` 함수 참조)
 
 ```clojure
 (defn- add-entity-to-index [ent layer ind-name]
@@ -448,30 +448,30 @@ Finally, we must update the indexes. This means, for each of the indexes (done b
          index (ind-name layer)
          all-attrs  (vals (:attrs ent))
          relevant-attrs (filter #((usage-pred index) %) all-attrs)
-         add-in-index-fn (fn [ind attr] 
-                                 (update-attr-in-index ind ent-id (:name attr) 
-                                                                  (:value attr) 
+         add-in-index-fn (fn [ind attr]
+                                 (update-attr-in-index ind ent-id (:name attr)
+                                                                  (:value attr)
                                                                   :db/add))]
         (assoc layer ind-name  (reduce add-in-index-fn index relevant-attrs))))
 
 (defn- update-attr-in-index [index ent-id attr-name target-val operation]
    (let [colled-target-val (collify target-val)
-         update-entry-fn (fn [ind vl] 
-                             (update-entry-in-index 
-                                ind 
-                                ((from-eav index) ent-id attr-name vl) 
+         update-entry-fn (fn [ind vl]
+                             (update-entry-in-index
+                                ind
+                                ((from-eav index) ent-id attr-name vl)
                                 operation))]
      (reduce update-entry-fn index colled-target-val)))
-     
+
 (defn- update-entry-in-index [index path operation]
    (let [update-path (butlast path)
          update-value (last path)
          to-be-updated-set (get-in index update-path #{})]
      (assoc-in index update-path (conj to-be-updated-set update-value))))
 ```
-All of these components are added as a new layer to the given database. All that’s left is to update the database’s timestamp and `top-id` fields. That last step occurs on the last line of `add-entity`, which also returns the updated database.
+이러한 모든 구성 요소들은 주어진 데이터베이스에 새 층으로 추가됩니다. 남은 것은 데이터베이스의 타임스탬프와 `top-id` 필드를 업데이트하는 것뿐입니다. 마지막 단계는 `add-entity`의 마지막 줄에서 발생하며, 이는 업데이트된 데이터베이스도 반환합니다.
 
-We also provide an `add-entities` convenience function that adds multiple entities to the database in one call by iteratively applying `add-entity`.
+또한 `add-entity`를 반복적으로 적용하여 한 번의 호출로 여러 엔티티를 데이터베이스에 추가하는 `add-entities` 편의 함수도 제공합니다.
 
 ```clojure
 (defn add-entities [db ents-seq] (reduce add-entity db ents-seq))
