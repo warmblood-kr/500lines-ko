@@ -922,9 +922,9 @@ var thunk = sum2(1, 2, 3)
 thunk()                   // -> 6
 ```
 
-None of the thunks are invoked until one is actually needed, which usually implies some type of output is required: in our case the result of a query. Each time the interpreter encounters a new function call, we wrap it in a thunk. Recall our original formulation of a query: `children(children(children(parents(parents(parents([8]))))))`. Each of those layers would be a thunk, wrapped up like an onion.
+썽크들은 실제로 필요할 때까지 호출되지 않는데, 보통 어떤 유형의 출력이 필요하다는 것을 의미한다: 우리의 경우 질의의 결과. 인터프리터가 새로운 함수 호출을 만날 때마다 썽크로 감싼다. 우리의 원래 질의 공식을 기억하라: `children(children(children(parents(parents(parents([8]))))))`. 그 층들 각각이 양파처럼 감싸진 썽크가 될 것이다.
 
-There are a couple of tradeoffs with this approach: one is that spatial performance becomes more difficult to reason about, because of the potentially vast thunk graphs that can be created. Another is that our program is now expressed as a single thunk, and we can't do much with it at that point.
+이 접근법에는 몇 가지 트레이드오프가 있다: 하나는 생성될 수 있는 잠재적으로 거대한 썽크 그래프 때문에 공간 성능에 대한 추론이 더 어려워진다는 것이다. 또 다른 하나는 이제 우리 프로그램이 단일 썽크로 표현되고, 그 시점에서는 할 수 있는 일이 많지 않다는 것이다.
 
 This second point isn't usually an issue, because of the phase separation between when our compiler runs its optimizations and when all the thunking occurs at runtime. In our case we don't have that advantage: because we're using method chaining to implement a fluent interface [^fluentinterface] if we also use thunks to achieve laziness we would thunk each new method as it is called, which means by the time we get to `run()` we have only a thunk as our input, and no way to optimize our query.
 
@@ -934,10 +934,10 @@ Interestingly, our fluent interface hides another difference between our query l
 
 So if we start evaluating our query at the end of the statement, with `run`, and work our way back to `v('Thor')`, calculating results only as needed, then we've effectively achieved non-strictness. The secret is in the linearity of our queries. Branches complicate the process graph and also introduce opportunities for duplicate calls, which require memoization to avoid wasted work. The simplicity of our query language means we can implement an equally simple interpreter based on our linear read/write head model.
 
-In addition to allowing runtime optimizations, this style has many other benefits related to the ease of instrumentation: history, reversibility, stepwise debugging, query statistics. All these are easy to add dynamically because we control the interpreter and have left it as a virtual machine evaluator instead of reducing the program to a single thunk.
+런타임 최적화를 허용하는 것 외에도, 이 스타일은 계측의 용이성과 관련된 많은 다른 이점들을 가진다: 히스토리, 되돌리기 가능성, 단계별 디버깅, 질의 통계. 프로그램을 단일 썽크로 축소하는 대신 가상 머신 평가기로 남겨두고 인터프리터를 제어하기 때문에, 이 모든 것들을 동적으로 추가하기 쉽다.
 
 
-## Interpreter, Unveiled
+## 인터프리터, 공개됨
 
 ```javascript
 Dagoba.Q.run = function() {                 // a machine for query processing
@@ -957,13 +957,13 @@ Dagoba.Q.run = function() {                 // a machine for query processing
     pipetype = Dagoba.getPipetype(step[0])  // a pipetype is just a function
 ```
 
-Here `max` is just a constant, and `step`, `state`, and `pipetype` cache information about the current step. We've entered the driver loop, and we won't stop until the last step is done.
+여기서 `max`는 그냥 상수이고, `step`, `state`, `pipetype`은 현재 단계에 대한 정보를 캐시한다. 드라이버 루프에 진입했고, 마지막 단계가 완료될 때까지 멈추지 않을 것이다.
 
 ```javascript
     maybe_gremlin = pipetype(this.graph, step[1], maybe_gremlin, state)
 ```
 
-Calling the step's pipetype function with its arguments.
+단계의 파이프타입 함수를 인수들과 함께 호출한다.
 
 ```javascript
     if(maybe_gremlin == 'pull') {           // 'pull' means the pipe wants more input
@@ -1022,13 +1022,13 @@ This is also the initialization state, since `pc` starts as `max`. So we start h
 We're out of the driver loop now: the query has ended, the results are in, and we just need to process and return them. If any gremlin has its result set we'll return that, otherwise we'll return the gremlin's final vertex. Are there other things we might want to return? What are the tradeoffs here?
 
 
-## Query Transformers
+## 쿼리 트랜스포머
 
-Now we have a nice compact interpreter for our query programs, but we're still missing something. Every modern DBMS comes with a query optimizer as an essential part of the system. For non-relational databases, optimizing our query plan rarely yields the exponential speedups seen in their relational cousins [^dboptimize], but it's still an important aspect of database design.
+이제 우리 질의 프로그램을 위한 멋지고 간결한 인터프리터를 가지고 있지만, 여전히 놓치고 있는 것이 있다. 모든 현대 DBMS는 시스템의 필수적인 부분으로 질의 최적화기를 갖추고 있다. 비관계형 데이터베이스의 경우, 질의 계획을 최적화하는 것이 관계형 사촌들에서 보는 기하급수적 속도 향상을 거의 가져다주지는 않지만[^dboptimize], 여전히 데이터베이스 설계의 중요한 측면이다.
 
 [^dboptimize]: Or, more pointedly, a poorly phrased query is less likely to yield exponential slowdowns. As an end-user of an RDBMS the aesthetics of query quality can often be quite opaque.
 
-What's the simplest thing we could do that could reasonably be called a query optimizer? Well, we could write little functions for transforming our query programs before we run them. We'll pass a program in as input and get a different program back out as output.
+합리적으로 질의 최적화기라고 부를 수 있는 가장 간단한 것은 무엇일까? 음, 실행하기 전에 질의 프로그램들을 변환하는 작은 함수들을 작성할 수 있다. 프로그램을 입력으로 전달하고 다른 프로그램을 출력으로 받을 것이다.
 
 ```javascript
 Dagoba.T = []                               // transformers (more than meets the eye)
@@ -1048,7 +1048,7 @@ Now we can add query transformers to our system. A query transformer is a functi
 
 [^paramdomain]: Note that we're keeping the domain of the priority parameter open, so it can be an integer, a rational, a negative number, or even things like Infinity or NaN.
 
-We'll assume there won't be an enormous number of transformer additions, and walk the list linearly to add a new one. We'll leave a note in case this assumption turns out to be false&mdash;a binary search is much more time-optimal for long lists, but adds a little complexity and doesn't really speed up short lists.
+막대한 수의 트랜스포머 추가가 없을 것이라고 가정하고, 새로운 것을 추가하기 위해 목록을 선형적으로 걸을 것이다. 이 가정이 거짓으로 판명되는 경우를 위해 메모를 남겨둘 것이다&mdash;이진 검색이 긴 목록에 대해서는 훨씬 더 시간 최적이지만, 약간의 복잡성을 추가하고 짧은 목록을 실제로는 빠르게 하지 못한다.
 
 To run these transformers we're going to inject a single line of code in to the top of our interpreter:
 
@@ -1164,9 +1164,9 @@ This brings us in to the realm of dependency resolution[^dependencyresolution], 
 On the other hand, we expect that our queries will generally be rather short (100 steps would be a very long query) and that we'll have a reasonably low number of transformers. Instead of fiddling around with DAGs and dependency management we could return 'true' from the transform function if anything changed, and then run it until it stops being productive. This requires each transformer to be idempotent, but that's a useful property for transformers to have. What are the pros and cons of these two pathways?
 
 
-## Performance
+## 성능
 
-All production graph databases share a particular performance characteristic: graph traversal queries are constant time with respect to total graph size [^ifadjacency]. In a non-graph database, asking for the list of someone's friends can require time proportional to the number of entries, because in the naive worst-case you have to look at every entry. This means if a query over ten entries takes a millisecond, then a query over ten million entries will take almost two weeks. Your friend list would arrive faster if sent by Pony Express [^ponyexpress]!
+모든 프로덕션 그래프 데이터베이스는 특별한 성능 특성을 공유한다: 그래프 순회 질의는 전체 그래프 크기에 대해 상수 시간이다[^ifadjacency]. 비그래프 데이터베이스에서는 누군가의 친구 목록을 요청하는 것이 항목 수에 비례하는 시간을 필요로 할 수 있는데, 순진한 최악의 경우 모든 항목을 살펴봐야 하기 때문이다. 이는 10개 항목에 대한 질의가 1밀리초 걸린다면, 천만 개 항목에 대한 질의는 거의 2주가 걸린다는 뜻이다. 친구 목록이 포니 익스프레스로 보내져도 더 빨리 도착할 것이다[^ponyexpress]!
 
 [^ifadjacency]: The fancy term for this is "index-free adjacency".
 
@@ -1174,7 +1174,7 @@ All production graph databases share a particular performance characteristic: gr
 
 To alleviate this dismal performance most databases index over oft-queried fields, which turns an $O(n)$ search into an $O(log n)$ search. This gives considerably better search performance, but at the cost of some write performance and a lot of space&mdash;indices can easily double the size of a database. Careful balancing of the space/time tradeoffs of indices is part of the perpetual tuning process for most databases.
 
-Graph databases sidestep this issue by making direct connections between vertices and edges, so graph traversals are just pointer jumps; no need to scan through every item, no need for indices, no extra work at all. Now finding your friends has the same price regardless of the total number of people in the graph, with no additional space cost or write time cost. One downside to this approach is that the pointers work best when the whole graph is in memory on the same machine. Effectively sharding a graph database across multiple machines is still an active area of research [^graphdbsharding].
+그래프 데이터베이스는 정점과 간선 사이에 직접 연결을 만들어서 이 문제를 우회하므로, 그래프 순회는 그냥 포인터 점프다; 모든 항목을 스캔할 필요도, 인덱스도, 추가 작업도 전혀 없다. 이제 친구 찾기는 그래프의 총 사람 수와 관계없이 같은 비용이며, 추가 공간 비용이나 쓰기 시간 비용도 없다. 이 접근법의 한 가지 단점은 전체 그래프가 같은 머신의 메모리에 있을 때 포인터가 최고로 작동한다는 것이다. 여러 머신에 걸쳐 그래프 데이터베이스를 효과적으로 샤딩하는 것은 여전히 활발한 연구 영역이다[^graphdbsharding].
 
 [^graphdbsharding]: Sharding a graph database requires partitioning the graph. [Optimal graph partitioning is NP-hard](http://dl.acm.org/citation.cfm?doid=1007912.1007931), even for simple graphs like trees and grids, and good approximations also have exponential [asymptotic complexity](http://arxiv.org/pdf/1311.3144v2.pdf).
 
@@ -1208,11 +1208,11 @@ Run these yourself to experience the graph database difference [^jslistfilter].
 [^jslistfilter]: In modern JavaScript engines filtering a list is quite fast&mdash;for small graphs the naive version can actually be faster than the index-free version due to the underlying data structures and the way the code is JIT compiled. Try it with different sizes of graphs to see how the two approaches scale.
 
 
-## Serialization
+## 직렬화
 
-Having a graph in memory is great, but how do we get it there in the first place? We saw that our graph constructor can take a list of vertices and edges and create a graph for us, but once the graph has been built how do we get the vertices and edges back out?
+메모리에 그래프를 갖는 것은 좋지만, 애초에 어떻게 그곳에 가져올 것인가? 우리의 그래프 생성자가 정점과 간선의 목록을 받아서 그래프를 만들 수 있다는 것을 보았지만, 그래프가 구축되고 나서는 어떻게 정점과 간선을 다시 꺼낼 것인가?
 
-Our natural inclination is to do something like `JSON.stringify(graph)`, which produces the terribly helpful error "TypeError: Converting circular structure to JSON". During the graph construction process the vertices were linked to their edges, and the edges are all linked to their vertices, so now everything refers to everything else. So how can we extract our nice neat lists again? JSON replacer functions to the rescue.
+우리의 자연스러운 경향은 `JSON.stringify(graph)`와 같은 것을 하는 것인데, 이는 "TypeError: Converting circular structure to JSON"이라는 끔찍하게 도움이 되는 오류를 생성한다. 그래프 구축 과정에서 정점들이 간선들에 연결되었고, 간선들은 모두 정점들에 연결되었으므로, 이제 모든 것이 다른 모든 것을 참조한다. 그러면 어떻게 우리의 멋지고 깔끔한 목록들을 다시 추출할 수 있을까? JSON 교체 함수가 구해준다.
 
 The `JSON.stringify` function takes a value to stringify, but it also takes two additional parameters: a replacer function and a whitespace number [^protip]. The replacer allows you to customize how the stringification proceeds.
 
@@ -1247,9 +1247,9 @@ We're manually manipulating JSON in `Dagoba.jsonify`, which generally isn't reco
 We could merge the two replacer functions into a single function, and use that new replacer function over the whole graph by doing `JSON.stringify(graph, my_cool_replacer)`. This frees us from having to manually massage the JSON output, but the resulting code may be quite a bit messier. Try it yourself and see if you can come up with a well-factored solution that avoids hand-coded JSON. (Bonus points if it fits in a tweet.)
 
 
-## Persistence
+## 지속성
 
-Persistence is usually one of the trickier parts of a database: disks are relatively safe but slow. Batching writes, making them atomic, journaling&mdash;these are difficult to make both fast and correct.
+지속성은 보통 데이터베이스의 더 까다로운 부분 중 하나다: 디스크는 상대적으로 안전하지만 느리다. 쓰기를 배치로 처리하고, 원자적으로 만들고, 저널링하는 것&mdash;이런 것들을 빠르고 정확하게 만드는 것은 어렵다.
 
 Fortunately, we're building an *in-memory* database, so we don't have to worry about any of that! We may, though, occasionally want to save a copy of the database locally for fast restart on page load. We can use the serializer we just built to do exactly that. First let's wrap it in a helper function:
 
@@ -1290,18 +1290,18 @@ There are also potential issues if multiple browser windows from the same domain
 If we wanted our persistence implementation to be multi-window–concurrency aware, then we could make use of the storage events that are fired when `localStorage` is changed to update our local graph accordingly.
 
 
-## Updates
+## 업데이트
 
 Our `out` pipetype copies the vertex's out-going edges and pops one off each time it needs one. Building that new data structure takes time and space, and pushes more work on to the memory manager. We could have instead used the vertex's out-going edge list directly, keeping track of our place with a counter variable. Can you think of a problem with that approach?
 
-If someone deletes an edge we've visited while we're in the middle of a query, that would change the size of our edge list, and we'd then skip an edge because our counter would be off. To solve this we could lock the vertices involved in our query, but then we'd either lose our capacity to regularly update the graph, or the ability to have long-lived query objects responding to requests for more results on-demand. Even though we're in a single-threaded event loop, our queries can span multiple asynchronous re-entries, which means concurrency concerns like this are a very real problem.
+누군가가 질의 중간에 우리가 방문한 간선을 삭제한다면, 간선 목록의 크기가 바뀌고, 카운터가 맞지 않아 간선을 건너뛰게 될 것이다. 이를 해결하기 위해 질의에 관련된 정점들을 잠글 수 있지만, 그러면 정기적으로 그래프를 업데이트할 능력이나 요청에 따라 더 많은 결과에 응답하는 장수명 질의 객체의 능력을 잃게 될 것이다. 단일 스레드 이벤트 루프에 있음에도 불구하고, 우리 질의는 여러 비동기 재진입에 걸칠 수 있으므로, 이런 동시성 우려는 매우 실질적인 문제다.
 
 So we'll pay the performance price to copy the edge list. There's still a problem, though, in that long-lived queries may not see a completely consistent chronology. We will traverse every edge belonging to a vertex at the moment we visit it, but we visit vertices at different clock times during our query. Suppose we save a query like `var q = g.v('Odin').children().children().take(2)` and then call `q.run()` to gather two of Odin's grandchildren. Some time later we need to pull another two grandchildren, so we call `q.run()` again. If Odin has had a new grandchild in the intervening time, we may or may not see it, depending on whether the parent vertex was visited the first time we ran the query.
 
 One way to fix this non-determinism is to change the update handlers to add versioning to the data. We'll then change the driver loop to pass the graph's current version in to the query, so we're always seeing a consistent view of the world as it existed when the query was first initialized. Adding versioning to our database also opens the door to true transactions, and automated rollback/retries in an STM-like fashion.
 
 
-## Future Directions
+## 미래 방향성
 
 We saw one way of gathering ancestors earlier:
 
@@ -1358,15 +1358,15 @@ g.v('Ymir').in().filter({survives: true}).every()
 which would work like `all`+`times` but without enforcing a limit. We may want to impose a particular strategy on the traversal, though, like a stolid BFS or YOLO DFS, so <latex>\newline</latex> `g.v('Ymir').in().filter({survives: true}).bfs()` would be more flexible. Phrasing it this way allows us to state complicated queries like "check for Ragnarök survivors, skipping every other generation" in a straightforward fashion: `g.v('Ymir').in().filter({survives: true}).in().bfs()`.
 
 
-## Wrapping Up
+## 마무리
 
-So what have we learned? Graph databases are great for storing interconnected [^sortainterconnected] data that you plan to query via graph traversals. Adding non-strict semantics allows for a fluent interface over queries you could never express in an eager system for performance reasons, and allows you to cross async boundaries. Time makes things complicated, and time from multiple perspectives (i.e., concurrency) makes things very complicated, so whenever we can avoid introducing a temporal dependency (e.g., state, observable effects, etc.) we make reasoning about our system easier. Building in a simple, decoupled and painfully unoptimized style leaves the door open for global optimizations later on, and using a driver loop allows for orthogonal optimizations&mdash;each without introducing the brittleness and complexity that is the hallmark of most optimization techniques.
+그러면 우리는 무엇을 배웠는가? 그래프 데이터베이스는 그래프 순회를 통해 질의할 계획인 상호 연결된[^sortainterconnected] 데이터를 저장하는 데 훌륭하다. 비엄격 의미론을 추가하는 것은 성능상의 이유로 성급한 시스템에서는 절대 표현할 수 없는 질의에 대한 유창한 인터페이스를 허용하고, 비동기 경계를 넘을 수 있게 해준다. 시간은 일을 복잡하게 만들고, 다중 관점에서의 시간(즉, 동시성)은 일을 매우 복잡하게 만든다. 그래서 시간적 의존성(예: 상태, 관찰 가능한 효과 등)의 도입을 피할 수 있을 때마다 우리는 시스템에 대한 추론을 더 쉽게 만든다. 간단하고, 분리되고, 고통스럽게 최적화되지 않은 스타일로 구축하는 것은 나중에 전역 최적화의 문을 열어두고, 드라이버 루프를 사용하는 것은 직교 최적화를 허용한다&mdash;각각은 대부분의 최적화 기법의 특징인 취약성과 복잡성을 도입하지 않고.
 
-That last point can't be overstated: keep it simple. Eschew optimization in favor of simplicity. Work hard to achieve simplicity by finding the right model. Explore many possibilities. The chapters in this book provide ample evidence that highly non-trivial applications can have a small, tight kernel. Once you find that kernel for the application you are building, fight to keep complexity from polluting it. Build hooks for attaching additional functionality, and maintain your abstraction barriers at all costs. Using these techniques well is not easy, but they can give you leverage over otherwise intractable problems.
+마지막 요점은 과장될 수 없다: 단순하게 유지하라. 단순함을 위해 최적화를 피하라. 올바른 모델을 찾아서 단순함을 달성하기 위해 열심히 노력하라. 많은 가능성을 탐색하라. 이 책의 챕터들은 고도로 자명하지 않은 애플리케이션들이 작고 긴밀한 커널을 가질 수 있다는 충분한 증거를 제공한다. 구축하고 있는 애플리케이션을 위한 그 커널을 찾으면, 복잡성이 그것을 오염시키지 못하도록 싸우라. 추가 기능을 부착하기 위한 후크들을 구축하고, 어떤 대가를 치르더라도 추상화 장벽을 유지하라. 이런 기법들을 잘 사용하는 것은 쉽지 않지만, 그렇지 않으면 다루기 어려운 문제들에 대해 레버리지를 줄 수 있다.
 
 [^sortainterconnected]: Not *too* interconnected, though&mdash;you'd like the number of edges to grow in direct proportion to the number of vertices. In other words, the average number of edges connected to a vertex shouldn't vary with the size of the graph. Most systems we'd consider putting in a graph database already have this property: if Loki had 100,000 additional grandchildren the degree of the Thor vertex wouldn't increase.
 
 
-### Acknowledgements
+### 감사의 말
 
-Many thanks are due to Amy Brown, Michael DiBernardo, Colin Lupton, Scott Rostrup, Michael Russo, Erin Toliver, and Leo Zovic for their invaluable contributions to this chapter.
+Amy Brown, Michael DiBernardo, Colin Lupton, Scott Rostrup, Michael Russo, Erin Toliver, 그리고 Leo Zovic에게 이 챕터에 대한 귀중한 기여에 대해 많은 감사를 표한다.
