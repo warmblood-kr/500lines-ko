@@ -366,7 +366,7 @@ Dagoba.getPipetype = function(name) {
 }
 ```
 
-If we can't find a pipetype, we generate an error and return the default pipetype, which acts like an empty conduit: if a message comes in one side, it gets passed out the other.
+파이프타입을 찾을 수 없다면, 오류를 생성하고 기본 파이프타입을 반환하는데, 이는 빈 도관과 같이 작동한다: 한쪽에서 메시지가 들어오면 다른 쪽으로 전달된다.
 
 ```javascript
 Dagoba.fauxPipetype = function(_, _, maybe_gremlin) {   // pass the result upstream
@@ -374,14 +374,14 @@ Dagoba.fauxPipetype = function(_, _, maybe_gremlin) {   // pass the result upstr
 }
 ```
 
-See those underscores? We use those to label params that won't be used in our function. Most other pipetypes will use all three parameters, and have all three parameter names. This allows us to distinguish at a glance which parameters a particular pipetype relies on.
+저 밑줄들이 보이는가? 우리는 함수에서 사용하지 않을 매개변수들을 표시하기 위해 그것들을 사용한다. 대부분의 다른 파이프타입들은 세 매개변수를 모두 사용하고, 세 매개변수 이름을 모두 갖는다. 이는 특정 파이프타입이 어떤 매개변수에 의존하는지 한눈에 구별할 수 있게 해준다.
 
-This underscore technique is also important because it makes the comments line up nicely. No, seriously. If programs ["must be written for people to read, and only incidentally for machines to execute"](https://mitpress.mit.edu/sicp/front/node3.html), then it immediately follows that our predominant concern should be making code pretty.
+이 밑줄 기법은 주석들을 보기 좋게 정렬시키기 때문에도 중요하다. 아니, 진짜로. 만약 프로그램이 ["사람이 읽기 위해 쓰여야 하고, 기계가 실행하는 것은 부수적이어야 한다"](https://mitpress.mit.edu/sicp/front/node3.html)면, 코드를 예쁘게 만드는 것이 우리의 주된 관심사여야 한다는 것이 즉시 따라온다.
 
 
 #### Vertex
 
-Most pipetypes we meet will take a gremlin and produce more gremlins, but this particular pipetype generates gremlins from just a string. Given an vertex ID it returns a single new gremlin. Given a query it will find all matching vertices, and yield one new gremlin at a time until it has worked through them.
+우리가 만나는 대부분의 파이프타입들은 그렘린을 받아서 더 많은 그렘린들을 생성하지만, 이 특별한 파이프타입은 그냥 문자열로부터 그렘린들을 생성한다. 정점 ID가 주어지면 단일 새 그렘린을 반환한다. 질의가 주어지면 일치하는 모든 정점들을 찾고, 그것들을 모두 처리할 때까지 한 번에 하나씩 새 그렘린을 내놓는다.
 
 ```javascript
 Dagoba.addPipetype('vertex', function(graph, args, gremlin, state) {
@@ -396,30 +396,30 @@ Dagoba.addPipetype('vertex', function(graph, args, gremlin, state) {
 })
 ```
 
-We first check to see if we've already gathered matching vertices, otherwise we try to find some. If there are any vertices, we'll pop one off and return a new gremlin sitting on that vertex. Each gremlin can carry around its own state, like a journal of where it's been and what interesting things it has seen on its journey through the graph. If we receive a gremlin as input to this step we'll copy its journal for the exiting gremlin.
+먼저 일치하는 정점들을 이미 수집했는지 확인하고, 그렇지 않다면 일부를 찾으려고 시도한다. 정점들이 있다면, 하나를 꺼내서 그 정점에 앉은 새 그렘린을 반환한다. 각 그렘린은 자신만의 상태를 가져다닐 수 있는데, 그것이 어디에 있었고 그래프를 여행하면서 본 흥미로운 것들의 일지와 같다. 이 단계에 입력으로 그렘린을 받는다면, 나가는 그렘린을 위해 그것의 일지를 복사할 것이다.
 
-Note that we're directly mutating the state argument here, and not passing it back. An alternative would be to return an object instead of a gremlin or signal, and pass state back that way. That complicates our return value, and creates some additional garbage [^garbage]. If JS allowed multiple return values it would make this option more elegant.
+여기서 state 인수를 직접 변경하고 있으며, 되돌려 전달하지 않는다는 점에 주목하라. 대안은 그렘린이나 신호 대신 객체를 반환하고, 그런 식으로 상태를 되돌려 전달하는 것이다. 그것은 우리의 반환값을 복잡하게 만들고, 추가적인 가비지를 생성한다[^garbage]. JS가 다중 반환값을 허용한다면 이 옵션을 더 우아하게 만들 것이다.
 
 [^garbage]: Very short lived garbage though, which is the second best kind.
 
-We would still need to find a way to deal with the mutations, though, as the call site maintains a reference to the original variable. What if we had some way to determine whether a particular reference is "unique"&mdash;that it is the only reference to that object?
+하지만 여전히 변경들을 처리하는 방법을 찾아야 하는데, 호출 지점이 원래 변수에 대한 참조를 유지하고 있기 때문이다. 만약 특정 참조가 "고유한" 것인지&mdash;즉, 그 객체에 대한 유일한 참조인지&mdash;를 결정할 수 있는 방법이 있다면 어떨까?
 
-If we know a reference is unique then we can get the benefits of immutability while avoiding expensive copy-on-write schemes or complicated persistent data structures. With only one reference we can't tell whether the object has been mutated or a new object has been returned with the changes we requested: "observed immutability" is maintained [^obsimmutability].
+참조가 고유하다는 것을 알면, 비싼 copy-on-write 방식이나 복잡한 영속 데이터 구조를 피하면서 불변성의 이점을 얻을 수 있다. 참조가 하나뿐이면 객체가 변경되었는지 아니면 우리가 요청한 변경사항이 담긴 새 객체가 반환되었는지 구별할 수 없다: "관찰된 불변성"이 유지된다[^obsimmutability].
 
 [^obsimmutability]: Two references to the same mutable data structure act like a pair of walkie-talkies, allowing whoever holds them to communicate directly. Those walkie-talkies can be passed around from function to function, and cloned to create a whole lot of walkie-talkies. This completely subverts the natural communication channels your code already possesses. In a system with no concurrency you can sometimes get away with it, but introduce multithreading or asynchronous behavior and all that walkie-talkie squawking can become a real drag.
 
-There are a couple of common ways of determining this: in a statically typed system we might make use of uniqueness types [^uniquenesstypes] to guarantee at compile time that each object has only one reference. If we had a reference counter [^referencecounter]&mdash;even just a cheap two-bit sticky counter&mdash;we could know at runtime that an object only has one reference and use that knowledge to our advantage.
+이를 결정하는 몇 가지 일반적인 방법이 있다: 정적 타입 시스템에서는 고유성 타입[^uniquenesstypes]을 사용하여 각 객체가 컴파일 타임에 하나의 참조만 가진다는 것을 보장할 수 있다. 참조 카운터[^referencecounter]가 있다면&mdash;심지어 간단한 2비트 스티키 카운터라도&mdash;런타임에 객체가 하나의 참조만 가진다는 것을 알 수 있고 그 지식을 우리에게 유리하게 사용할 수 있다.
 
 [^uniquenesstypes]: Uniqueness types were dusted off in the Clean language, and have a non-linear relationship with linear types, which are themselves a subtype of substructural types.
 
 [^referencecounter]: Most modern JS runtimes employ generational garbage collectors, and the language is intentionally kept at arm's length from the engine's memory management to curtail a source of programmatic non-determinism.
 
-JavaScript doesn't have either of these facilities, but we can get almost the same effect if we're really, really disciplined. Which we will be. For now. 
+JavaScript는 이러한 기능들 중 어느 것도 갖지 않지만, 우리가 정말, 정말 규율을 지킨다면 거의 같은 효과를 얻을 수 있다. 그리고 우리는 그렇게 할 것이다. 지금은. 
 
 
 #### In-N-Out
 
-Walking the graph is as easy as ordering a burger. These two lines set up the `in` and `out` pipetypes for us.
+그래프를 걷는 것은 버거를 주문하는 것만큼 쉽다. 이 두 줄이 우리를 위해 `in`과 `out` 파이프타입을 설정해 준다.
 
 \newpage 
 
@@ -428,7 +428,7 @@ Dagoba.addPipetype('out', Dagoba.simpleTraversal('out'))
 Dagoba.addPipetype('in',  Dagoba.simpleTraversal('in'))
 ```
 
-The `simpleTraversal` function returns a pipetype handler that accepts a gremlin as its input, and spawns a new gremlin each time it's queried. Once those gremlins are gone, it sends back a 'pull' request to get a new gremlin from its predecessor.
+`simpleTraversal` 함수는 그렘린을 입력으로 받고, 질의될 때마다 새 그렘린을 생성하는 파이프타입 핸들러를 반환한다. 그 그렘린들이 소진되면, 이전 단계로부터 새 그렘린을 얻기 위해 'pull' 요청을 되돌려 보낸다.
 
 ```javascript
 Dagoba.simpleTraversal = function(dir) {
@@ -454,42 +454,42 @@ Dagoba.simpleTraversal = function(dir) {
 }
 ```
 
-The first couple of lines handle the differences between the in version and the out version. Then we're ready to return our pipetype function, which looks quite a bit like the vertex pipetype we just saw. That's a little surprising, since this one takes in a gremlin whereas the vertex pipetype creates gremlins *ex nihilo*.
+처음 몇 줄은 in 버전과 out 버전 사이의 차이점을 처리한다. 그러면 우리가 방금 본 vertex 파이프타입과 매우 비슷해 보이는 파이프타입 함수를 반환할 준비가 된다. 이것은 약간 놀라운데, 이것은 그렘린을 받아들이는 반면 vertex 파이프타입은 *무에서* 그렘린들을 생성하기 때문이다.
 
-Yet we can see the same beats being hit here, with the addition of a query initialization step. If there's no gremlin and we're out of available edges then we pull. If we have a gremlin but haven't yet set state then we find any edges going the appropriate direction and add them to our state. If there's a gremlin but its current vertex has no appropriate edges then we pull. And finally we pop off an edge and return a freshly cloned gremlin on the vertex to which it points.
+그럼에도 불구하고 여기서 같은 리듬이 반복되는 것을 볼 수 있는데, 질의 초기화 단계가 추가되었다. 그렘린이 없고 사용 가능한 간선이 떨어졌다면 pull한다. 그렘린이 있지만 아직 상태를 설정하지 않았다면 적절한 방향으로 가는 간선들을 찾아서 우리 상태에 추가한다. 그렘린이 있지만 현재 정점에 적절한 간선이 없다면 pull한다. 그리고 마지막으로 간선 하나를 꺼내서 그것이 가리키는 정점에서 새로 복제된 그렘린을 반환한다.
 
-Glancing at this code we see `!state.edges.length` repeated in each of the three clauses. It's tempting to refactor this to reduce the complexity of those conditionals. There are two issues keeping us from doing so.
+이 코드를 훑어보면 세 절 각각에서 `!state.edges.length`가 반복되는 것을 볼 수 있다. 그 조건문들의 복잡성을 줄이기 위해 이것을 리팩토링하고 싶은 유혹이 든다. 우리가 그렇게 하는 것을 막는 두 가지 문제가 있다.
 
-One is relatively minor: the third `!state.edges.length` means something different from the first two, since `state.edges` has been changed between the second and third conditional. This actually encourages us to refactor, because having the same label mean two different things inside a single function usually isn't ideal.
+하나는 비교적 사소한 것이다: 세 번째 `!state.edges.length`는 처음 두 개와 다른 의미인데, 두 번째와 세 번째 조건문 사이에서 `state.edges`가 변경되기 때문이다. 이는 실제로 우리가 리팩토링하도록 권장하는데, 단일 함수 내에서 같은 레이블이 두 가지 다른 의미를 갖는 것은 보통 이상적이지 않기 때문이다.
 
-The second is more serious. This isn't the only pipetype function we're writing, and we'll see these ideas of query initialization and/or state initialization repeated over and over. When writing code, there's always a balancing act between structured qualities and unstructured qualities. Too much structure and you pay a high cost in boilerplate and abstraction complexity. Too little structure and you'll have to keep all the plumbing minutia in your head.
+두 번째는 더 심각하다. 이것이 우리가 쓰고 있는 유일한 파이프타입 함수가 아니며, 질의 초기화 및/또는 상태 초기화의 이런 아이디어들이 계속해서 반복되는 것을 보게 될 것이다. 코드를 작성할 때 구조적 품질과 비구조적 품질 사이에는 항상 균형 맞추기가 있다. 너무 많은 구조는 보일러플레이트와 추상화 복잡성에서 높은 비용을 지불하게 한다. 너무 적은 구조는 모든 배관 세부사항을 머릿속에 유지해야 한다.
 
-In this case, with a dozen or so pipetypes, the right choice seems to be to style each of the pipetype functions as similarly as possible, and label the constituent pieces with comments. So we resist our impulse to refactor this particular pipetype, because doing so would reduce uniformity, but we also resist the urge to engineer a formal structural abstraction for query initialization, state initialization, and the like. If there were hundreds of pipetypes that latter choice would probably be the right one: the complexity cost of the abstraction is constant, while the benefit accrues linearly with the number of units. When handling that many moving pieces, anything you can do to enforce regularity among them is helpful.
+이 경우, 대략 12개 정도의 파이프타입으로는, 올바른 선택은 각 파이프타입 함수를 가능한 한 비슷하게 스타일링하고, 구성 요소들을 주석으로 레이블하는 것으로 보인다. 그래서 우리는 이 특별한 파이프타입을 리팩토링하려는 충동을 억제한다. 그렇게 하는 것이 균일성을 감소시킬 것이기 때문이다. 하지만 우리는 또한 질의 초기화, 상태 초기화 등을 위한 공식적인 구조적 추상화를 설계하려는 욕구도 억제한다. 수백 개의 파이프타입이 있다면 후자의 선택이 아마도 올바른 것일 것이다: 추상화의 복잡성 비용은 일정하지만, 이익은 단위 수에 따라 선형적으로 누적되기 때문이다. 그렇게 많은 움직이는 조각들을 다룰 때는, 그들 사이의 규칙성을 강제할 수 있는 모든 것이 도움이 된다.
 
 
 #### Property
 
-Let's pause for a moment to consider an example query based on the three pipetypes we've seen. We can ask for Thor's grandparents like this[^runnote]: 
+지금까지 본 세 가지 파이프타입을 기반으로 한 예제 질의를 생각해보기 위해 잠깐 멈춰보자. 이렇게 토르의 조부모를 요청할 수 있다[^runnote]: 
 
 [^runnote]: The `run()` at the end of the query invokes the interpreter and returns results.
 
 ```javascript
 g.v('Thor').out('parent').out('parent').run()
 ``` 
-But what if we wanted their names? We could put a map on the end of that:
+하지만 그들의 이름을 원한다면 어떨까? 그것의 끝에 map을 붙일 수 있다:
 
 ```javascript
 g.v('Thor').out('parent').out('parent').run()
  .map(function(vertex) {return vertex.name})
 ```
 
-But this is a common enough operation that we'd prefer to write something more like:
+하지만 이것은 충분히 일반적인 연산이라서 우리는 다음과 같은 것을 쓰는 것을 선호할 것이다:
 
 ```javascript
 g.v('Thor').out('parent').out('parent').property('name').run()
 ```
 
-Plus this way the property pipe is an integral part of the query, instead of something appended after. This has some interesting benefits, as we'll soon see.
+게다가 이 방식에서는 property 파이프가 나중에 추가되는 것이 아니라 질의의 통합적인 부분이다. 곧 보게 되겠지만 이것은 몇 가지 흥미로운 이점이 있다.
 
 ```javascript
 Dagoba.addPipetype('property', function(graph, args, gremlin, state) {
@@ -499,17 +499,16 @@ Dagoba.addPipetype('property', function(graph, args, gremlin, state) {
 })
 ```
 
-Our query initialization here is trivial: if there's no gremlin, we pull. If there is a gremlin, we'll set its result to the property's value. Then the gremlin can continue onward. If it makes it through the last pipe its result will be collected and returned from the query. Not all gremlins have a `result` property. Those that don't return their most recently visited vertex.
+여기서 우리의 질의 초기화는 간단하다: 그렘린이 없으면 pull한다. 그렘린이 있으면, 그것의 result를 속성의 값으로 설정한다. 그러면 그렘린은 계속 진행할 수 있다. 마지막 파이프를 통과하면 그것의 result가 수집되어 질의로부터 반환될 것이다. 모든 그렘린이 `result` 속성을 갖지는 않는다. 그렇지 않은 것들은 가장 최근에 방문한 정점을 반환한다.
 
-Note that if the property doesn't exist we return `false` instead of the gremlin, so property pipes also act as a type of filter. Can you think of a use for this? What are the tradeoffs in this design decision?
+속성이 존재하지 않으면 그렘린 대신 `false`를 반환한다는 점에 주목하라. 그래서 property 파이프도 필터의 한 유형으로 작동한다. 이것의 용도를 생각해볼 수 있는가? 이 설계 결정의 트레이드오프는 무엇인가?
 
 
 #### Unique
 
-If we want to collect all Thor's grandparents' grandchildren&mdash;his cousins, his siblings, and himself&mdash;we could do a query like this: `g.v('Thor').in().in().out().out().run()`. That would give us many duplicates, however. In fact there would be at least four copies of Thor himself. (Can you think of a time when there might be more?)
+토르의 조부모들의 손자들&mdash;그의 사촌들, 형제자매들, 그리고 그 자신&mdash;을 모두 수집하고 싶다면, `g.v('Thor').in().in().out().out().run()`과 같은 질의를 할 수 있다. 하지만 그것은 많은 중복을 줄 것이다. 실제로 토르 자신의 복사본이 최소 4개는 있을 것이다. (더 많을 수 있는 때를 생각해볼 수 있는가?)
 
-To resolve this we introduce a new pipetype called 'unique'. Our new query
-produces output in one-to-one correspondence with the grandchildren:
+이를 해결하기 위해 우리는 'unique'라는 새로운 파이프타입을 도입한다. 우리의 새로운 질의는 손자들과 일대일 대응으로 출력을 생성한다:
 
 ```javascript
     g.v('Thor').in().in().out().out().unique().run()
@@ -526,13 +525,13 @@ Dagoba.addPipetype('unique', function(graph, args, gremlin, state) {
 })
 ```
 
-A unique pipe is purely a filter: it either passes the gremlin through unchanged or it tries to pull a new gremlin from the previous pipe.
+unique 파이프는 순전히 필터다: 그렘린을 변경 없이 통과시키거나 이전 파이프에서 새로운 그렘린을 pull하려고 시도한다.
 
-We initialize by trying to collect a gremlin. If the gremlin's current vertex is in our cache, then we've seen it before so we try to collect a new one. Otherwise, we add the gremlin's current vertex to our cache and pass it along. Easy peasy.
+그렘린을 수집하려고 시도함으로써 초기화한다. 그렘린의 현재 정점이 우리 캐시에 있다면, 이전에 본 것이므로 새로운 것을 수집하려고 시도한다. 그렇지 않으면, 그렘린의 현재 정점을 캐시에 추가하고 통과시킨다. 아주 쉽다.
 
 #### Filter
 
-We've seen two simplistic ways of filtering, but sometimes we need more elaborate constraints. What if we want to find all of Thor's siblings whose weight is greater than their height [^weight]? This query would give us our answer:
+우리는 필터링의 두 가지 간단한 방법을 보았지만, 때로는 더 정교한 제약이 필요하다. 체중이 키보다 큰 토르의 모든 형제자매를 찾고 싶다면 어떨까[^weight]? 이 질의가 우리에게 답을 줄 것이다:
 
 [^weight]: With weight in skippund and height in fathoms, naturally. Depending on the density of Asgardian flesh this may return many results, or none at all. (Or just Volstagg, if we're allowing Shakespeare by way of Jack Kirby into our pantheon.)
 
@@ -542,13 +541,13 @@ g.v('Thor').out().in().unique()
  .run()
 ```
 
-If we want to know which of Thor's siblings survive Ragnarök we can pass filter an object:
+토르의 형제자매 중 누가 라그나뢰크에서 살아남는지 알고 싶다면 filter에 객체를 전달할 수 있다:
 
 ```javascript
 g.v('Thor').out().in().unique().filter({survives: true}).run()
 ```
 
-Here's how it works:
+작동 방식은 다음과 같다:
 
 ```javascript
 Dagoba.addPipetype('filter', function(graph, args, gremlin, state) {
@@ -568,26 +567,26 @@ Dagoba.addPipetype('filter', function(graph, args, gremlin, state) {
 })
 ```
 
-If the filter's first argument is not an object or function then we trigger an error, and pass the gremlin along. Pause for a minute, and consider the alternatives. Why would we decide to continue the query once an error is encountered?
+필터의 첫 번째 인수가 객체나 함수가 아니라면 오류를 발생시키고, 그렘린을 통과시킨다. 잠깐 멈춰서 대안들을 생각해보자. 왜 오류가 발생하면 질의를 계속하기로 결정할까?
 
-There are two reasons this error might arise. The first involves a programmer typing in a query, either in a REPL or directly in code. When run, that query will produce results, and also generate a programmer-observable error. The programmer then corrects the error to further filter the set of results produced. Alternatively, the system could display only the error and produce no results, and fixing all errors would allow results to be displayed.
+이 오류가 발생할 수 있는 두 가지 이유가 있다. 첫 번째는 프로그래머가 REPL이나 코드에서 직접 질의를 입력하는 것과 관련이 있다. 실행될 때, 그 질의는 결과를 생성하고, 프로그래머가 관찰할 수 있는 오류도 생성한다. 프로그래머는 그 다음 생성된 결과 집합을 더 필터링하기 위해 오류를 수정한다. 대안적으로, 시스템은 오류만 표시하고 결과를 생성하지 않을 수 있으며, 모든 오류를 수정하면 결과가 표시될 수 있다.
 
-The second possibility is that the filter is being applied dynamically at run time. This is a much more important case, because the person invoking the query is not necessarily the author of the query code. Because this is on the web, our default rule is to always show results, and to never break things. It is usually preferable to soldier on in the face of trouble rather than succumb to our wounds and present the user with a grisly error message.
+두 번째 가능성은 필터가 런타임에 동적으로 적용되는 것이다. 이것이 훨씬 더 중요한 경우인데, 질의를 호출하는 사람이 반드시 질의 코드의 작성자는 아니기 때문이다. 이것이 웹상에 있으므로, 우리의 기본 규칙은 항상 결과를 보여주고, 절대 중단시키지 않는 것이다. 보통은 상처에 굴복하여 사용자에게 끔찍한 오류 메시지를 제시하는 것보다 문제에 직면해서 굳건히 계속 진행하는 것이 좋다.
 
-For those occasions when showing too few results is better than showing too many, `Dagoba.error` can be overridden to throw an error, thereby circumventing the natural control flow.
+너무 많은 결과를 보여주는 것보다 너무 적은 결과를 보여주는 것이 나은 경우에는, `Dagoba.error`를 오버라이드하여 오류를 던질 수 있으며, 이로써 자연스러운 제어 흐름을 우회할 수 있다.
 
 
 #### Take
 
-We don't always want all the results at once. Sometimes we only need a handful of results; say we want a dozen of Thor's contemporaries, so we walk all the way back to the primeval cow Auðumbla:
+우리는 항상 모든 결과를 한 번에 원하지는 않는다. 때로는 소수의 결과만 필요하다; 토르의 동시대인들을 12명 원한다고 하면, 원시 소 아우둠블라까지 완전히 거슬러 올라간다:
 
 ```javascript
 g.v('Thor').out().out().out().out().in().in().in().in().unique().take(12).run()
 ```
 
-Without the `take` pipe that query could take quite a while to run, but thanks to our lazy evaluation strategy the query with the `take` pipe is very efficient.
+`take` 파이프가 없다면 그 질의는 실행하는 데 상당한 시간이 걸릴 수 있지만, 지연 평가 전략 덕분에 `take` 파이프가 있는 질의는 매우 효율적이다.
 
-Sometimes we just want one at a time: we'll process the result, work with it, and then come back for another one. This pipetype allows us to do that as well.
+때로는 한 번에 하나씩만 원한다: 결과를 처리하고, 작업하고, 그 다음에 다른 하나를 가져온다. 이 파이프타입은 그것도 할 수 있게 해준다.
 
 ```javascript
 q = g.v('Auðumbla').in().in().in().property('name').take(1)
@@ -598,7 +597,7 @@ q.run() // ['Vé']
 q.run() // []
 ```
 
-Our query can function in an asynchronous environment, allowing us to collect more results as needed. When we run out, an empty array is returned.
+우리 질의는 비동기 환경에서 작동할 수 있어서, 필요에 따라 더 많은 결과를 수집할 수 있다. 결과가 떨어지면, 빈 배열이 반환된다.
 
 
 ```javascript
@@ -616,20 +615,20 @@ Dagoba.addPipetype('take', function(graph, args, gremlin, state) {
 })
 ```
 
-We initialize `state.taken` to zero if it doesn't already exist. JavaScript has implicit coercion, but coerces `undefined` into `NaN`, so we have to be explicit here [^explicit].
+이미 존재하지 않으면 `state.taken`을 0으로 초기화한다. JavaScript에는 암시적 강제 변환이 있지만, `undefined`를 `NaN`으로 강제 변환하므로, 여기서는 명시적이어야 한다[^explicit].
 
 [^explicit]: Some would argue it's best to be explicit all the time. Others would argue that a good system for implicits makes for more concise, readable code, with less boilerplate and a smaller surface area for bugs. One thing we can all agree on is that making effective use of JavaScript's implicit coercion requires memorizing a lot of non-intuitive special cases, making it a minefield for the uninitiated.
 
-Then when `state.taken` reaches `args[0]` we return 'done', sealing off the pipes before us. We also reset the `state.taken` counter, allowing us to repeat the query later.
+그러면 `state.taken`이 `args[0]`에 도달하면 'done'을 반환하여, 우리 이전의 파이프들을 차단한다. 또한 `state.taken` 카운터를 재설정하여, 나중에 질의를 반복할 수 있게 한다.
 
-We do those two steps before query initialization to handle the cases of `take(0)` and `take()` [^takereturn]. Then we increment our counter and return the gremlin.
+`take(0)`과 `take()`의 경우를 처리하기 위해 질의 초기화 전에 그 두 단계를 수행한다[^takereturn]. 그 다음 카운터를 증가시키고 그렘린을 반환한다.
 
 [^takereturn]: What would you expect each of those to return? What do they actually return?
 
 
 #### As
 
-These next four pipetypes work as a group to allow more advanced queries. This one just allows you to label the current vertex. We'll use that label with the next two pipetypes.
+다음 네 개의 파이프타입은 그룹으로 작동하여 더 고급 질의를 가능하게 한다. 이것은 그냥 현재 정점에 레이블을 붙일 수 있게 해준다. 다음 두 파이프타입에서 그 레이블을 사용할 것이다.
 
 ```javascript
 Dagoba.addPipetype('as', function(graph, args, gremlin, state) {
@@ -640,11 +639,11 @@ Dagoba.addPipetype('as', function(graph, args, gremlin, state) {
 })
 ```
 
-After initializing the query, we ensure the gremlin's local state has an `as` parameter. Then we set a property of that parameter to the gremlin's current vertex.
+질의를 초기화한 후, 그렘린의 로컬 상태가 `as` 매개변수를 갖도록 보장한다. 그 다음 그 매개변수의 속성을 그렘린의 현재 정점으로 설정한다.
 
 #### Merge
 
-Once we've labeled vertices we can extract them using merge. If we want Thor's parents, grandparents and great-grandparents we can do something like this:
+정점들에 레이블을 붙이고 나면 merge를 사용하여 그것들을 추출할 수 있다. 토르의 부모, 조부모, 증조부모를 원한다면 다음과 같이 할 수 있다:
 
 ```javascript
 g.v('Thor').out().as('parent').out().as('grandparent').out().as('great-grandparent')
@@ -669,25 +668,25 @@ Dagoba.addPipetype('merge', function(graph, args, gremlin, state) {
 })
 ```
 
-We map over each argument, looking for it in the gremlin's list of labeled vertices. If we find it, we clone the gremlin to that vertex. Note that only gremlins that make it to this pipe are included in the merge&mdash;if Thor's mother's parents aren't in the graph, she won't be in the result set.
+각 인수를 매핑하여, 그렘린의 레이블이 붙은 정점 목록에서 그것을 찾는다. 찾으면, 그 정점으로 그렘린을 복제한다. 이 파이프에 도달한 그렘린들만 merge에 포함된다는 점에 주목하라&mdash;토르의 어머니의 부모들이 그래프에 없다면, 그녀는 결과 집합에 있지 않을 것이다.
 
 
 #### Except
 
-We've already seen cases where we would like to say "Give me all Thor's siblings who are not Thor". We can do that with a filter:
+"토르가 아닌 토르의 모든 형제자매를 주세요"라고 말하고 싶은 경우들을 이미 보았다. 필터로 그것을 할 수 있다:
 
 ```javascript
 g.v('Thor').out().in().unique()
            .filter(function(asgardian) {return asgardian._id != 'Thor'}).run()
 ```
 
-It's more straightforward with `as` and `except`:
+`as`와 `except`로는 더 직관적이다:
 
 ```javascript
 g.v('Thor').as('me').out().in().except('me').unique().run()
 ```
 
-But there are also queries that would be difficult to try to filter. What if we wanted Thor's uncles and aunts? How would we filter out his parents? It's easy with `as` and `except` [^unexpectedresults]:
+하지만 필터링하기 어려운 질의들도 있다. 토르의 삼촌과 이모를 원한다면 어떨까? 그의 부모들을 어떻게 필터링해서 제외할까? `as`와 `except`로는 쉽다[^unexpectedresults]:
 
 ```javascript
 g.v('Thor').out().as('parent').out().in().except('parent').unique().run()
@@ -703,12 +702,12 @@ Dagoba.addPipetype('except', function(graph, args, gremlin, state) {
 })
 ```
 
-Here we're checking whether the current vertex is equal to the one we stored previously. If it is, we skip it.
+여기서 현재 정점이 이전에 저장한 정점과 같은지 확인한다. 같다면, 그것을 건너뛴다.
 
 
 #### Back
 
-Some of the questions we might ask involve checking further into the graph, only to return later to our point of origin if the answer is in the affirmative. Suppose we wanted to know which of Fjörgynn's daughters had children with one of Bestla's sons?
+우리가 물을 수 있는 질문들 중 일부는 그래프를 더 깊이 확인하는 것을 포함하는데, 답이 긍정적이면 나중에 시작점으로 돌아온다. Fjörgynn의 딸들 중 누가 Bestla의 아들들 중 하나와 자녀를 낳았는지 알고 싶다고 가정해보자.
 
 ```javascript
 g.v('Fjörgynn').in().as('me')       // first gremlin's state.as is Frigg
@@ -718,7 +717,7 @@ g.v('Fjörgynn').in().as('me')       // first gremlin's state.as is Frigg
  .back('me').unique().run()         // jump gremlin's vertex back to Frigg and exit
 ```
 
-Here's the definition for `back`:
+`back`의 정의는 다음과 같다:
 
 ```javascript
 Dagoba.addPipetype('back', function(graph, args, gremlin, state) {
@@ -727,16 +726,16 @@ Dagoba.addPipetype('back', function(graph, args, gremlin, state) {
 })
 ```
 
-We're using the `Dagoba.gotoVertex` helper function to do all real work here. Let's take a look at that and some other helpers now.
+여기서 모든 실제 작업을 수행하기 위해 `Dagoba.gotoVertex` 도우미 함수를 사용한다. 이제 그것과 다른 몇 가지 도우미들을 살펴보자.
 
 
 ## Helpers
 
-The pipetypes above rely on a few helpers to do their jobs. Let's take a quick look at those before diving in to the interpreter.
+위의 파이프타입들은 작업을 수행하기 위해 몇 가지 도우미들에 의존한다. 인터프리터로 들어가기 전에 그것들을 빠르게 살펴보자.
 
 #### Gremlins
 
-Gremlins are simple creatures: they have a current vertex, and some local state. So to make a new one we just need to make an object with those two things.
+그렘린들은 단순한 생물이다: 현재 정점과 일부 로컬 상태를 가진다. 그래서 새로운 것을 만들려면 그 두 가지를 가진 객체를 만들기만 하면 된다.
 
 ```javascript
 Dagoba.makeGremlin = function(vertex, state) {
@@ -744,9 +743,9 @@ Dagoba.makeGremlin = function(vertex, state) {
 }
 ```
 
-Any object that has a vertex property and a state property is a gremlin by this definition, so we could just inline the constructor, but wrapping it in a function allows us to add new properties to all gremlins in a single place.
+이 정의에 따르면 vertex 속성과 state 속성을 가진 모든 객체가 그렘린이므로, 그냥 생성자를 인라인할 수도 있지만, 함수로 감싸는 것은 모든 그렘린에 새로운 속성을 한 곳에서 추가할 수 있게 해준다.
 
-We can also take an existing gremlin and send it to a new vertex, as we saw in the `back` pipetype and the `simpleTraversal` function.
+`back` 파이프타입과 `simpleTraversal` 함수에서 본 것처럼, 기존 그렘린을 가져와서 새로운 정점으로 보낼 수도 있다.
 
 ```javascript
 Dagoba.gotoVertex = function(gremlin, vertex) {               // clone the gremlin
@@ -754,9 +753,9 @@ Dagoba.gotoVertex = function(gremlin, vertex) {               // clone the greml
 }
 ```
 
-Note that this function actually returns a brand new gremlin: a clone of the old one, sent to our desired destination. That means a gremlin can sit on a vertex while its clones are sent out to explore many other vertices. This is exactly what happens in `simpleTraversal`.
+이 함수가 실제로는 완전히 새로운 그렘린을 반환한다는 점에 주목하라: 우리가 원하는 목적지로 보내진, 이전 것의 복제본이다. 이는 그렘린이 한 정점에 앉아 있으면서 그것의 복제본들이 많은 다른 정점들을 탐색하기 위해 보내진다는 뜻이다. 이것이 정확히 `simpleTraversal`에서 일어나는 일이다.
 
-As an example of possible enhancements, we could add a bit of state to keep track of every vertex the gremlin visits, and add new pipetypes to take advantage of those paths.
+가능한 향상의 예로, 그렘린이 방문하는 모든 정점을 추적하기 위한 약간의 상태를 추가하고, 그런 경로들을 활용하기 위한 새로운 파이프타입들을 추가할 수 있다.
 
 
 #### Finding
