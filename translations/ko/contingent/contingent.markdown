@@ -428,9 +428,9 @@ which would have us represent \aosafigref{500l.contingent.graph} as:
      ('api.rst', 'api.html')}
 ```
 
-This would allow quick iteration across all of our edges,
-fast insert and delete operations for a single edge,
-and a quick way to check whether a particular edge was present.
+이것은 모든 엣지에 대한 빠른 반복,
+단일 엣지에 대한 빠른 삽입 및 삭제 연산,
+그리고 특정 엣지가 존재하는지 확인하는 빠른 방법을 허용할 것입니다.
 
 불행히도, 이것들이 우리에게 필요한 유일한 연산은 아닙니다.
 
@@ -487,12 +487,12 @@ to see which are incoming and which are outgoing.
 It is also slightly redundant to keep naming the node
 over and over again in its set of edges.
 
-The solution to both of these objections
-is to place incoming and outgoing edges
-in their own separate data structures,
-which will also absolve us
-of having to mention the node over and over again
-for every one of the edges in which it is involved.
+이 두 가지 반대 의견에 대한 해결책은
+들어오는 엣지와 나가는 엣지를
+각각의 별도 데이터 구조에 배치하는 것입니다.
+이것은 또한 노드가 관련된 모든 엣지에 대해
+그 노드를 반복해서 언급해야 하는 부담에서
+우리를 해방시켜 줄 것입니다.
 
 ```python
     incoming = {
@@ -524,24 +524,24 @@ once as an outgoing edge from one node
 (`tutorial.rst` → `tutorial.html`)
 and again as an incoming edge to the other
 (`tutorial.html` ← `tutorial.rst`).
-These two representations capture precisely the same relationship,
-just from the opposite perspectives of the two nodes
-at either end of the edge.
-But in return for this redundancy,
-the data structure supports the fast lookup that Contingent needs.
+이 두 표현은 정확히 동일한 관계를 포착하지만,
+엣지의 양 끝에 있는 두 노드의
+반대 관점에서 표현합니다.
+하지만 이런 중복성에 대한 대가로,
+이 데이터 구조는 Contingent가 필요로 하는 빠른 조회를 지원합니다.
 
 ## 클래스의 적절한 사용
 
-You may have been surprised
-by the absence of classes in the above discussion
-of Python data structures.
-After all, classes are a frequent mechanism for structuring applications
-and a hardly less-frequent subject of heated debate
-among their adherents and detractors.
-Classes were once thought important enough that
-entire educational curricula were designed around them,
-and the majority of popular programming languages
-include dedicated syntax for defining and using them.
+위의 Python 데이터 구조 논의에서
+클래스가 없다는 점에 놀랐을 수도 있습니다.
+결국 클래스는 애플리케이션을 구조화하는
+빈번한 메커니즘이며,
+지지자와 반대자들 사이에서 열띤 논쟁의
+주제가 되는 것도 그에 못지않게 빈번합니다.
+클래스는 한때 매우 중요하게 여겨져서
+전체 교육 커리큘럼이 클래스를 중심으로 설계되었고,
+대부분의 인기 있는 프로그래밍 언어들이
+클래스를 정의하고 사용하기 위한 전용 문법을 포함하고 있습니다.
 
 But it turns out that classes are often orthogonal
 to the question of data structure design.
