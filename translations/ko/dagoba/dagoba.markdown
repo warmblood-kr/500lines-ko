@@ -760,7 +760,7 @@ Dagoba.gotoVertex = function(gremlin, vertex) {               // clone the greml
 
 #### Finding
 
-The `vertex` pipetype uses the `findVertices` function to collect a set of initial vertices from which to begin our query.
+`vertex` 파이프타입은 질의를 시작할 초기 정점들의 집합을 수집하기 위해 `findVertices` 함수를 사용한다.
 
 ```javascript
 Dagoba.G.findVertices = function(args) {                      // vertex finder helper
@@ -773,16 +773,16 @@ Dagoba.G.findVertices = function(args) {                      // vertex finder h
 }
 ```
 
-This function receives its arguments as a list. If the first one is an object it passes it to `searchVertices`, allowing queries like:
+이 함수는 인수들을 목록으로 받는다. 첫 번째가 객체라면 그것을 `searchVertices`에 전달하여, 다음과 같은 질의를 허용한다:
 
 ```javascript
   g.v({_id:'Thor'}).run()
   g.v({species: 'Aesir'}).run()
 ```
 
-Otherwise, if there are arguments it gets passed to `findVerticesByIds`, which handles queries like `g.v('Thor', 'Odin').run()`.
+그렇지 않고, 인수들이 있다면 `g.v('Thor', 'Odin').run()`과 같은 질의를 처리하는 `findVerticesByIds`에 전달된다.
 
-If there are no arguments at all, then our query looks like `g.v().run()`. This isn't something you'll want to do frequently with large graphs, especially since we're slicing the vertex list before returning it. We slice because some call sites manipulate the returned list directly by popping items off as they work through them. We could optimize this use case by cloning at the call site, or by avoiding those manipulations. (We could keep a counter in state instead of popping.)
+인수가 전혀 없다면, 질의는 `g.v().run()`처럼 보인다. 이는 대형 그래프에서 자주 하고 싶은 일이 아니며, 특히 반환하기 전에 정점 목록을 슬라이싱하고 있기 때문이다. 일부 호출 지점에서 작업하면서 항목들을 꺼내어 반환된 목록을 직접 조작하기 때문에 슬라이싱한다. 호출 지점에서 복제하거나 그런 조작을 피함으로써 이 사용 사례를 최적화할 수 있다. (꺼내는 대신 상태에 카운터를 유지할 수도 있다.)
 
 ```javascript
 Dagoba.G.findVerticesByIds = function(ids) {
@@ -799,7 +799,7 @@ Dagoba.G.findVertexById = function(vertex_id) {
 }
 ```
 
-Note the use of `vertexIndex` here. Without that index we'd have to go through each vertex in our list one at a time to decide if it matched the ID&mdash;turning a constant time operation into a linear time one, and any $O(n)$ operations that directly rely on it into $O(n^2)$ operations.
+여기서 `vertexIndex`의 사용에 주목하라. 그 인덱스 없이는 ID가 일치하는지 결정하기 위해 목록의 각 정점을 한 번에 하나씩 살펴봐야 할 것이다&mdash;상수 시간 연산을 선형 시간 연산으로 바꾸고, 그것에 직접 의존하는 모든 $O(n)$ 연산을 $O(n^2)$ 연산으로 만든다.
 
 ```javascript
 Dagoba.G.searchVertices = function(filter) {        // match on filter's properties
@@ -809,12 +809,12 @@ Dagoba.G.searchVertices = function(filter) {        // match on filter's propert
 }
 ```
 
-The `searchVertices` function uses the `objectFilter` helper on every vertex in the graph. We'll look at `objectFilter` in the next section, but in the meantime, can you think of a way to search through the vertices lazily?
+`searchVertices` 함수는 그래프의 모든 정점에 대해 `objectFilter` 도우미를 사용한다. 다음 섹션에서 `objectFilter`를 살펴보겠지만, 그 동안 정점들을 지연적으로 검색하는 방법을 생각해볼 수 있는가?
 
 
 #### Filtering
 
-We saw that `simpleTraversal` uses a filtering function on the edges it encounters. It's a simple function, but powerful enough for our purposes.
+`simpleTraversal`이 만나는 간선들에 대해 필터링 함수를 사용하는 것을 보았다. 간단한 함수이지만, 우리 목적에는 충분히 강력하다.
 
 ```javascript
 Dagoba.filterEdges = function(filter) {
@@ -833,13 +833,13 @@ Dagoba.filterEdges = function(filter) {
 }
 ```
 
-The first case is no filter at all: `g.v('Odin').in().run()` traverses all edges to Odin.
+첫 번째 경우는 필터가 전혀 없는 것이다: `g.v('Odin').in().run()`은 오딘으로의 모든 간선을 순회한다.
 
-The second case filters on the edge's label: `g.v('Odin').in('parent').run()` traverses those edges with a label of 'parent'.
+두 번째 경우는 간선의 레이블로 필터링한다: `g.v('Odin').in('parent').run()`은 'parent' 레이블을 가진 간선들을 순회한다.
 
-The third case accepts an array of labels: `g.v('Odin').in(['parent', 'spouse']).run()` traverses both parent and spouse edges.
+세 번째 경우는 레이블의 배열을 받는다: `g.v('Odin').in(['parent', 'spouse']).run()`은 parent와 spouse 간선을 모두 순회한다.
 
-And the fourth case uses the objectFilter function we saw before:
+그리고 네 번째 경우는 이전에 본 objectFilter 함수를 사용한다:
 
 ```javascript
 Dagoba.objectFilter = function(thing, filter) {
@@ -851,48 +851,48 @@ Dagoba.objectFilter = function(thing, filter) {
 }
 ```
 
-This allows us to query the edge using a filter object:
+이를 통해 필터 객체를 사용하여 간선을 질의할 수 있다:
 
 ```javascript
 `g.v('Odin').in({_label: 'spouse', order: 2}).run()`    // finds Odin's second wife
 ```
 
 
-## The Interpreter's Nature
+## 인터프리터의 본질
 
-We've arrived at the top of the narrative mountain, ready to receive our prize: the interpreter. The code is actually fairly compact, but the model has a bit of subtlety.
+우리는 서사의 산 정상에 도달했고, 우리의 상을 받을 준비가 되었다: 인터프리터. 코드는 실제로 꽤 간결하지만, 모델에는 약간의 미묘함이 있다.
 
-We compared programs to pipelines earlier, and that's a good mental model for writing queries. As we saw, though, we need a different model for the actual implementation. That model is more like a Turing machine than a pipeline: there's a read/write head that sits over a particular step. It "reads" the step, changes its "state", and then moves either right or left.
+앞서 프로그램들을 파이프라인과 비교했고, 그것은 질의 작성을 위한 좋은 정신적 모델이다. 하지만 보았듯이, 실제 구현을 위해서는 다른 모델이 필요하다. 그 모델은 파이프라인보다는 튜링 머신에 더 가깝다: 특정 단계 위에 앉는 읽기/쓰기 헤드가 있다. 그것은 단계를 "읽고", "상태"를 바꾸고, 왼쪽이나 오른쪽으로 이동한다.
 
-Reading the step means evaluating the pipetype function. As we saw above, each of those functions accepts as input the entire graph, its own arguments, maybe a gremlin, and its own local state. As output it provides a gremlin, false, or a signal of 'pull' or 'done'. This output is what our quasi-Turing machine reads in order to change the machine's state.
+단계를 읽는다는 것은 파이프타입 함수를 평가한다는 뜻이다. 위에서 본 바와 같이, 그 함수들 각각은 입력으로 전체 그래프, 자신의 인수들, 어쩌면 그렘린, 그리고 자신의 로컬 상태를 받는다. 출력으로는 그렘린, false, 또는 'pull'이나 'done'의 신호를 제공한다. 이 출력이 우리의 준-튜링 머신이 머신의 상태를 변경하기 위해 읽는 것이다.
 
-That state comprises just two variables: one to record steps that are 'done', and another to record the `results` of the query. Those are updated, and then either the machine head moves or the query finishes and the result is returned.
+그 상태는 단지 두 개의 변수로 구성된다: 'done'인 단계들을 기록하는 것 하나와 질의의 `results`를 기록하는 또 다른 하나. 그것들이 업데이트되고, 그 다음 머신 헤드가 이동하거나 질의가 끝나고 결과가 반환된다.
 
-We've now described all the state in our machine. We'll have a list of results that starts empty:
+이제 우리 머신의 모든 상태를 설명했다. 빈 상태로 시작하는 결과 목록을 갖게 될 것이다:
 
 ```javascript
   var results = []
 ```
 
-An index of the last 'done' step that starts behind the first step:
+첫 번째 단계 뒤에서 시작하는 마지막 'done' 단계의 인덱스:
 
 ```javascript
   var done = -1
 ```
 
-We need a place to store the most recent step's output, which might be a gremlin&mdash;or it might be nothing&mdash;so we'll call it `maybe_gremlin`:
+가장 최근 단계의 출력을 저장할 장소가 필요한데, 그것은 그렘린일 수도 있고&mdash;아무것도 아닐 수도 있으므로&mdash;`maybe_gremlin`이라고 부를 것이다:
 
 ```javascript
   var maybe_gremlin = false
 ```
 
-And finally we'll need a program counter to indicate the position of the read/write head.
+그리고 마지막으로 읽기/쓰기 헤드의 위치를 나타내는 프로그램 카운터가 필요하다.
 
 ```javascript
   var pc = this.program.length - 1
 ```
 
-Except... wait a second. How are we going to get lazy [^getlazy]? The traditional way of building a lazy system out of an eager one is to store parameters to function calls as "thunks" instead of evaluating them. You can think of a thunk as an unevaluated expression. In JS, which has first-class functions and closures, we can create a thunk by wrapping a function and its arguments in a new anonymous function which takes no arguments:
+그런데... 잠깐. 어떻게 지연적으로 만들 것인가[^getlazy]? 성급한 것에서 지연 시스템을 구축하는 전통적인 방법은 함수 호출의 매개변수들을 평가하는 대신 "썽크"로 저장하는 것이다. 썽크를 평가되지 않은 표현식이라고 생각할 수 있다. 일급 함수와 클로저를 가진 JS에서는, 함수와 그 인수들을 인수를 받지 않는 새로운 익명 함수로 감싸서 썽크를 생성할 수 있다:
 
 [^getlazy]: Technically we need to implement an interpreter with non-strict semantics, which means it will only evaluate when forced to do so. Lazy evaluation is a technique used for implementing non-strictness. It's a bit lazy of us to conflate the two, so we will only disambiguate when forced to do so.
 
