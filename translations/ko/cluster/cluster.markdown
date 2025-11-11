@@ -131,71 +131,71 @@ Paxos라는 이름은 "The Part-Time Parliament"의 신화적인 섬에서 유�
 * 제안자 A가 투표 번호 1에 대해 ``Prepare``/``Promise`` 단계를 수행합니다.
 * 제안자 A가 자신의 제안을 수락받기 전에, 제안자 B가 투표 번호 2에 대해 \newline ``Prepare``/``Promise`` 단계를 수행합니다.
 * 제안자 A가 마침내 투표 번호 1로 ``Accept``를 보낼 때, 수락자들은 이미 투표 번호 2를 약속했기 때문에 이를 거부합니다.
-* Proposer A reacts by immediately sending a ``Prepare`` with a higher ballot number (3), before Proposer B can send its ``Accept`` message.
-* Proposer B's subsequent ``Accept`` is rejected, and the process repeats.
+* 제안자 A가 제안자 B가 자신의 ``Accept`` 메시지를 보내기 전에 즉시 더 높은 투표 번호 (3)로 ``Prepare``를 보내어 반응합니다.
+* 제안자 B의 후속 ``Accept``는 거부되고, 과정이 반복됩니다.
 
-With unlucky timing -- more common over long-distance connections where the time between sending a message and getting a response is long -- this deadlock can continue for many rounds.
+불운한 타이밍으로는 -- 메시지를 보내고 응답을 받는 시간이 긴 장거리 연결에서 더 일반적인데 -- 이러한 교착 상태가 여러 라운드 동안 계속될 수 있습니다.
 
 ### Multi-Paxos
 
 
-Reaching consensus on a single static value is not particularly useful on its own.
-Clustered systems such as the bank account service want to agree on a particular state (account balances) that changes over time.
-We use Paxos to agree on each operation, treated as a state machine transition.
+단일 정적 값에 대한 합의에 도달하는 것은 그 자체로는 특별히 유용하지 않습니다.
+은행 계좌 서비스와 같은 클러스터링된 시스템은 시간에 따라 변화하는 특정 상태(계좌 잔액)에 대해 동의하고자 합니다.
+우리는 각 작업에 대해 Paxos를 사용하여 합의하며, 이를 상태 머신 전환으로 취급합니다.
 
-Multi-Paxos is, in effect, a sequence of simple Paxos instances (slots), each numbered sequentially.
-Each state transition is given a "slot number", and each member of the cluster executes transitions in strict numeric order.
-To change the cluster's state (to process a transfer operation, for example), we try to achieve consensus on that operation in the next slot.
-In concrete terms, this means adding a slot number to each message, with all of the protocol state tracked on a per-slot basis.
+Multi-Paxos는 실질적으로 일련의 Simple Paxos 인스턴스들(슬롯)로 각각이 순차적으로 번호가 매겨집니다.
+각 상태 전환은 "슬롯 번호"를 부여받으며, 클러스터의 각 구성원은 엄격한 숫자 순서로 전환을 실행합니다.
+클러스터의 상태를 변경하기 위해(예를 들어, 이체 작업을 처리하기 위해), 우리는 다음 슬롯에서 해당 작업에 대한 합의를 달성하려고 합니다.
+구체적으로 말하면, 이는 각 메시지에 슬롯 번호를 추가하는 것을 의미하며, 모든 프로토콜 상태가 슬롯별로 추적됩니다.
 
-Running Paxos for every slot, with its minimum of two round trips, would be too slow.
-Multi-Paxos optimizes by using the same set of ballot numbers for all slots, and performing the ``Prepare``/``Promise`` phase for all slots at once.
+각 슬롯에 대해 최소 두 번의 라운드 트립을 가진 Paxos를 실행하는 것은 너무 느릴 것입니다.
+Multi-Paxos는 모든 슬롯에 대해 동일한 투표 번호 집합을 사용하고, 모든 슬롯에 대해 ``Prepare``/``Promise`` 단계를 한 번에 수행하여 최적화합니다.
 
 ### Paxos Made Pretty Hard
 
-Implementing Multi-Paxos in practical software is notoriously difficult, spawning a number of papers mocking Lamport's "Paxos Made Simple" with titles like "Paxos Made Practical".
+실용적인 소프트웨어에서 Multi-Paxos를 구현하는 것은 악명 높게 어렵기로 유명하며, Lamport의 "Paxos Made Simple"을 조롱하는 "Paxos Made Practical"과 같은 제목의 여러 논문들이 등장했습니다.
 
-First, the multiple-proposers problem described above can become problematic in a busy environment, as each cluster member attempts to get its state machine operation decided in each slot.
-The fix is to elect a "leader" which is responsible for submitting ballots for each slot.
-All other cluster nodes then send new operations to the leader for execution.
-Thus, in normal operation with only one leader, ballot conflicts do not occur.
+첫째, 위에서 설명한 다중 제안자 문제는 각 클러스터 구성원이 각 슬롯에서 자신의 상태 머신 작업을 결정받으려고 시도할 때 바쁜 환경에서 문제가 될 수 있습니다.
+해결책은 각 슬롯에 대한 투표를 제출할 책임이 있는 "리더"를 선출하는 것입니다.
+그러면 다른 모든 클러스터 노드들은 실행을 위해 새로운 작업들을 리더에게 보냅니다.
+따라서 단 하나의 리더만 있는 정상 작동에서는 투표 충돌이 발생하지 않습니다.
 
-The ``Prepare``/``Promise`` phase can function as a kind of leader election: whichever cluster member owns the most recently promised ballot number is considered the leader.
-The leader is then free to execute the ``Accept``/``Accepted`` phase directly without repeating the first phase.
-As we'll see below, leader elections are actually quite complex.
+``Prepare``/``Promise`` 단계는 일종의 리더 선출로 기능할 수 있습니다: 가장 최근에 약속된 투표 번호를 소유한 클러스터 구성원이 리더로 간주됩니다.
+그러면 리더는 첫 번째 단계를 반복하지 않고 직접 ``Accept``/``Accepted`` 단계를 실행할 수 있습니다.
+아래에서 보겠지만, 리더 선출은 실제로 꽤 복잡합니다.
 
-Although simple Paxos guarantees that the cluster will not reach conflicting decisions, it cannot guarantee that any decision will be made.
-For example, if the initial ``Prepare`` message is lost and doesn't reach the acceptors, then the proposer will wait for a ``Promise`` message that will never arrive.
-Fixing this requires carefully orchestrated re-transmissions: enough to eventually make progress, but not so many that the cluster buries itself in a packet storm.
+Simple Paxos는 클러스터가 상충하는 결정에 도달하지 않을 것을 보장하지만, 어떤 결정이 내려질 것을 보장할 수는 없습니다.
+예를 들어, 초기 ``Prepare`` 메시지가 손실되어 수락자들에게 도달하지 않으면, 제안자는 절대 도착하지 않을 ``Promise`` 메시지를 기다릴 것입니다.
+이를 해결하기 위해서는 신중하게 조율된 재전송이 필요합니다: 결국 진전을 이루기에는 충분하지만, 클러스터가 패킷 폭풍에 스스로를 매장할 정도로 많지는 않은 수준으로요.
 
-Another problem is the dissemination of decisions.
-A simple broadcast of a ``Decision`` message can take care of this for the normal case.
-If the message is lost, though, a node can remain permanently ignorant of the decision and unable to apply state machine transitions for later slots.
-So an implementation needs some mechanism for sharing information about decided proposals.
+또 다른 문제는 결정의 전파입니다.
+``Decision`` 메시지의 간단한 브로드캐스트가 정상적인 경우에는 이를 처리할 수 있습니다.
+그러나 메시지가 손실되면, 노드는 결정에 대해 영구적으로 무지한 상태로 남아 있을 수 있고 이후 슬롯들에 대한 상태 머신 전환을 적용할 수 없게 됩니다.
+따라서 구현에서는 결정된 제안들에 대한 정보를 공유하는 어떤 메커니즘이 필요합니다.
 
-Our use of a distributed state machine presents another interesting challenge: start-up.
-When a new node starts, it needs to catch up on the existing state of the cluster.
-Although it can do so by catching up on decisions for all slots since the first, in a mature cluster this may involve millions of slots.
-Furthermore, we need some way to initialize a new cluster.
+분산 상태 머신의 사용은 또 다른 흥미로운 도전을 제시합니다: 시작입니다.
+새로운 노드가 시작될 때, 클러스터의 기존 상태를 따라잡아야 합니다.
+첫 번째 슬롯부터 모든 슬롯의 결정들을 따라잡음으로써 그렇게 할 수 있지만, 성숙한 클러스터에서는 이것이 수백만 개의 슬롯을 포함할 수 있습니다.
+더욱이, 새로운 클러스터를 초기화하는 어떤 방법이 필요합니다.
 
-But enough talk of theory and algorithms -- let's have a look at the code.
+하지만 이론과 알고리즘에 대한 이야기는 충분합니다 -- 코드를 살펴보겠습니다.
 
-## Introducing Cluster
+## Cluster 소개
 
-The *Cluster* library in this chapter implements a simple form of Multi-Paxos.
-It is designed as a library to provide a consensus service to a larger application.
+이 장의 *Cluster* 라이브러리는 Multi-Paxos의 간단한 형태를 구현합니다.
+이것은 더 큰 애플리케이션에 합의 서비스를 제공하는 라이브러리로 설계되었습니다.
 
-Users of this library will depend on its correctness, so it's important to structure the code so that we can see -- and test -- its correspondence to the specification.
-Complex protocols can exhibit complex failures, so we will build support for reproducing and debugging rare failures.
+이 라이브러리의 사용자들은 그 정확성에 의존할 것이므로, 명세와의 대응을 볼 수 있고 -- 그리고 테스트할 수 있도록 -- 코드를 구조화하는 것이 중요합니다.
+복잡한 프로토콜은 복잡한 실패를 나타낼 수 있으므로, 드물게 발생하는 실패를 재현하고 디버깅하는 지원을 구축할 것입니다.
 
-The implementation in this chapter is proof-of-concept code: enough to demonstrate that the core concept is practical, but without all of the mundane equipment required for use in production.
-The code is structured so that such equipment can be added later with minimal changes to the core implementation.
+이 장의 구현은 개념 증명 코드입니다: 핵심 개념이 실용적임을 보여주기에는 충분하지만, 프로덕션에서 사용하기 위해 필요한 모든 일상적인 장비는 없습니다.
+코드는 그러한 장비가 핵심 구현에 최소한의 변경으로 나중에 추가될 수 있도록 구조화되어 있습니다.
 
-Let's get started.
+시작해보겠습니다.
 
-### Types and Constants
+### 타입과 상수
 
-Cluster's protocol uses fifteen different message types, each defined as a Python [``namedtuple``](https://docs.python.org/3/library/collections.html).
+Cluster의 프로토콜은 15개의 서로 다른 메시지 타입을 사용하며, 각각은 Python [``namedtuple``](https://docs.python.org/3/library/collections.html)로 정의됩니다.
 
 ```python
     Accepted = namedtuple('Accepted', ['slot', 'ballot_num'])
@@ -216,24 +216,24 @@ Cluster's protocol uses fifteen different message types, each defined as a Pytho
 ```    
 
 
-Using named tuples to describe each message type keeps the code clean and helps avoid some simple errors.
-The named tuple constructor will raise an exception if it is not given exactly the right attributes, making typos obvious.
-The tuples format themselves nicely in log messages, and as an added bonus don't use as much memory as a dictionary.
+각 메시지 타입을 설명하기 위해 명명된 튜플을 사용하는 것은 코드를 깔끔하게 유지하고 일부 간단한 오류를 피하는 데 도움이 됩니다.
+명명된 튜플 생성자는 정확히 올바른 속성이 주어지지 않으면 예외를 발생시켜 오타를 명백하게 만듭니다.
+튜플들은 로그 메시지에서 자신을 깔끔하게 포맷하며, 추가 보너스로 딕셔너리만큼 많은 메모리를 사용하지 않습니다.
 
-Creating a message reads naturally:
+메시지를 생성하는 것은 자연스럽게 읽힙니다:
 
 ```python
     msg = Accepted(slot=10, ballot_num=30)
 ```
 
-And the fields of that message are accessible with a minimum of extra typing:
+그리고 해당 메시지의 필드들은 최소한의 추가 타이핑으로 접근할 수 있습니다:
 
 ```python
     got_ballot_num = msg.ballot_num
 ```
 
-We'll see what these messages mean in the sections that follow.
-The code also introduces a few constants, most of which define timeouts for various messages:
+이어지는 섹션들에서 이러한 메시지들이 무엇을 의미하는지 살펴볼 것입니다.
+코드는 또한 몇 가지 상수들을 도입하는데, 대부분은 다양한 메시지들에 대한 타임아웃을 정의합니다:
 
 ```python
     JOIN_RETRANSMIT = 0.7
@@ -246,21 +246,21 @@ The code also introduces a few constants, most of which define timeouts for vari
     NOOP_PROPOSAL = Proposal(None, None, None)  # no-op to fill otherwise empty slots
 ```
 
-Finally, Cluster uses two data types named to correspond to the protocol description:
+마지막으로, Cluster는 프로토콜 설명에 대응하도록 명명된 두 개의 데이터 타입을 사용합니다:
 
 ```python
     Proposal = namedtuple('Proposal', ['caller', 'client_id', 'input'])
     Ballot = namedtuple('Ballot', ['n', 'leader'])
 ```
 
-### Component Model
+### 컴포넌트 모델
 
-Humans are limited by what we can hold in our active memory.
-We can't reason about the entire Cluster implementation at once -- it's just too much, so it's easy to miss details.
-For similar reasons, large monolithic codebases are hard to test: test cases must manipulate many moving pieces and are brittle, failing on almost any change to the code.
+인간은 활성 메모리에 보관할 수 있는 것에 제한이 있습니다.
+전체 Cluster 구현에 대해 한 번에 추론할 수 없습니다 -- 그것은 너무 많아서 세부 사항을 놓치기 쉽습니다.
+비슷한 이유로, 크고 단일체적인 코드베이스는 테스트하기 어렵습니다: 테스트 케이스는 많은 움직이는 부분들을 조작해야 하고 취약하여, 코드의 거의 모든 변경에 실패합니다.
 
-To encourage testability and keep the code readable, we break Cluster down into a handful of classes corresponding to the roles described in the protocol.
-Each is a subclass of ``Role``.
+테스트 가능성을 장려하고 코드를 읽기 쉽게 유지하기 위해, 우리는 Cluster를 프로토콜에서 설명된 역할들에 대응하는 소수의 클래스들로 나눕니다.
+각각은 ``Role``의 서브클래스입니다.
 
 ```python
 class Role(object):
@@ -280,11 +280,11 @@ class Role(object):
         self.node.unregister(self)
 ```
 
-The roles that a cluster node has are glued together by the ``Node`` class, which represents a single node on the network.
-Roles are added to and removed from the node as execution proceeds.
-Messages that arrive on the node are relayed to all active roles, calling a method named after the message type with a ``do_`` prefix.
-These ``do_`` methods receive the message's attributes as keyword arguments for easy access.
-The ``Node`` class also provides a ``send`` method as a convenience, using ``functools.partial`` to supply some arguments to the same methods of the ``Network`` class.
+클러스터 노드가 갖는 역할들은 네트워크상의 단일 노드를 나타내는 ``Node`` 클래스에 의해 함께 묶입니다.
+실행이 진행됨에 따라 역할들이 노드에 추가되고 제거됩니다.
+노드에 도착하는 메시지들은 모든 활성 역할들에게 중계되며, ``do_`` 접두사가 붙은 메시지 타입 이름의 메서드를 호출합니다.
+이러한 ``do_`` 메서드들은 쉬운 접근을 위해 메시지의 속성들을 키워드 인수로 받습니다.
+``Node`` 클래스는 또한 편의를 위해 ``send`` 메서드를 제공하며, ``functools.partial``을 사용하여 ``Network`` 클래스의 동일한 메서드들에 일부 인수를 공급합니다.
 
 ```python
 
@@ -318,15 +318,15 @@ class Node(object):
     
 ```
 
-### Application Interface
+### 애플리케이션 인터페이스
 
-The application creates and starts a ``Member`` object on each cluster member, providing an application-specific state machine and a list of peers.
-The member object adds a bootstrap role to the node if it is joining an existing cluster, or seed if it is creating a new cluster.
-It then runs the protocol (via ``Network.run``) in a separate thread.
+애플리케이션은 각 클러스터 구성원에서 ``Member`` 객체를 생성하고 시작하며, 애플리케이션별 상태 머신과 피어 목록을 제공합니다.
+멤버 객체는 기존 클러스터에 참여하는 경우 노드에 부트스트랩 역할을, 새로운 클러스터를 생성하는 경우 시드를 추가합니다.
+그런 다음 별도의 스레드에서 프로토콜을(``Network.run``을 통해) 실행합니다.
 
-The application interacts with the cluster through the ``invoke`` method, which kicks off a proposal for a state transition.
-Once that proposal is decided and the state machine runs, ``invoke`` returns the machine's output.
-The method uses a simple synchronized `Queue` to wait for the result from the protocol thread.
+애플리케이션은 상태 전환에 대한 제안을 시작하는 ``invoke`` 메서드를 통해 클러스터와 상호작용합니다.
+해당 제안이 결정되고 상태 머신이 실행되면, ``invoke``는 머신의 출력을 반환합니다.
+이 메서드는 프로토콜 스레드로부터의 결과를 기다리기 위해 간단한 동기화된 `Queue`를 사용합니다.
 
 
 ```python
@@ -359,17 +359,17 @@ class Member(object):
         return output
 ```
 
-### Role Classes
+### 역할 클래스들
 
-Let's look at each of the role classes in the library one by one.
+라이브러리의 각 역할 클래스들을 하나씩 살펴보겠습니다.
 
 #### Acceptor
 
-The ``Acceptor`` implements the acceptor role in the protocol, so it must store the ballot number representing its most recent promise, along with the set of accepted proposals for each slot.
-It then responds to ``Prepare`` and ``Accept`` messages according to the protocol.
-The result is a short class that is easy to compare to the protocol.
+``Acceptor``는 프로토콜에서 수락자 역할을 구현하므로, 가장 최근의 약속을 나타내는 투표 번호와 각 슬롯에 대한 수락된 제안들의 집합을 저장해야 합니다.
+그런 다음 프로토콜에 따라 ``Prepare``와 ``Accept`` 메시지에 응답합니다.
+결과는 프로토콜과 비교하기 쉬운 짧은 클래스입니다.
 
-For acceptors, Multi-Paxos looks a lot like Simple Paxos, with the addition of slot numbers to the messages.
+수락자들에게 있어 Multi-Paxos는 메시지에 슬롯 번호가 추가된 것을 제외하고는 Simple Paxos와 매우 유사해 보입니다.
 
 ```python
 class Acceptor(Role):
@@ -405,52 +405,49 @@ class Acceptor(Role):
 #### Replica
 \label{sec.cluster.replica}
 
-The ``Replica`` class is the most complicated role class, as it has a few closely related responsibilities:
+``Replica`` 클래스는 몇 가지 밀접하게 관련된 책임을 갖고 있어 가장 복잡한 역할 클래스입니다:
 
-* Making new proposals;
-* Invoking the local state machine when proposals are decided;
-* Tracking the current leader; and
-* Adding newly started nodes to the cluster.
+* 새로운 제안 만들기;
+* 제안이 결정될 때 로컬 상태 머신 호출하기;
+* 현재 리더 추적하기; 그리고
+* 새로 시작된 노드들을 클러스터에 추가하기.
 
-The replica creates new proposals in response to ``Invoke`` messages from clients, selecting what it believes to be an unused slot and sending a ``Propose`` message to the current leader (\aosafigref{500l.cluster.replica}.)
-Furthermore, if the consensus for the selected slot is for a different proposal, the replica must re-propose with a new slot.
+복제본은 클라이언트로부터의 ``Invoke`` 메시지에 응답하여 새로운 제안을 생성하며, 사용되지 않은 것으로 믿는 슬롯을 선택하고 현재 리더에게 ``Propose`` 메시지를 보냅니다(\aosafigref{500l.cluster.replica}.)
+더욱이, 선택된 슬롯에 대한 합의가 다른 제안에 대한 것이라면, 복제본은 새로운 슬롯으로 다시 제안해야 합니다.
 
 \aosafigure[240pt]{cluster-images/replica.png}{Replica Role Control Flow}{500l.cluster.replica}
 
-``Decision`` messages represent slots on which the cluster has come to consensus.
-Here, replicas store the new decision, then run the state machine until it reaches an undecided slot.
-Replicas distinguish *decided* slots, on which the cluster has agreed, from *committed* slots, which the local state machine has processed.
-When slots are decided out of order, the committed proposals may lag behind, waiting for the next slot to be decided.
-When a slot is committed, each replica sends an ``Invoked`` message back to the requester with the result of the operation.
+``Decision`` 메시지들은 클러스터가 합의에 도달한 슬롯들을 나타냅니다.
+여기서, 복제본들은 새로운 결정을 저장한 다음, 결정되지 않은 슬롯에 도달할 때까지 상태 머신을 실행합니다.
+복제본들은 클러스터가 합의한 *결정된* 슬롯과 로컬 상태 머신이 처리한 *커밋된* 슬롯을 구별합니다.
+슬롯들이 순서에 맞지 않게 결정될 때, 커밋된 제안들은 다음 슬롯이 결정되기를 기다리며 뒤처질 수 있습니다.
+슬롯이 커밋될 때, 각 복제본은 작업의 결과와 함께 요청자에게 ``Invoked`` 메시지를 다시 보냅니다.
 
-In some circumstances, it's possible for a slot to have no active proposals and no decision.
-The state machine is required to execute slots one by one, so the cluster must reach a consensus on something to fill the slot.
-To protect against this possibility, replicas make a "no-op" proposal whenever they catch up on a slot.
-If such a proposal is eventually decided, then the state machine does nothing for that slot.
+일부 상황에서는 슬롯이 활성 제안도 없고 결정도 없을 가능성이 있습니다.
+상태 머신은 슬롯들을 하나씩 실행해야 하므로, 클러스터는 슬롯을 채우기 위해 무언가에 대한 합의에 도달해야 합니다.
+이러한 가능성으로부터 보호하기 위해, 복제본들은 슬롯을 따라잡을 때마다 "no-op" 제안을 만듭니다.
+그러한 제안이 최종적으로 결정되면, 상태 머신은 해당 슬롯에 대해 아무것도 하지 않습니다.
 
-Likewise, it's possible for the same proposal to be decided twice.
-The replica skips invoking the state machine for any such duplicate proposals, performing no transition for that slot.
+마찬가지로, 같은 제안이 두 번 결정될 가능성도 있습니다.
+복제본은 그러한 중복 제안들에 대해 상태 머신 호출을 건너뛰고, 해당 슬롯에 대해 전환을 수행하지 않습니다.
 
-Replicas need to know which node is the active leader in order to send ``Propose`` messages to it.
-There is a surprising amount of subtlety required to get this right, as we'll see later.
-Each replica tracks the active leader using three sources of information.
+복제본들은 ``Propose`` 메시지를 보내기 위해 어떤 노드가 활성 리더인지 알아야 합니다.
+나중에 보겠지만, 이를 올바르게 하기 위해서는 놀라울 정도로 많은 미묘함이 필요합니다.
+각 복제본은 세 가지 정보 소스를 사용하여 활성 리더를 추적합니다.
 
-When the leader role becomes active, it sends an ``Adopted`` message to the replica on the same node (\aosafigref{500l.cluster.adopted}.)
+리더 역할이 활성화될 때, 같은 노드의 복제본에게 ``Adopted`` 메시지를 보냅니다(\aosafigref{500l.cluster.adopted}.)
 
 \aosafigure[240pt]{cluster-images/adopted.png}{Adopted}{500l.cluster.adopted}
 
-When the acceptor role sends a ``Promise`` to a new leader, it sends an ``Accepting`` message to its local replica (\aosafigref{500l.cluster.accepting}.)
+수락자 역할이 새로운 리더에게 ``Promise``를 보낼 때, 자신의 로컬 복제본에게 ``Accepting`` 메시지를 보냅니다(\aosafigref{500l.cluster.accepting}.)
 
 \aosafigure[240pt]{cluster-images/accepting.png}{Accepting}{500l.cluster.accepting}
 
-The active leader sends ``Active`` messages as a heartbeat (\aosafigref{500l.cluster.active}.) If no such message arrives before the ``LEADER_TIMEOUT`` expires, the replica assumes the leader is dead and moves on to the next leader.  In this case, it's important that all replicas choose the *same* new leader, which we accomplish by sorting the members and selecting the next one in the list.
+활성 리더는 하트비트로 ``Active`` 메시지를 보냅니다(\aosafigref{500l.cluster.active}.) ``LEADER_TIMEOUT``이 만료되기 전에 그러한 메시지가 도착하지 않으면, 복제본은 리더가 죽었다고 가정하고 다음 리더로 넘어갑니다. 이 경우, 모든 복제본이 *같은* 새로운 리더를 선택하는 것이 중요하며, 이를 위해 구성원들을 정렬하고 목록에서 다음 것을 선택합니다.
 
 \aosafigure[240pt]{cluster-images/active.png}{Active}{500l.cluster.active}
 
-Finally, when a node joins the network, the bootstrap role sends a ``Join``
-message (\aosafigref{500l.cluster.bootstrap}.) The replica responds with a
-``Welcome`` message containing its most recent state, allowing the new node to
-come up to speed quickly.
+마지막으로, 노드가 네트워크에 참여할 때, 부트스트랩 역할이 ``Join`` 메시지를 보냅니다(\aosafigref{500l.cluster.bootstrap}.) 복제본은 가장 최근의 상태를 포함하는 ``Welcome`` 메시지로 응답하여, 새로운 노드가 빠르게 속도를 맞출 수 있도록 합니다.
 
 \aosafigure[240pt]{cluster-images/bootstrap.png}{Bootstrap}{500l.cluster.bootstrap}
 
@@ -566,13 +563,13 @@ class Replica(Role):
                 state=self.state, slot=self.slot, decisions=self.decisions))
 ```
 
-#### Leader, Scout, and Commander
+#### Leader, Scout, 그리고 Commander
 
-The leader's primary task is to take ``Propose`` messages requesting new ballots and produce decisions.
-A leader is "active" when it has successfully carried out the ``Prepare``/``Promise`` portion of the protocol.
-An active leader can immediately send an ``Accept`` message in response to a ``Propose``.
+리더의 주요 작업은 새로운 투표를 요청하는 ``Propose`` 메시지를 받아서 결정을 생성하는 것입니다.
+리더는 프로토콜의 ``Prepare``/``Promise`` 부분을 성공적으로 수행했을 때 "활성" 상태가 됩니다.
+활성 리더는 ``Propose``에 응답하여 즉시 ``Accept`` 메시지를 보낼 수 있습니다.
 
-In keeping with the class-per-role model, the leader delegates to the scout and commander roles to carry out each portion of the protocol.
+역할별 클래스 모델을 유지하면서, 리더는 프로토콜의 각 부분을 수행하기 위해 스카우트와 커맨더 역할에게 위임합니다.
 
 ```python
 class Leader(Role):
@@ -636,9 +633,9 @@ class Leader(Role):
             self.logger.info("got PROPOSE for a slot already being proposed")
 ```
 
-The leader creates a scout role when it wants to become active, in response to receiving a ``Propose`` when it is inactive (\aosafigref{500l.cluster.leaderscout}.)
-The scout sends (and re-sends, if necessary) a ``Prepare`` message, and collects ``Promise`` responses until it has heard from a majority of its peers or until it has been preempted.
-It communicates back to the leader with ``Adopted`` or ``Preempted``, respectively. \newpage
+리더는 비활성 상태일 때 ``Propose``를 받아서 활성화되고 싶을 때 스카우트 역할을 생성합니다(\aosafigref{500l.cluster.leaderscout}.)
+스카우트는 ``Prepare`` 메시지를 보내고(필요하면 재전송하고), 피어의 과반수로부터 응답을 듣거나 선점당할 때까지 ``Promise`` 응답을 수집합니다.
+각각 ``Adopted`` 또는 ``Preempted``로 리더에게 다시 통신합니다. \newpage
 
 \aosafigure[240pt]{cluster-images/leaderscout.png}{Scout}{500l.cluster.leaderscout}
 
@@ -693,10 +690,10 @@ class Scout(Role):
             self.stop()
 ```
 
-The leader creates a commander role for each slot where it has an active proposal (\aosafigref{500l.cluster.leadercommander}.)
-Like a scout, a commander sends and re-sends ``Accept`` messages and waits for a majority of acceptors to reply with ``Accepted``, or for news of its preemption.
-When a proposal is accepted, the commander broadcasts a ``Decision`` message to all nodes.
-It responds to the leader with ``Decided`` or ``Preempted``.
+리더는 활성 제안이 있는 각 슬롯에 대해 커맨더 역할을 생성합니다(\aosafigref{500l.cluster.leadercommander}.)
+스카우트와 마찬가지로, 커맨더는 ``Accept`` 메시지를 보내고 재전송하며, 수락자의 과반수가 ``Accepted``로 응답하거나 선점에 대한 소식을 기다립니다.
+제안이 수락되면, 커맨더는 모든 노드에 ``Decision`` 메시지를 브로드캐스트합니다.
+리더에게 ``Decided`` 또는 ``Preempted``로 응답합니다.
 
 \aosafigure[240pt]{cluster-images/leadercommander.png}{Commander}{500l.cluster.leadercommander}
 
@@ -740,23 +737,23 @@ class Commander(Role):
             self.finished(ballot_num, True)
 ```
 
-As an aside, a surprisingly subtle bug appeared here during development.
-At the time, the network simulator introduced packet loss even on messages within a node.
-When *all* ``Decision`` messages were lost, the protocol could not proceed.
-The replica continued to re-transmit ``Propose`` messages, but the leader ignored them as it already had a proposal for that slot.
-The replica's catch-up process could not find the result, as no replica had heard of the decision.
-The solution was to ensure that local messages are always delivered, as is the case for real network stacks.
+여담으로, 개발 중에 놀라울 정도로 미묘한 버그가 여기서 나타났습니다.
+당시, 네트워크 시뮬레이터는 노드 내의 메시지에서도 패킷 손실을 도입했습니다.
+*모든* ``Decision`` 메시지가 손실되었을 때, 프로토콜은 진행될 수 없었습니다.
+복제본은 계속해서 ``Propose`` 메시지를 재전송했지만, 리더는 해당 슬롯에 대한 제안을 이미 갖고 있어 이를 무시했습니다.
+복제본의 따라잡기 과정은 어떤 복제본도 결정에 대해 들은 적이 없어 결과를 찾을 수 없었습니다.
+해결책은 실제 네트워크 스택의 경우와 같이 로컬 메시지가 항상 전달되도록 보장하는 것이었습니다.
 
 
 #### Bootstrap
 
-When a node joins the cluster, it must determine the current cluster state before it can participate.
-The bootstrap role handles this by sending ``Join`` messages to each peer in turn until it receives a ``Welcome``.
-Bootstrap's communication diagram is shown above in \aosasecref{sec.cluster.replica}.
+노드가 클러스터에 참여할 때, 참여하기 전에 현재 클러스터 상태를 결정해야 합니다.
+부트스트랩 역할은 ``Welcome``을 받을 때까지 각 피어에게 차례로 ``Join`` 메시지를 보내어 이를 처리합니다.
+Bootstrap의 통신 다이어그램은 위의 \aosasecref{sec.cluster.replica}에 표시되어 있습니다.
 
-An early version of the implementation started each node with a full set of roles (replica, leader, and acceptor), each of which began in a "startup" phase, waiting for information from the ``Welcome`` message.
-This spread the initialization logic around every role, requiring separate testing of each one.
-The final design has the bootstrap role adding each of the other roles to the node once startup is complete, passing the initial state to their constructors.
+구현의 초기 버전은 각 노드를 완전한 역할 집합(복제본, 리더, 수락자)으로 시작했으며, 각각은 ``Welcome`` 메시지의 정보를 기다리는 "시작" 단계에서 시작했습니다.
+이는 초기화 논리를 모든 역할에 분산시켜, 각각에 대한 별도의 테스팅이 필요했습니다.
+최종 설계는 시작이 완료되면 부트스트랩 역할이 다른 각 역할을 노드에 추가하고, 초기 상태를 그들의 생성자에게 전달하도록 합니다.
 
 ```python
 class Bootstrap(Role):
@@ -792,25 +789,25 @@ class Bootstrap(Role):
 
 #### Seed
 
-In normal operation, when a node joins the cluster, it expects to find the cluster already running, with at least one node willing to respond to a ``Join`` message.
-But how does the cluster get started?
-One option is for the bootstrap role to determine, after attempting to contact every other node, that it is the first in the cluster.
-But this has two problems.
-First, for a large cluster it means a long wait while each ``Join`` times out.
-More importantly, in the event of a network partition, a new node might be unable to contact any others and start a new cluster.
+정상적인 작동에서, 노드가 클러스터에 참여할 때, 클러스터가 이미 실행되고 있고 적어도 하나의 노드가 ``Join`` 메시지에 응답할 의지가 있다고 예상합니다.
+하지만 클러스터는 어떻게 시작될까요?
+한 가지 옵션은 부트스트랩 역할이 다른 모든 노드에 연결을 시도한 후, 자신이 클러스터의 첫 번째라고 결정하는 것입니다.
+하지만 이것은 두 가지 문제가 있습니다.
+첫째, 큰 클러스터의 경우 각 ``Join``이 타임아웃되는 동안 긴 대기를 의미합니다.
+더 중요하게는, 네트워크 분할 상황에서 새로운 노드가 다른 어떤 노드와도 연결할 수 없어 새로운 클러스터를 시작할 수도 있습니다.
 
-Network partitions are the most challenging failure case for clustered applications.
-In a network partition, all cluster members remain alive, but communication fails between some members.
-For example, if the network link joining a cluster with nodes in Berlin and Taipei fails, the network is partitioned.
-If both parts of a cluster continue to operate during a partition, then re-joining the parts after the network link is restored can be challenging.
-In the Multi-Paxos case, the healed network would be hosting two clusters with different decisions for the same slot numbers.
+네트워크 분할은 클러스터링된 애플리케이션에 가장 도전적인 실패 사례입니다.
+네트워크 분할에서는 모든 클러스터 구성원이 살아있지만, 일부 구성원들 간의 통신이 실패합니다.
+예를 들어, 베를린과 타이페이의 노드들을 가진 클러스터를 연결하는 네트워크 링크가 실패하면, 네트워크가 분할됩니다.
+분할 중에 클러스터의 두 부분이 모두 계속 작동한다면, 네트워크 링크가 복원된 후 부분들을 다시 연결하는 것은 도전적일 수 있습니다.
+Multi-Paxos의 경우, 복구된 네트워크는 같은 슬롯 번호에 대해 다른 결정을 가진 두 개의 클러스터를 호스팅하게 될 것입니다.
 
-To avoid this outcome, creating a new cluster is a user-specified operation.
-Exactly one node in the cluster runs the seed role, with the others running bootstrap as usual.
-The seed waits until it has received ``Join`` messages from a majority of its peers, then sends a ``Welcome`` with an initial state for the state machine and an empty set of decisions.
-The seed role then stops itself and starts a bootstrap role to join the newly-seeded cluster.
+이러한 결과를 피하기 위해, 새로운 클러스터 생성은 사용자가 지정하는 작업입니다.
+클러스터에서 정확히 하나의 노드가 시드 역할을 실행하고, 다른 노드들은 평상시와 같이 부트스트랩을 실행합니다.
+시드는 피어의 과반수로부터 ``Join`` 메시지를 받을 때까지 기다린 다음, 상태 머신의 초기 상태와 빈 결정 집합을 가진 ``Welcome``을 보냅니다.
+그런 다음 시드 역할은 자신을 중지하고 새로 시드된 클러스터에 참여하기 위해 부트스트랩 역할을 시작합니다.
 
-Seed emulates the ``Join``/``Welcome`` part of the bootstrap/replica interaction, so its communication diagram is the same as for the replica role.
+시드는 부트스트랩/복제본 상호작용의 ``Join``/``Welcome`` 부분을 모방하므로, 그 통신 다이어그램은 복제본 역할과 동일합니다.
 
 ```python
 class Seed(Role):
@@ -850,9 +847,9 @@ class Seed(Role):
 
 #### Requester
 
-The requester role manages a request to the distributed state machine.
-The role class simply sends ``Invoke`` messages to the local replica until it receives a corresponding ``Invoked``.
-See the "Replica" section, above, for this role's communication diagram.
+요청자 역할은 분산 상태 머신에 대한 요청을 관리합니다.
+역할 클래스는 단순히 해당하는 ``Invoked``를 받을 때까지 로컬 복제본에 ``Invoke`` 메시지를 보냅니다.
+이 역할의 통신 다이어그램은 위의 "Replica" 섹션을 참조하세요.
 
 ```python
 class Requester(Role):
@@ -881,36 +878,36 @@ class Requester(Role):
         self.stop()
 ```
 
-### Summary
+### 요약
 
-To recap, cluster's roles are:
+요약하자면, 클러스터의 역할들은 다음과 같습니다:
 
- * Acceptor -- make promises and accept proposals
- * Replica -- manage the distributed state machine: submitting proposals, committing decisions, and responding to requesters
- * Leader -- lead rounds of the Multi-Paxos algorithm
- * Scout -- perform the ``Prepare``/``Promise`` portion of the Multi-Paxos algorithm for a leader
- * Commander -- perform the ``Accept``/``Accepted`` portion of the Multi-Paxos algorithm for a leader
- * Bootstrap -- introduce a new node to an existing cluster
- * Seed -- create a new cluster
- * Requester -- request a distributed state machine operation
+ * Acceptor -- 약속을 하고 제안을 수락
+ * Replica -- 분산 상태 머신 관리: 제안 제출, 결정 커밋, 요청자에게 응답
+ * Leader -- Multi-Paxos 알고리즘의 라운드를 이끔
+ * Scout -- 리더를 위해 Multi-Paxos 알고리즘의 ``Prepare``/``Promise`` 부분을 수행
+ * Commander -- 리더를 위해 Multi-Paxos 알고리즘의 ``Accept``/``Accepted`` 부분을 수행
+ * Bootstrap -- 기존 클러스터에 새로운 노드를 도입
+ * Seed -- 새로운 클러스터를 생성
+ * Requester -- 분산 상태 머신 작업을 요청
 
-There is just one more piece of equipment required to make Cluster go: the network through which all of the nodes communicate.
+Cluster가 작동하기 위해 필요한 한 가지 더 있는 장비가 있습니다: 모든 노드들이 통신하는 네트워크입니다.
 
-Network
+네트워크
 -------
 
-Any network protocol needs the ability to send and receive messages and a means of calling functions at a time in the future.
+모든 네트워크 프로토콜은 메시지를 보내고 받을 수 있는 능력과 미래의 시점에 함수를 호출하는 수단이 필요합니다.
 
-The ``Network`` class provides a simple simulated network with these capabilities and also simulates packet loss and message propagation delays.
+``Network`` 클래스는 이러한 기능들을 가진 간단한 시뮬레이션된 네트워크를 제공하며, 패킷 손실과 메시지 전파 지연도 시뮬레이션합니다.
 
-Timers are handled using Python's `heapq` module, allowing efficient selection of the next event.
-Setting a timer involves pushing a ``Timer`` object onto the heap.
-Since removing items from a heap is inefficient, cancelled timers are left in place but marked as cancelled.
+타이머들은 Python의 `heapq` 모듈을 사용하여 처리되며, 다음 이벤트의 효율적인 선택을 허용합니다.
+타이머 설정은 ``Timer`` 객체를 힙에 푸시하는 것을 포함합니다.
+힙에서 항목을 제거하는 것은 비효율적이므로, 취소된 타이머들은 제자리에 남겨두되 취소되었다고 표시됩니다.
 
-Message transmission uses the timer functionality to schedule a later delivery of the message at each node, using a random simulated delay.
-We again use ``functools.partial`` to set up a future call to the destination node's ``receive`` method with appropriate arguments.
+메시지 전송은 타이머 기능을 사용하여 각 노드에서 랜덤 시뮬레이션된 지연을 사용해 메시지의 나중 전달을 스케줄합니다.
+우리는 다시 ``functools.partial``을 사용하여 적절한 인수와 함께 목적지 노드의 ``receive`` 메서드에 대한 미래 호출을 설정합니다.
 
-Running the simulation just involves popping timers from the heap and executing them if they have not been cancelled and if the destination node is still active.
+시뮬레이션 실행은 단순히 힙에서 타이머를 팝하고, 취소되지 않았으며 목적지 노드가 여전히 활성 상태라면 실행하는 것을 포함합니다.
 
 ```python 
 class Timer(object):
@@ -982,22 +979,22 @@ class Network(object):
             sendto(dest, copy.deepcopy(message))
 ```
 
-While it's not included in this implementation, the component model allows us to swap in a real-world network implementation, communicating between actual servers on a real network, with no changes to the other components.
-Testing and debugging can take place using the simulated network, with production use of the library operating over real network hardware.
+이 구현에는 포함되지 않았지만, 컴포넌트 모델은 다른 컴포넌트에 변경 없이 실제 네트워크에서 실제 서버들 간에 통신하는 실제 네트워크 구현으로 교체할 수 있게 해줍니다.
+테스팅과 디버깅은 시뮬레이션된 네트워크를 사용하여 이루어질 수 있으며, 라이브러리의 프로덕션 사용은 실제 네트워크 하드웨어에서 작동합니다.
 
-Debugging Support
+디버깅 지원
 -----------------
 
-When developing a complex system such as this, the bugs quickly transition from trivial, like a simple ``NameError``, to obscure failures that only manifest after several minutes of (simulated) proocol operation.
-Chasing down bugs like this involves working backward from the point where the error became obvious.
-Interactive debuggers are useless here, as they can only step forward in time.
+이와 같은 복잡한 시스템을 개발할 때, 버그는 간단한 ``NameError``와 같은 사소한 것에서 몇 분간의 (시뮬레이션된) 프로토콜 작동 후에만 나타나는 모호한 실패로 빠르게 전환됩니다.
+이러한 버그를 추적하는 것은 오류가 명백해진 지점에서 역으로 작업하는 것을 포함합니다.
+대화형 디버거들은 시간상 앞으로만 나아갈 수 있으므로 여기서는 쓸모없습니다.
 
-The most important debugging feature in Cluster is a *deterministic* simulator.
-Unlike a real network, it will behave exactly the same way on every run, given the same seed for the random number generator.
-This means that we can add additional debugging checks or output to the code and re-run the simulation to see the same failure in more detail.
+Cluster에서 가장 중요한 디버깅 기능은 *결정론적* 시뮬레이터입니다.
+실제 네트워크와 달리, 랜덤 수 생성기에 동일한 시드가 주어지면 매 실행에서 정확히 같은 방식으로 행동할 것입니다.
+이는 코드에 추가적인 디버깅 확인이나 출력을 추가하고 시뮬레이션을 다시 실행하여 같은 실패를 더 자세히 볼 수 있음을 의미합니다.
 
-Of course, much of that detail is in the messages exchanged by the nodes in the cluster, so those are automatically logged in their entirety.
-That logging includes the role class sending or receiving the message, as well as the simulated timestamp injected via the ``SimTimeLogger`` class.
+물론, 그 세부 사항 대부분은 클러스터의 노드들에 의해 교환되는 메시지에 있으므로, 그것들은 전체적으로 자동으로 로그됩니다.
+해당 로깅은 메시지를 보내거나 받는 역할 클래스와 ``SimTimeLogger`` 클래스를 통해 주입된 시뮬레이션된 타임스탬프를 포함합니다.
 
 ```python
 class SimTimeLogger(logging.LoggerAdapter):
@@ -1010,13 +1007,13 @@ class SimTimeLogger(logging.LoggerAdapter):
                               {'network': self.extra['network']})
 ```
 
-A resilient protocol such as this one can often run for a long time after a bug has been triggered.
-For example, during development, a data aliasing error caused all replicas to share the same ``decisions`` dictionary.
-This meant that once a decision was handled on one node, all other nodes saw it as already decided.
-Even with this serious bug, the cluster produced correct results for several transactions before deadlocking.
+이와 같은 복원력 있는 프로토콜은 버그가 트리거된 후에도 종종 오랫동안 실행될 수 있습니다.
+예를 들어, 개발 중에 데이터 별칭 오류가 모든 복제본들이 동일한 ``decisions`` 딕셔너리를 공유하도록 했습니다.
+이는 하나의 노드에서 결정이 처리되면, 다른 모든 노드들이 그것을 이미 결정된 것으로 본다는 것을 의미했습니다.
+이 심각한 버그에도 불구하고, 클러스터는 교착 상태에 빠지기 전에 여러 트랜잭션에 대해 정확한 결과를 생성했습니다.
 
-Assertions are an important tool to catch this sort of error early.
-Assertions should include any invariants from the algorithm design, but when the code doesn't behave as we expect, asserting our expectations is a great way to see where things go astray. 
+어서션은 이런 종류의 오류를 일찍 잡기 위한 중요한 도구입니다.
+어서션은 알고리즘 설계의 불변량을 포함해야 하지만, 코드가 우리가 예상하는 대로 작동하지 않을 때, 우리의 기대를 어서션하는 것은 일이 잘못되는 곳을 보는 좋은 방법입니다.
 
 ```python
     assert not self.decisions.get(self.slot, None), \
@@ -1026,30 +1023,30 @@ Assertions should include any invariants from the algorithm design, but when the
             "slot %d already decided with %r!" % (slot, self.decisions[slot])
 ```
 
-Identifying the right assumptions we make while reading code is a part of the art of debugging.
-In this code from ``Replica.do_Decision``, the problem was that the ``Decision`` for the next slot to commit was being ignored because it was already in ``self.decisions``.
-The underlying assumption being violated was that the next slot to be committed was not yet decided.
-Asserting this at the beginning of ``do_Decision`` identified the flaw and led quickly to the fix.
-Similarly, other bugs led to cases where different proposals were decided in the same slot -- a serious error.
+코드를 읽는 동안 우리가 하는 올바른 가정들을 식별하는 것은 디버깅 기술의 일부입니다.
+``Replica.do_Decision``의 이 코드에서, 문제는 커밋할 다음 슬롯에 대한 ``Decision``이 이미 ``self.decisions``에 있어서 무시되고 있다는 것이었습니다.
+위반되고 있던 기본 가정은 커밋될 다음 슬롯이 아직 결정되지 않았다는 것이었습니다.
+``do_Decision`` 시작에서 이를 어서션하는 것이 결함을 식별하고 빠르게 수정으로 이끌었습니다.
+마찬가지로, 다른 버그들은 동일한 슬롯에서 다른 제안들이 결정되는 경우들로 이어졌습니다 -- 심각한 오류입니다.
 
-Many other assertions were added during development of the protocol, but in the interests of space, only a few remain.
+프로토콜 개발 중에 많은 다른 어서션들이 추가되었지만, 공간의 관점에서 몇 개만 남겨두었습니다.
 
-Testing
+테스팅
 -------
 
-Some time in the last ten years, coding without tests finally became as crazy as driving without a seatbelt.
-Code without tests is probably incorrect, and modifying code is risky without a way to see if its behavior has changed.
+지난 10년 동안 어느 시점에, 테스트 없이 코딩하는 것이 마침내 안전벨트 없이 운전하는 것만큼 미친 일이 되었습니다.
+테스트가 없는 코드는 아마도 부정확하며, 행동이 변경되었는지 확인할 방법 없이 코드를 수정하는 것은 위험합니다.
 
-Testing is most effective when the code is organized for testability.
-There are a few active schools of thought in this area, but the approach we've taken is to divide the code into small, minimally connected units that can be tested in isolation.
-This agrees nicely with the role model, where each role has a specific purpose and can operate in isolation from the others, resulting in a compact, self-sufficient class.
+테스팅은 코드가 테스트 가능성을 위해 조직화되었을 때 가장 효과적입니다.
+이 영역에는 몇 가지 활발한 사상학파가 있지만, 우리가 택한 접근법은 코드를 격리된 상태에서 테스트할 수 있는 작고 최소한으로 연결된 단위들로 나누는 것입니다.
+이는 각 역할이 특정 목적을 갖고 다른 것들로부터 격리되어 작동할 수 있어 압축적이고 자급자족적인 클래스를 만드는 역할 모델과 잘 맞습니다.
 
-Cluster is written to maximize that isolation: all communication between roles takes place via messages, with the exception of creating new roles.
-For the most part, then, roles can be tested by sending messages to them and observing their responses.
+Cluster는 그 격리를 최대화하도록 작성되었습니다: 새로운 역할을 생성하는 것을 제외하고는 역할들 간의 모든 통신이 메시지를 통해 이루어집니다.
+따라서 대부분의 경우, 역할들은 메시지를 보내고 그들의 응답을 관찰함으로써 테스트될 수 있습니다.
 
-#### Unit Testing
+#### 단위 테스팅
 
-The unit tests for Cluster are simple and short:
+Cluster의 단위 테스트들은 간단하고 짧습니다:
 
 ```python
 class Tests(utils.ComponentTestCase):
@@ -1060,14 +1057,14 @@ class Tests(utils.ComponentTestCase):
         self.assertCommanderStarted(Ballot(0, 'F999'), 10, PROPOSAL1)
 ```
 
-This method tests a single behavior (commander spawning) of a single unit (the ``Leader`` class).
-It follows the well-known "arrange, act, assert" pattern: set up an active leader, send it a message, and check the result.
+이 메서드는 단일 유닛(``Leader`` 클래스)의 단일 행동(커맨더 생성)을 테스트합니다.
+잘 알려진 "준비, 작동, 어서션" 패턴을 따릅니다: 활성 리더를 설정하고, 메시지를 보내고, 결과를 확인합니다.
 
-#### Dependency Injection
+#### 의존성 주입
 
-We use a technique called "dependency injection" to handle creation of new roles.
-Each role class which adds other roles to the network takes a list of class objects as constructor arguments, defaulting to the actual classes.
-For example, the constructor for ``Leader`` looks like this:
+우리는 새로운 역할들의 생성을 처리하기 위해 "의존성 주입"이라 불리는 기법을 사용합니다.
+네트워크에 다른 역할들을 추가하는 각 역할 클래스는 실제 클래스들을 기본값으로 하는 클래스 객체들의 목록을 생성자 인수로 받습니다.
+예를 들어, ``Leader``의 생성자는 다음과 같습니다:
 
 ```python
 class Leader(Role):
@@ -1082,7 +1079,7 @@ class Leader(Role):
         self.peers = peers
 ```
 
-The ``spawn_scout`` method (and similarly, ``spawn_commander``) creates the new role object with ``self.scout_cls``:
+``spawn_scout`` 메서드는 (그리고 유사하게, ``spawn_commander``) ``self.scout_cls``로 새로운 역할 객체를 생성합니다:
 
 ```python
 class Leader(Role):
@@ -1092,7 +1089,7 @@ class Leader(Role):
         self.scout_cls(self.node, self.ballot_num, self.peers).start()
 ```
 
-The magic of this technique is that, in testing, ``Leader`` can be given fake classes and thus tested separately from ``Scout`` and ``Commander``.
+이 기법의 마법은 테스팅에서 ``Leader``에게 가짜 클래스들을 줄 수 있어 ``Scout``와 ``Commander``로부터 분리되어 테스트될 수 있다는 것입니다.
 
 #### Interface Correctness
 
