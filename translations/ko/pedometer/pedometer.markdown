@@ -1,137 +1,139 @@
-title: A Pedometer in the Real World
+title: 현실 세계의 만보계
 author: Dessy Daskalov
 <markdown>
-_Dessy is an engineer by trade, an entrepreneur by passion, and a developer at heart. She's currently the CTO and co-founder of [Nudge Rewards](http://nudgerewards.com/.) When she’s not busy building product with her team, she can be found teaching others to code, attending or hosting a Toronto tech event, and online at [dessydaskalov.com](http://www.dessydaskalov.com/) and [\@dess_e](https://twitter.com/dess_e)._
+_Dessy는 직업적으로는 엔지니어이고, 열정적으로는 기업가이며, 마음으로는 개발자입니다. 현재 [Nudge Rewards](http://nudgerewards.com/)의 CTO이자 공동창업자입니다. 팀과 함께 제품을 구축하느라 바쁘지 않을 때는, 다른 사람들에게 코딩을 가르치거나, 토론토 기술 이벤트에 참석하거나 주최하며, [dessydaskalov.com](http://www.dessydaskalov.com/)과 [\@dess_e](https://twitter.com/dess_e)에서 온라인 활동을 하고 있습니다._
 </markdown>
-## A Perfect World
+## 완벽한 세계
 
-Many software engineers reflecting on their training will remember having the pleasure of living in a very perfect world. We were taught to solve well-defined problems in idealized domains.
+많은 소프트웨어 엔지니어들이 자신의 교육 과정을 되돌아보면, 매우 완벽한 세계에 살았던 즐거움을 기억할 것입니다. 우리는 이상화된 영역에서 잘 정의된 문제들을 해결하는 방법을 배웠습니다.
 
-Then we were thrown into the real world, with all of its complexities and challenges. It's messy, which makes it all the more exciting. When you can solve a real-life problem, with all of its quirks, you can build software that really helps people.
+그리고 나서 우리는 모든 복잡성과 도전 과제가 있는 현실 세계로 던져졌습니다. 현실은 지저분하지만, 그래서 훨씬 더 흥미진진합니다. 온갖 특이한 점들을 가진 실제 문제를 해결할 수 있다면, 사람들에게 진정으로 도움이 되는 소프트웨어를 구축할 수 있습니다.
 
-In this chapter, we'll examine a problem that looks straightforward on the surface, and gets tangled very quickly when the real world, and real people, are thrown into the mix.
+이 장에서는 표면적으로는 단순해 보이지만, 현실 세계와 실제 사람들이 개입하면 매우 빠르게 복잡해지는 문제를 살펴보겠습니다.
 
-We'll work together to build a basic pedometer. We'll start by discussing the theory behind a pedometer and creating a step counting solution outside of code. Then, we'll implement our solution in code. Finally, we'll add a web layer to our code so that we have a friendly interface for a user to work with.
+우리는 함께 기본적인 만보계를 구축할 것입니다. 만보계의 이론을 논의하고 코드 밖에서 걸음 수 카운팅 솔루션을 만드는 것부터 시작하겠습니다. 그다음 우리의 솔루션을 코드로 구현할 것입니다. 마지막으로, 사용자가 작업할 수 있는 친근한 인터페이스를 제공하기 위해 코드에 웹 레이어를 추가할 것입니다.
 
-Let's roll up our sleeves, and prepare to untangle a real-world problem.
+소매를 걷어붙이고 현실 세계의 문제를 풀어낼 준비를 해봅시다.
 
-## Pedometer Theory
+## 만보계 이론
 
-The rise of the mobile device brought with it a trend to collect more and more data on our daily lives. One type of data many people collect is the number of steps they've taken over a period of time. This data can be used for health tracking, training for sporting events, or, for those of us obsessed with collecting and analyzing data, just for kicks. Steps can be counted using a pedometer, which often uses data from a hardware accelerometer as input.
+모바일 기기의 등장은 우리 일상생활에서 점점 더 많은 데이터를 수집하려는 경향을 가져왔습니다. 많은 사람들이 수집하는 데이터 중 하나는 일정 기간 동안 걸은 걸음 수입니다. 이 데이터는 건강 추적, 스포츠 이벤트 훈련에 사용되거나, 데이터 수집과 분석에 열중하는 사람들에게는 단순한 재미를 위해 사용될 수 있습니다. 걸음 수는 만보계를 사용하여 카운트할 수 있으며, 만보계는 종종 하드웨어 가속도계의 데이터를 입력으로 사용합니다.
 
-### What's an Accelerometer?
+### 가속도계란 무엇인가?
 
-An accelerometer is a piece of hardware that measures acceleration in the $x$, $y$, and $z$ directions. Many people carry an accelerometer with them wherever they go, as it's built into almost all smartphones currently on the market. The $x$, $y$, and $z$ directions are relative to the phone.
+가속도계는 $x$, $y$, $z$ 방향의 가속도를 측정하는 하드웨어입니다. 많은 사람들이 어디를 가든지 가속도계를 휴대하고 다닙니다. 현재 시장에 나와 있는 거의 모든 스마트폰에 내장되어 있기 때문입니다. $x$, $y$, $z$ 방향은 휴대폰을 기준으로 상대적입니다.
 
-An accelerometer returns a *signal* in 3-dimensional space. A signal is a set of data points recorded over time. Each component of the signal is a time series representing acceleration in one of the $x$, $y$, or $z$ directions. Each point in a time series is the acceleration in that direction at a specific point in time. Acceleration is measured in units of g-force, or *g*. One *g* is equal to 9.8 $m/s^2$, the average acceleration due to gravity on Earth.
+가속도계는 3차원 공간에서 *신호*를 반환합니다. 신호는 시간에 걸쳐 기록된 데이터 포인트의 집합입니다. 신호의 각 구성 요소는 $x$, $y$, 또는 $z$ 방향 중 하나의 가속도를 나타내는 시계열입니다. 시계열의 각 점은 특정 시점에서 해당 방향의 가속도입니다. 가속도는 중력가속도 또는 *g*의 단위로 측정됩니다. 1 *g*는 9.8 $m/s^2$로, 지구에서 중력으로 인한 평균 가속도와 같습니다.
 
-\aosafigref{500l.pedometer.accelerationtotal} shows an example signal from an accelerometer with the three time series.
+\aosafigref{500l.pedometer.accelerationtotal}는 세 개의 시계열을 가진 가속도계 신호의 예를 보여줍니다.
 
 \aosafigure[333pt]{pedometer-images/acceleration-total.png}{Example acceleration signal}{500l.pedometer.accelerationtotal}
 
-The *sampling rate* of the accelerometer, which can often be calibrated, determines the number of measurements per second. For instance, an accelerometer with a sampling rate of 100 returns 100 data points for each $x$, $y$, and $z$ time series every second.
+가속도계의 *샘플링 속도*는 종종 조정할 수 있으며, 초당 측정 횟수를 결정합니다. 예를 들어, 샘플링 속도가 100인 가속도계는 매초마다 $x$, $y$, $z$ 시계열 각각에 대해 100개의 데이터 포인트를 반환합니다.
 
-### Let's Talk About a Walk
+### 걷기에 대해 이야기해보자
 
-When a person walks, they bounce slightly with each step. Just watch the top of a person's head as they walk away from you. Their head, torso, and hips are synchronized in a smooth bouncing motion. While people don't bounce very far, only one or two centimeters, it is one of the clearest, most constant, and most recognizable parts of a person's walking acceleration signal.
+사람이 걸을 때, 각 걸음마다 약간씩 튀어 오릅니다. 당신에게서 멀어져 가는 사람의 머리 꼭대기를 지켜보세요. 머리, 몸통, 엉덩이가 부드러운 튕기는 동작으로 동기화되어 있습니다. 사람들이 그리 멀리 튀지는 않지만, 1~2센티미터 정도만 움직여도, 이것은 사람의 걷기 가속도 신호에서 가장 명확하고, 가장 일정하며, 가장 인식하기 쉬운 부분 중 하나입니다.
 
-A person bounces up and down, in the vertical direction, with each step. If you are walking on Earth (or another big ball of mass floating in space) the bounce is conveniently in the same direction as gravity.
+사람은 각 걸음마다 수직 방향으로 위아래로 튕깁니다. 지구(또는 우주에 떠 있는 다른 큰 질량덩어리)에서 걷고 있다면, 이 튕기는 움직임은 편리하게도 중력과 같은 방향입니다.
 
-We are going to count steps by using the accelerometer to count bounces up and down. Because the phone can rotate in any direction, we will use gravity to know which direction down is. **A pedometer can count steps by counting the number of bounces in the direction of gravity.**
+우리는 가속도계를 사용하여 위아래 튕기는 움직임을 카운트함으로써 걸음을 세려고 합니다. 휴대폰은 어느 방향으로든 회전할 수 있기 때문에, 아래쪽이 어느 방향인지 알기 위해 중력을 사용할 것입니다. **만보계는 중력 방향의 튕기는 횟수를 카운트하여 걸음을 셀 수 있습니다.**
 
-Let's look at a person walking with an accelerometer-equipped smartphone in his or her shirt pocket (\aosafigref{500l.pedometer.walk1}).
+가속도계가 장착된 스마트폰을 셔츠 주머니에 넣고 걷는 사람을 살펴봅시다(\aosafigref{500l.pedometer.walk1}).
 
 \aosafigure[240pt]{pedometer-images/walk-1.png}{Walking}{500l.pedometer.walk1}
 
-For the sake of simplicity, we'll assume that the person:
+단순화를 위해, 이 사람은:
 
-* is walking in the $z$ direction;
-* bounces with each step in the $y$ direction; and
-* maintains the phone in the same orientation throughout the entire walk.
+* $z$ 방향으로 걷고 있고;
+* 각 걸음마다 $y$ 방향으로 튕기며;
+* 전체 걷기 동안 휴대폰을 같은 방향으로 유지한다고
 
-In our perfect world, acceleration from step bounces will form a perfect sine wave in the $y$ direction. Each peak in the sine wave is exactly one step. Step counting becomes a matter of counting these perfect peaks.
+가정하겠습니다.
 
-Ah, the joys of a perfect world, which we only ever experience in texts like this. Don't fret, things are about to get a little messier, and a lot more exciting. Let's add a little more reality to our world.
+우리의 완벽한 세계에서, 걸음 튕김으로 인한 가속도는 $y$ 방향에서 완벽한 사인파를 형성할 것입니다. 사인파의 각 피크는 정확히 하나의 걸음입니다. 걸음 카운팅은 이러한 완벽한 피크들을 세는 문제가 됩니다.
 
-### Even Perfect Worlds Have Fundamental Forces of Nature
+아, 이런 텍스트에서만 경험할 수 있는 완벽한 세계의 즐거움이여! 걱정하지 마세요. 상황이 곧 조금 더 지저분해지고, 훨씬 더 흥미진진해질 것입니다. 우리 세계에 조금 더 현실을 추가해봅시다.
 
-The force of gravity causes an acceleration in the direction of gravity, which we refer to as gravitational acceleration. This acceleration is unique because it is always present and, for the purposes of this chapter, is constant at 9.8 $m/s^2$.
+### 완벽한 세계도 자연의 기본 힘들을 가지고 있다
 
-Suppose a smartphone is lying on a table screen-side up. In this orientation, our coordinate system is such that the negative $z$ direction is the one that gravity is acting on. Gravity will pull our phone in the negative $z$ direction, so our accelerometer, *even when perfectly still*, will record an acceleration of 9.8 $m/s^2$ in the negative $z$ direction. Accelerometer data from our phone in this orientation is shown in \aosafigref{500l.pedometer.accelerationtotalphonestill}.
+중력은 중력 방향으로 가속도를 발생시키며, 이를 중력 가속도라고 합니다. 이 가속도는 항상 존재하고, 이 장의 목적상 9.8 $m/s^2$로 일정하기 때문에 독특합니다.
+
+스마트폰이 화면을 위로 향한 채 테이블 위에 놓여 있다고 가정해봅시다. 이 방향에서, 우리의 좌표계는 음의 $z$ 방향이 중력이 작용하는 방향이 되도록 설정되어 있습니다. 중력은 우리 휴대폰을 음의 $z$ 방향으로 끌어당기므로, 우리의 가속도계는 *완전히 정지해 있을 때조차* 음의 $z$ 방향으로 9.8 $m/s^2$의 가속도를 기록할 것입니다. 이 방향에서 우리 휴대폰의 가속도계 데이터는 \aosafigref{500l.pedometer.accelerationtotalphonestill}에 나와 있습니다.
 
 \aosafigure[333pt]{pedometer-images/acceleration-total-phone-still.png}{Example accelerometer data at rest}{500l.pedometer.accelerationtotalphonestill}
 
-Note that $x(t)$ and $y(t)$ remain constant at 0, while $z(t)$ is constant at -1 *g*. Our accelerometer records all acceleration, including gravitational acceleration.
+$x(t)$와 $y(t)$는 0에서 일정하게 유지되는 반면, $z(t)$는 -1 *g*에서 일정함을 주목하세요. 우리의 가속도계는 중력 가속도를 포함한 모든 가속도를 기록합니다.
 
-Each time series measures the *total acceleration* in that direction. Total acceleration is the sum of *user acceleration* and *gravitational acceleration*.
+각 시계열은 해당 방향의 *전체 가속도*를 측정합니다. 전체 가속도는 *사용자 가속도*와 *중력 가속도*의 합입니다.
 
-User acceleration is the acceleration of the device due to the movement of the user, and is constant at 0 when the phone is perfectly still. However, when the user is moving with the device, user acceleration is rarely constant, since it's difficult for a person to move with a constant acceleration.
+사용자 가속도는 사용자의 움직임으로 인한 기기의 가속도이며, 휴대폰이 완전히 정지해 있을 때는 0에서 일정합니다. 그러나 사용자가 기기와 함께 움직일 때, 사람이 일정한 가속도로 움직이기는 어렵기 때문에 사용자 가속도는 거의 일정하지 않습니다.
 
 \aosafigure[240pt]{pedometer-images/component-signals-2.png}{Component signals}{500l.pedometer.componentsignals}
 
-To count steps, we're interested in the bounces created by the user in the direction of gravity. That means we're interested in isolating the 1-dimensional time series which describes **user acceleration in the direction of gravity** from our 3-dimensional acceleration signal (\aosafigref{500l.pedometer.componentsignals}).
+걸음을 세기 위해서는, 중력 방향으로 사용자가 만든 튕김에 관심이 있습니다. 즉, 3차원 가속도 신호에서 **중력 방향의 사용자 가속도**를 설명하는 1차원 시계열을 분리하는 데 관심이 있습니다(\aosafigref{500l.pedometer.componentsignals}).
 
-In our simple example, gravitational acceleration is 0 in $x(t)$ and $z(t)$ and constant at 9.8 $m/s^2$ in $y(t)$. Therefore, in our total acceleration plot, $x(t)$ and $z(t)$ fluctuate around 0 while $y(t)$ fluctuates around -1 *g*. In our user acceleration plot, we notice that&mdash;because we have removed gravitational acceleration&mdash;all three time series fluctuate around 0. Note the obvious peaks in $y_{u}(t)$. Those are due to step bounces! In our last plot, gravitational acceleration, $y_{g}(t)$ is constant at -1 *g*, and $x_{g}(t)$ and $z_{g}(t)$ are constant at 0.
+우리의 간단한 예에서, 중력 가속도는 $x(t)$와 $z(t)$에서는 0이고 $y(t)$에서는 9.8 $m/s^2$로 일정합니다. 따라서 전체 가속도 플롯에서, $x(t)$와 $z(t)$는 0 주위에서 변동하는 반면 $y(t)$는 -1 *g* 주위에서 변동합니다. 사용자 가속도 플롯에서는 중력 가속도를 제거했기 때문에 세 시계열 모두 0 주위에서 변동하는 것을 알 수 있습니다. $y_{u}(t)$의 명백한 피크들을 주목하세요. 이것들은 걸음 튕김 때문입니다! 마지막 플롯에서, 중력 가속도 $y_{g}(t)$는 -1 *g*에서 일정하고, $x_{g}(t)$와 $z_{g}(t)$는 0에서 일정합니다.
 
-So, in our example, the 1-dimensional user acceleration in the direction of gravity time series we're interested in is $y_{u}(t)$. Although $y_{u}(t)$ isn't as smooth as our perfect sine wave, we can identify the peaks, and use those peaks to count steps. So far, so good. Now, let's add even more reality to our world.
+따라서 우리 예에서, 우리가 관심 있는 중력 방향의 1차원 사용자 가속도 시계열은 $y_{u}(t)$입니다. $y_{u}(t)$가 우리의 완벽한 사인파만큼 부드럽지는 않지만, 피크들을 식별할 수 있고, 이 피크들을 사용하여 걸음을 셀 수 있습니다. 지금까지는 좋습니다. 이제 우리 세계에 더욱 현실을 추가해봅시다.
 
-### People Are Complicated Creatures
+### 사람은 복잡한 생명체이다
 
-What if a person carries the phone in a bag on their shoulder, with the phone in a more wonky position? To make matters worse, what if the phone rotates in the bag part way through the walk, as in \aosafigref{500l.pedometer.walk2}?
+만약 사람이 휴대폰을 어깨에 멘 가방에 넣어 다니는데, 휴대폰이 더 이상한 위치에 있다면 어떨까요? 설상가상으로, 휴대폰이 걷는 도중에 가방 안에서 회전한다면 어떨까요(\aosafigref{500l.pedometer.walk2})?
 
 \aosafigure[133pt]{pedometer-images/walk-2.png}{A more complicated walk}{500l.pedometer.walk2}
 
-Yikes. Now all three of our components have a non-zero gravitational acceleration, so the user acceleration in the direction of gravity is now split amongst all three time series. To determine user acceleration in the direction of gravity, we first have to determine which direction gravity is acting in. To do this, we have to split total acceleration in each of the three time series into a user acceleration time series and a gravitational acceleration time series (\aosafigref{500l.pedometer.component3}).
+아야. 이제 세 구성 요소 모두가 0이 아닌 중력 가속도를 가지므로, 중력 방향의 사용자 가속도가 세 시계열 모두에 분산됩니다. 중력 방향의 사용자 가속도를 결정하려면, 먼저 중력이 어느 방향으로 작용하고 있는지 알아야 합니다. 이를 위해 세 시계열 각각에서 전체 가속도를 사용자 가속도 시계열과 중력 가속도 시계열로 분할해야 합니다(\aosafigref{500l.pedometer.component3}).
 
 \aosafigure[240pt]{pedometer-images/component-signals-3.png}{More complicated component signals}{500l.pedometer.component3}
 
-Then we can isolate the portion of user acceleration in each component that is in the direction of gravity, resulting in just the user acceleration in the direction of gravity time series.
+그러면 각 구성 요소에서 중력 방향에 있는 사용자 가속도 부분을 분리할 수 있어, 중력 방향의 사용자 가속도 시계열만을 얻을 수 있습니다.
 
-Let's define this as two steps below:
+이를 다음과 같이 두 단계로 정의해봅시다:
 
-1. Splitting total acceleration into user acceleration and gravitational acceleration.
-2. Isolating user acceleration in the direction of gravity.
+1. 전체 가속도를 사용자 가속도와 중력 가속도로 분할하기.
+2. 중력 방향의 사용자 가속도 분리하기.
 
-We'll look at each step separately, and put on our mathematician hats.
+각 단계를 개별적으로 살펴보고, 수학자 모자를 써봅시다.
 
-### 1. Splitting Total Acceleration Into User Acceleration and Gravitational Acceleration
+### 1. 전체 가속도를 사용자 가속도와 중력 가속도로 분할하기
 
-We can use a tool called a *filter* to split a total acceleration time series into a user acceleration time series and a gravitational acceleration time series.
+*필터*라는 도구를 사용하여 전체 가속도 시계열을 사용자 가속도 시계열과 중력 가속도 시계열로 분할할 수 있습니다.
 
-#### Low-Pass and High-Pass Filters
-A filter is a tool used in signal processing to remove an unwanted component from a signal.
+#### 저역 통과 필터와 고역 통과 필터
+필터는 신호 처리에서 신호로부터 원하지 않는 구성 요소를 제거하는 데 사용되는 도구입니다.
 
-A *low-pass filter* allows low-frequency signals through, while attenuating signals higher than a set threshold. Conversely, a *high-pass filter* allows high-frequency signals through, while attenuating signals below a set threshold. Using music as an analogy, a low-pass filter can eliminate treble, and a high-pass filter can eliminate bass.
+*저역 통과 필터*는 저주파 신호는 통과시키면서 설정된 임계값보다 높은 신호는 감쇠시킵니다. 반대로, *고역 통과 필터*는 고주파 신호는 통과시키면서 설정된 임계값보다 낮은 신호는 감쇠시킵니다. 음악을 비유로 들면, 저역 통과 필터는 고음을 제거할 수 있고, 고역 통과 필터는 저음을 제거할 수 있습니다.
 
-In our situation, the frequency, measured in Hz, indicates how quickly the acceleration is changing. A constant acceleration has a frequency of 0 Hz, while a non-constant acceleration has a non-zero frequency. This means that our constant gravitational acceleration is a 0 Hz signal, while user acceleration is not.
+우리 상황에서, Hz로 측정되는 주파수는 가속도가 얼마나 빨리 변화하는지를 나타냅니다. 일정한 가속도는 0 Hz의 주파수를 가지는 반면, 일정하지 않은 가속도는 0이 아닌 주파수를 가집니다. 이는 우리의 일정한 중력 가속도가 0 Hz 신호인 반면, 사용자 가속도는 그렇지 않다는 것을 의미합니다.
 
-For each component, we can pass total acceleration through a low-pass filter, and we'll be left with just the gravitational acceleration time series. Then we can subtract gravitational acceleration from total acceleration, and we'll have the user acceleration time series (\aosafigref{500l.pedometer.lowpass}).
+각 구성 요소에 대해, 전체 가속도를 저역 통과 필터에 통과시키면 중력 가속도 시계열만 남게 됩니다. 그다음 전체 가속도에서 중력 가속도를 빼면, 사용자 가속도 시계열을 얻게 됩니다(\aosafigref{500l.pedometer.lowpass}).
 
 \aosafigure[240pt]{pedometer-images/low-pass-filter-a.png}{A low-pass filter}{500l.pedometer.lowpass}
 
-There are numerous varieties of filters. The one we'll use is called an infinite impulse response (IIR) filter. We've chosen an IIR filter because of its low overhead and ease of implementation. The IIR filter we've chosen is implemented using the formula: 
+필터에는 수많은 종류가 있습니다. 우리가 사용할 것은 무한 임펄스 응답(IIR) 필터라고 불립니다. 우리가 IIR 필터를 선택한 이유는 낮은 오버헤드와 구현의 용이성 때문입니다. 우리가 선택한 IIR 필터는 다음 공식을 사용하여 구현됩니다:
 
 $$
 output_{i} = \alpha_{0}(input_{i}\beta_{0} + input_{i-1}\beta_{1} + input_{i-2}\beta_{2} - output_{i-1}\alpha_{1} - output_{i-2}\alpha_{2})
 $$
 
-The design of digital filters is outside of the scope of this chapter, but a very short teaser discussion is warranted. It's a well-studied, fascinating topic, with numerous practical applications. A digital filter can be designed to cancel any frequency or range of frequencies desired. The $\alpha$ and $\beta$ values in the formula are coefficients, set based on the cutoff frequency, and the range of frequencies we want to preserve.
+디지털 필터의 설계는 이 장의 범위를 벗어나지만, 매우 짧은 맛보기 논의는 적절합니다. 이는 잘 연구된, 매력적인 주제로, 수많은 실용적 응용이 있습니다. 디지털 필터는 원하는 주파수나 주파수 범위를 취소하도록 설계할 수 있습니다. 공식의 $\alpha$와 $\beta$ 값은 차단 주파수와 보존하고자 하는 주파수 범위를 기반으로 설정된 계수입니다.
 
-We want to cancel all frequencies except for our constant gravitational acceleration, so we've chosen coefficients that attenuate frequencies higher than 0.2 Hz. Notice that we've set our threshold slightly higher than 0 Hz. While gravity does create a true 0 Hz acceleration, our real, imperfect world has real, imperfect accelerometers, so we're allowing for a slight margin of error in measurement.
+우리는 일정한 중력 가속도를 제외한 모든 주파수를 취소하고 싶으므로, 0.2 Hz보다 높은 주파수를 감쇠시키는 계수를 선택했습니다. 우리가 임계값을 0 Hz보다 약간 높게 설정했다는 것을 주목하세요. 중력은 실제로 0 Hz 가속도를 만들어내지만, 우리의 현실적이고 불완전한 세계는 현실적이고 불완전한 가속도계를 가지고 있으므로, 측정에서 약간의 오차 여지를 허용하고 있습니다.
 
-#### Implementing a Low-Pass Filter
+#### 저역 통과 필터 구현하기
 
-Let's work through a low-pass filter implementation using our earlier example. We'll split:
+앞선 예를 사용하여 저역 통과 필터 구현을 살펴봅시다. 우리는 다음을 분할할 것입니다:
 
-* $x(t)$ into $x_{g}(t)$ and $x_{u}(t)$,
-* $y(t)$ into $y_{g}(t)$ and $y_{u}(t)$, and
-* $z(t)$ into $z_{g}(t)$ and $z_{u}(t)$.
+* $x(t)$를 $x_{g}(t)$와 $x_{u}(t)$로,
+* $y(t)$를 $y_{g}(t)$와 $y_{u}(t)$로,
+* $z(t)$를 $z_{g}(t)$와 $z_{u}(t)$로.
 
-We'll initialize the first two values of gravitational acceleration to 0, so that the formula has initial values to work with.
+공식이 작업할 초기값을 가지도록 중력 가속도의 처음 두 값을 0으로 초기화할 것입니다.
 
 $$x_{g}(0) = x_{g}(1) = y_{g}(0) = y_{g}(1) = z_{g}(0) = z_{g}(1) = 0$$
 
-Then we'll implement the filter formula for each time series.
+그다음 각 시계열에 대해 필터 공식을 구현할 것입니다.
 
 $$x_{g}(t) = \alpha_{0}(x(t)\beta_{0} + x(t-1)\beta_{1} + x(t-2)\beta_{2} - x_{g}(t-1)\alpha_{1} - x_{g}(t-2)\alpha_{2})$$
 
@@ -139,13 +141,13 @@ $$y_{g}(t) = \alpha_{0}(y(t)\beta_{0} + y(t-1)\beta_{1} + y(t-2)\beta_{2} - y_{g
 
 $$z_{g}(t) = \alpha_{0}(z(t)\beta_{0} + z(t-1)\beta_{1} + z(t-2)\beta_{2} - z_{g}(t-1)\alpha_{1} - z_{g}(t-2)\alpha_{2})$$
 
-The resulting time series after low-pass filtering are in \aosafigref{500l.pedometer.accelerationgravitational}.
+저역 통과 필터링 후의 결과 시계열은 \aosafigref{500l.pedometer.accelerationgravitational}에 있습니다.
 
 \aosafigure[333pt]{pedometer-images/acceleration-gravitational.png}{Gravitational acceleration}{500l.pedometer.accelerationgravitational}
 
-$x_{g}(t)$ and $z_{g}(t)$ hover around 0, and $y_{g}(t)$ very quickly drops to $-1g$. The initial 0 value in $y_{g}(t)$ is from the initialization of the formula.
+$x_{g}(t)$와 $z_{g}(t)$는 0 주위에서 맴돌고, $y_{g}(t)$는 매우 빠르게 $-1g$로 떨어집니다. $y_{g}(t)$의 초기 0 값은 공식의 초기화에서 나온 것입니다.
 
-Now, to calculate user acceleration, we can subtract gravitational acceleration from our total acceleration:
+이제 사용자 가속도를 계산하기 위해, 전체 가속도에서 중력 가속도를 뺄 수 있습니다:
 
 $$
 x_{u}(t) = x(t) - x_{g}(t)
@@ -157,90 +159,88 @@ $$
 z_{u}(t) = z(t) - z_{g}(t)
 $$
 
-The result is the time series seen in
-\aosafigref{500l.pedometer.accelerationuser}.  We've successfully split our
-total acceleration into user acceleration and gravitational acceleration!
+결과는 \aosafigref{500l.pedometer.accelerationuser}에서 볼 수 있는 시계열입니다. 우리는 성공적으로 전체 가속도를 사용자 가속도와 중력 가속도로 분할했습니다!
 
 \aosafigure[333pt]{pedometer-images/acceleration-user.png}{Split acceleration}{500l.pedometer.accelerationuser}
 
 
-### 2. Isolating User Acceleration in the Direction of Gravity
+### 2. 중력 방향의 사용자 가속도 분리하기
 
-$x_{u}(t)$, $y_{u}(t)$, and $z_{u}(t)$ include all movements of the user, not just movements in the direction of gravity. Our goal here is to end up with a 1-dimensional time series representing user acceleration in the direction of gravity. This will include portions of user acceleration in each of the directions.
+$x_{u}(t)$, $y_{u}(t)$, $z_{u}(t)$는 중력 방향의 움직임뿐만 아니라 사용자의 모든 움직임을 포함합니다. 여기서 우리의 목표는 중력 방향의 사용자 가속도를 나타내는 1차원 시계열을 얻는 것입니다. 이는 각 방향의 사용자 가속도 부분들을 포함할 것입니다.
 
-Let's get to it. First, some linear algebra 101. Don't take that mathematician hat off just yet!
+시작해봅시다. 먼저, 선형대수학 101입니다. 수학자 모자를 아직 벗지 마세요!
 
-#### The Dot Product
+#### 내적
 
-When working with coordinates, you won't get very far before being introduced to the *dot product*, one of the fundamental tools used in comparing the magnitude and direction of $x$, $y$, and $z$ coordinates.  
+좌표를 다룰 때, $x$, $y$, $z$ 좌표의 크기와 방향을 비교하는 데 사용되는 기본 도구 중 하나인 *내적*을 접하지 않고는 멀리 갈 수 없습니다.
 
-The dot product takes us from 3-dimensional space to 1-dimensional space (\aosafigref{500l.pedometer.dotproduct}). When we take the dot product of the two time series, user acceleration and gravitational acceleration, both of which are in 3-dimensional space, we'll be left with a single time series in 1-dimensional space representing the portion of user acceleration in the direction of gravity. We'll arbitrarily call this new time series $a(t)$, because, well, every important time series deserves a name.
+내적은 우리를 3차원 공간에서 1차원 공간으로 이동시킵니다(\aosafigref{500l.pedometer.dotproduct}). 두 시계열, 즉 사용자 가속도와 중력 가속도의 내적을 구하면(둘 다 3차원 공간에 있음), 중력 방향의 사용자 가속도 부분을 나타내는 1차원 공간의 단일 시계열이 남게 됩니다. 우리는 이 새로운 시계열을 임의로 $a(t)$라고 부르겠습니다. 모든 중요한 시계열은 이름을 가질 자격이 있으니까요.
 
 \aosafigure[333pt]{pedometer-images/dot-product-explanation.png}{The dot product}{500l.pedometer.dotproduct}
 
 
-#### Implementing the Dot Product
+#### 내적 구현하기
 
-We can implement the dot product for our earlier example using the formula $a(t) = x_{u}(t)x_{g}(t) + y_{u}(t)y_{g}(t) + z_{u}(t)z_{g}(t)$, leaving us with $a(t)$ in 1-dimensional space (\aosafigref{500l.pedometer.accelerationdotproduct}).
+우리는 공식 $a(t) = x_{u}(t)x_{g}(t) + y_{u}(t)y_{g}(t) + z_{u}(t)z_{g}(t)$를 사용하여 앞선 예에 대한 내적을 구현할 수 있으며, 이는 1차원 공간에서 $a(t)$를 남겨둡니다(\aosafigref{500l.pedometer.accelerationdotproduct}).
 
 \aosafigure[333pt]{pedometer-images/acceleration-dotproduct.png}{Implementing the dot product}{500l.pedometer.accelerationdotproduct}
 
-We can now visually pick out where the steps are in $a(t)$. The dot product is very powerful, yet beautifully simple.
+이제 $a(t)$에서 걸음이 어디에 있는지 시각적으로 선별할 수 있습니다. 내적은 매우 강력하면서도 아름답게 단순합니다.
 
-### Solutions in the Real World
+### 현실 세계의 솔루션
 
-We saw how quickly our seemingly simple problem became more complex when we threw in the challenges of the real world and real people. However, we're getting a lot closer to counting steps, and we can see how $a(t)$ is starting to resemble our ideal sine wave. But, only "kinda, sorta" starting to. We still need to make our messy $a(t)$ time series smoother. There are four main issues (\aosafigref{500l.pedometer.problems}) with $a(t)$ in its current state. Let's examine each one.
+겉보기에 단순한 문제가 현실 세계와 실제 사람들의 도전 과제를 던져 넣었을 때 얼마나 빠르게 복잡해졌는지 보았습니다. 그러나 우리는 걸음을 세는 것에 훨씬 더 가까워졌고, $a(t)$가 우리의 이상적인 사인파를 닮아가기 시작한 것을 볼 수 있습니다. 하지만 "어느 정도만" 시작한 것입니다. 우리는 여전히 지저분한 $a(t)$ 시계열을 더 부드럽게 만들어야 합니다. 현재 상태의 $a(t)$에는 네 가지 주요 문제(\aosafigref{500l.pedometer.problems})가 있습니다. 각각을 살펴봅시다.
 
 \aosafigure[333pt]{pedometer-images/jumpy-slow-short-bumpy.png}{Jumpy, slow, short, bumpy}{500l.pedometer.problems}
 
 
-#### 1. Jumpy Peaks
+#### 1. 지터링 피크
 
-$a(t)$ is very "jumpy", because a phone can jiggle with each step, adding a high-frequency component to our time series. This jumpiness is called noise. By studying numerous data sets, we've determined that a step acceleration is at maximum 5 Hz. We can use a low-pass IIR filter to remove the noise, picking $\alpha$ and $\beta$ to attenuate all signals above 5 Hz.
+$a(t)$는 매우 "지터링"입니다. 휴대폰이 각 걸음마다 흔들릴 수 있어 우리 시계열에 고주파 구성 요소가 추가되기 때문입니다. 이 지터링을 노이즈라고 합니다. 수많은 데이터 세트를 연구함으로써, 걸음 가속도가 최대 5 Hz임을 결정했습니다. 5 Hz 이상의 모든 신호를 감쇠시키는 $\alpha$와 $\beta$를 선택하여 저역 통과 IIR 필터를 사용해 노이즈를 제거할 수 있습니다.
 
-#### 2. Slow Peaks
+#### 2. 느린 피크
 
-With a sampling rate of 100, the slow peak displayed in $a(t)$ spans 1.5 seconds, which is too slow to be a step. In studying enough samples of data, we've determined that the slowest step we can take is at a 1 Hz frequency. Slower accelerations are due to a low-frequency component, that we can again remove using a high-pass IIR filter, setting $\alpha$ and $\beta$ to cancel all signals below 1 Hz.
+샘플링 속도가 100일 때, $a(t)$에 표시된 느린 피크는 1.5초에 걸쳐 있으며, 이는 걸음이 되기에는 너무 느립니다. 충분한 데이터 샘플을 연구한 결과, 우리가 할 수 있는 가장 느린 걸음이 1 Hz 주파수임을 결정했습니다. 더 느린 가속도는 저주파 구성 요소 때문이며, 1 Hz 미만의 모든 신호를 취소하도록 $\alpha$와 $\beta$를 설정하여 고역 통과 IIR 필터를 사용해 다시 제거할 수 있습니다.
 
-#### 3. Short Peaks
+#### 3. 짧은 피크
 
-As a person is using an app or making a call, the accelerometer registers small movements in the direction of gravity, presenting themselves as short peaks in our time series. We can eliminate these short peaks by setting a minimum threshold, and counting a step every time $a(t)$ crosses that threshold in the positive direction.
+사람이 앱을 사용하거나 통화를 할 때, 가속도계는 중력 방향의 작은 움직임을 등록하여 우리 시계열에서 짧은 피크로 나타납니다. 최소 임계값을 설정하고 $a(t)$가 양의 방향으로 해당 임계값을 넘을 때마다 걸음을 카운트함으로써 이러한 짧은 피크들을 제거할 수 있습니다.
 
-#### 4. Bumpy Peaks
+#### 4. 거친 피크
 
-Our pedometer should accommodate many people with different walks, so we've set minimum and maximum step frequencies based on a large sample size of people and walks. This means that we may sometimes filter slightly too much or too little. While we'll often have fairly smooth peaks, we can, once in a while, get a "bumpier" peak. \aosafigref{500l.pedometer.problems} zooms in on one such peak.
+우리 만보계는 다양한 걸음걸이를 가진 많은 사람들을 수용해야 하므로, 사람과 걸음걸이의 큰 샘플 크기를 기반으로 최소 및 최대 걸음 주파수를 설정했습니다. 이는 때때로 약간 너무 많이 또는 너무 적게 필터링할 수 있음을 의미합니다. 보통은 상당히 부드러운 피크를 가지겠지만, 가끔씩 "더 거친" 피크를 얻을 수 있습니다. \aosafigref{500l.pedometer.problems}는 그러한 피크 중 하나를 확대한 것입니다.
 
-When bumpiness occurs at our threshold, we can mistakenly count too many steps for one peak. We'll use a method called *hysteresis* to address this. Hysteresis refers to the dependence of an output on past inputs. We can count threshold crossings in the positive direction, as well as 0 crossings in the negative direction. Then, we only count steps where a threshold crossing occurs after a 0 crossing, ensuring we count each step only once.
+임계값에서 거칠함이 발생할 때, 하나의 피크에 대해 너무 많은 걸음을 잘못 카운트할 수 있습니다. 이를 해결하기 위해 *히스테리시스*라는 방법을 사용할 것입니다. 히스테리시스는 과거 입력에 대한 출력의 의존성을 의미합니다. 양의 방향의 임계값 교차와 음의 방향의 0 교차를 카운트할 수 있습니다. 그다음 0 교차 후에 임계값 교차가 발생하는 걸음만 카운트하여, 각 걸음을 한 번만 카운트하도록 보장합니다.
 
-#### Peaks That Are Juuuust Right
+#### 딱 적절한 피크
 
 \aosafigure[333pt]{pedometer-images/acceleration-filtered.png}{Tweaked peaks}{500l.pedometer.accelerationfiltered}
 
-\noindent In accounting for these four scenarios, we've managed to bring our messy $a(t)$ fairly close to our ideal sine wave (\aosafigref{500l.pedometer.accelerationfiltered}), allowing us to count steps.
+\noindent 이 네 가지 시나리오를 고려함으로써, 지저분한 $a(t)$를 이상적인 사인파에 상당히 가깝게 만들어(\aosafigref{500l.pedometer.accelerationfiltered}) 걸음을 셀 수 있게 되었습니다.
 
-### Recap
+### 요약
 
-The problem, at first glance, looked straightforward. However, the real world and real people threw a few curve balls our way. Let's recap how we solved the problem:
+문제는 처음 보기에는 단순해 보였습니다. 그러나 현실 세계와 실제 사람들이 우리에게 몇 가지 예상치 못한 문제를 던져주었습니다. 우리가 어떻게 문제를 해결했는지 요약해봅시다:
 
-1. We started with total acceleration, $(x(t), y(t), z(t))$.
-2. We used a low-pass filter to split total acceleration into user acceleration and gravitational acceleration, $(x_{u}(t), y_{u}(t), z_{u}(t))$ and $(x_{g}(t), y_{g}(t), z_{g}(t))$, respectively.
-3. We took the dot product of $(x_{u}(t), y_{u}(t), z_{u}(t))$ and $(x_{g}(t), y_{g}(t), z_{g}(t))$ to obtain the user acceleration in the direction of gravity, $a(t)$.
-4. We used a low-pass filter again to remove the high-frequency component of $a(t)$, removing noise.
-5. We used a high-pass filter to cancel the low-frequency component of $a(t)$, removing slow peaks.
-6. We set a threshold to ignore short peaks.
-7. We used hysteresis to avoid double-counting steps with bumpy peaks.
+1. 전체 가속도 $(x(t), y(t), z(t))$로 시작했습니다.
+2. 저역 통과 필터를 사용하여 전체 가속도를 사용자 가속도와 중력 가속도, 즉 각각 $(x_{u}(t), y_{u}(t), z_{u}(t))$와 $(x_{g}(t), y_{g}(t), z_{g}(t))$로 분할했습니다.
+3. $(x_{u}(t), y_{u}(t), z_{u}(t))$와 $(x_{g}(t), y_{g}(t), z_{g}(t))$의 내적을 구하여 중력 방향의 사용자 가속도 $a(t)$를 얻었습니다.
+4. $a(t)$의 고주파 구성 요소를 제거하기 위해 저역 통과 필터를 다시 사용하여 노이즈를 제거했습니다.
+5. $a(t)$의 저주파 구성 요소를 취소하기 위해 고역 통과 필터를 사용하여 느린 피크를 제거했습니다.
+6. 짧은 피크를 무시하기 위해 임계값을 설정했습니다.
+7. 거친 피크로 인한 걸음 중복 카운팅을 피하기 위해 히스테리시스를 사용했습니다.
 
-As software developers in a training or academic setting, we may have been presented with a perfect signal and asked to write code to count the steps in that signal. While that may have been an interesting coding challenge, it wouldn't have been something we could apply in a live situation. We saw that in reality, with gravity and people thrown into the mix, the problem was a little more complex. We used mathematical tools to address the complexities, and were able to solve a real-world problem. It's time to translate our solution into code.
+훈련이나 학술 환경의 소프트웨어 개발자로서, 우리는 완벽한 신호를 받고 해당 신호에서 걸음을 카운트하는 코드를 작성하라는 요청을 받았을 수 있습니다. 그것은 흥미로운 코딩 도전이었을 수 있지만, 실제 상황에서 적용할 수 있는 것은 아니었을 것입니다. 현실에서는 중력과 사람들이 섞여들면서 문제가 조금 더 복잡하다는 것을 보았습니다. 우리는 복잡성을 해결하기 위해 수학적 도구를 사용했고, 현실 세계의 문제를 해결할 수 있었습니다. 이제 우리의 솔루션을 코드로 번역할 때입니다.
 
-## Diving Into Code
+## 코드로 뛰어들기
 
-Our goal for this chapter is to create a web application in Ruby that accepts accelerometer data, parses, processes, and analyzes the data, and returns the number of steps taken, the distance travelled, and the elapsed time.
+이 장의 목표는 가속도계 데이터를 받아들이고, 데이터를 파싱, 처리, 분석하여 걸음 수, 이동 거리, 경과 시간을 반환하는 Ruby 웹 애플리케이션을 만드는 것입니다.
 
-### Preliminary Work
+### 예비 작업
 
-Our solution requires us to filter our time series several times. Rather than peppering filtering code throughout our program, it makes sense to create a class that takes care of the filtering, and if we ever need to enhance or modify it, we'll only ever need to change that one class. This strategy is called *separation of concerns*, a commonly used design principle which promotes splitting a program into distinct pieces, where every piece has one primary concern. It's a beautiful way to write clean, maintainable code that's easily extensible. We'll revisit this idea several times throughout the chapter.
+우리의 솔루션은 시계열을 여러 번 필터링해야 합니다. 프로그램 전체에 필터링 코드를 흩뿌리기보다는, 필터링을 담당하는 클래스를 만드는 것이 합리적입니다. 그러면 향상시키거나 수정해야 할 때, 그 하나의 클래스만 변경하면 됩니다. 이 전략을 *관심사의 분리*라고 하며, 프로그램을 각각 하나의 주요 관심사를 가진 구별되는 조각들로 나누는 것을 장려하는 일반적으로 사용되는 설계 원칙입니다. 이는 깨끗하고 유지 관리 가능하며 쉽게 확장 가능한 코드를 작성하는 아름다운 방법입니다. 이 장 전반에 걸쳐 이 아이디어를 여러 번 다시 살펴볼 것입니다.
 
-Let's dive into the filtering code, contained in, logically, a `Filter` class.
+논리적으로 `Filter` 클래스에 포함된 필터링 코드로 뛰어들어 봅시다.
 
 ```ruby
 class Filter
@@ -288,67 +288,67 @@ private
 end
 ```
 
-Anytime our program needs to filter a time series, we can call one of the class methods in `Filter` with the data we need filtered:
+프로그램이 시계열을 필터링해야 할 때마다, 필터링하고자 하는 데이터와 함께 `Filter`의 클래스 메서드 중 하나를 호출할 수 있습니다:
 
-* `low_0_hz` is used to low-pass filter signals near 0 Hz
-* `low_5_hz` is used to low-pass filter signals at or below 5 Hz
-* `high_1_hz` is used to high-pass filter signals above 1 Hz
+* `low_0_hz`는 0 Hz 근처의 신호를 저역 통과 필터링하는 데 사용됩니다
+* `low_5_hz`는 5 Hz 이하의 신호를 저역 통과 필터링하는 데 사용됩니다
+* `high_1_hz`는 1 Hz 이상의 신호를 고역 통과 필터링하는 데 사용됩니다
 
-Each class method calls `filter`, which implements the IIR filter and returns the result. If we wish to add more filters in the future, we only need to change this one class. Note is that all magic numbers are defined at the top. This makes our class easier to read and understand.
+각 클래스 메서드는 IIR 필터를 구현하고 결과를 반환하는 `filter`를 호출합니다. 향후 더 많은 필터를 추가하고 싶다면, 이 하나의 클래스만 변경하면 됩니다. 모든 매직 넘버가 상단에 정의되어 있다는 점을 주목하세요. 이는 우리 클래스를 더 읽기 쉽고 이해하기 쉽게 만듭니다.
 
-### Input Formats
+### 입력 형식
 
-Our input data is coming from mobile devices such as Android phones and iPhones. Most mobile phones on the market today have accelerometers built in, that are able to record total acceleration. Let's call the input data format that records total acceleration the *combined format*. Many, but not all, devices can also record user acceleration and gravitational acceleration separately. Let's call this format the *separated format*. A device that has the ability to return data in the separated format necessarily has the ability to return data in the combined format. However, the inverse is not always true. Some devices can only record data in the combined format. Input data in the combined format will need to be passed through a low-pass filter to turn it into the separated format.
+입력 데이터는 안드로이드 폰과 아이폰과 같은 모바일 기기에서 나옵니다. 오늘날 시장에 나와 있는 대부분의 모바일 폰에는 전체 가속도를 기록할 수 있는 가속도계가 내장되어 있습니다. 전체 가속도를 기록하는 입력 데이터 형식을 *결합 형식*이라고 부르겠습니다. 모든 기기는 아니지만 많은 기기가 사용자 가속도와 중력 가속도를 별도로 기록할 수도 있습니다. 이 형식을 *분리 형식*이라고 부르겠습니다. 분리 형식으로 데이터를 반환할 수 있는 기기는 필연적으로 결합 형식으로도 데이터를 반환할 수 있습니다. 그러나 그 반대는 항상 참이 아닙니다. 일부 기기는 결합 형식으로만 데이터를 기록할 수 있습니다. 결합 형식의 입력 데이터는 분리 형식으로 바꾸기 위해 저역 통과 필터를 통과해야 할 것입니다.
 
-We want our program to handle all mobile devices on the market with accelerometers, so we'll need to accept data in both formats. Let's look at the two formats we'll be accepting individually.
+우리는 프로그램이 가속도계가 있는 시장의 모든 모바일 기기를 처리하기를 원하므로, 두 형식의 데이터를 모두 받아들여야 할 것입니다. 우리가 받아들일 두 형식을 개별적으로 살펴봅시다.
 
-#### Combined Format
+#### 결합 형식
 
-Data in the combined format is total acceleration in the $x$, $y$, and $z$ directions, over time. $x$, $y$, and $z$ values will be separated by a comma, and samples per unit time will be separated by a semi-colon.
+결합 형식의 데이터는 시간에 걸친 $x$, $y$, $z$ 방향의 전체 가속도입니다. $x$, $y$, $z$ 값들은 쉼표로 구분되고, 단위 시간당 샘플들은 세미콜론으로 구분됩니다.
 
 $$
 x_1,y_1,z_1; \ldots x_n,y_n,z_n;
 $$
 
-#### Separated Format
+#### 분리 형식
 
-The separated format returns user acceleration and gravitational acceleration in the $x$, $y$, and $z$ directions, over time. User acceleration values will be separated from gravitational acceleration values by a pipe.
+분리 형식은 시간에 걸친 $x$, $y$, $z$ 방향의 사용자 가속도와 중력 가속도를 반환합니다. 사용자 가속도 값들은 중력 가속도 값들과 파이프로 구분됩니다.
 
 $$
 x^{u}_1,y^{u}_1,z^{u}_1 \vert x^{g}_1,y^{g}_1,z^{g}_1; \ldots x^{u}_n,y^{u}_n,z^{u}_n \vert x^{g}_n,y^{g}_n,z^{g}_n;
 $$
 
-### I Got Multiple Input Formats But a Standard Ain't One
+### 다중 입력 형식이 있지만 표준은 없다
 
-Dealing with multiple input formats is a common programming problem. If we want our entire program to work with both formats, every single piece of code dealing with the data would need to know how to handle both formats. This can become very messy, very quickly, especially if a third (or a fourth, or a fifth, or a hundredth) input format is added.
+다중 입력 형식을 다루는 것은 흔한 프로그래밍 문제입니다. 전체 프로그램이 두 형식 모두와 작동하기를 원한다면, 데이터를 다루는 모든 코드 조각이 두 형식을 모두 처리하는 방법을 알아야 할 것입니다. 이는 매우 빠르게 매우 지저분해질 수 있으며, 특히 세 번째(또는 네 번째, 다섯 번째, 또는 백 번째) 입력 형식이 추가되면 더욱 그렇습니다.
 
-#### Standard Format
+#### 표준 형식
 
-The cleanest way for us to deal with this is to take our two input formats and fit them into a standard format as soon as possible, allowing the rest of the program to work with this new standard format. Our solution requires that we work with user acceleration and gravitational acceleration separately, so our standard format will need to be split into the two accelerations (\aosafigref{500l.pedometer.standardformat}).
+이를 처리하는 가장 깨끗한 방법은 두 입력 형식을 가능한 한 빨리 표준 형식에 맞추어, 프로그램의 나머지 부분이 이 새로운 표준 형식과 작동하도록 하는 것입니다. 우리의 솔루션은 사용자 가속도와 중력 가속도를 별도로 작업해야 하므로, 표준 형식은 두 가속도로 분할되어야 할 것입니다(\aosafigref{500l.pedometer.standardformat}).
 
 \aosafigure[240pt]{pedometer-images/standard-format.png}{Standard format}{500l.pedometer.standardformat}
 
-Our standard format allows us to store a time series, as each element represents acceleration at a point in time. We've defined it as an array of arrays of arrays. Let's peel that onion.
+표준 형식을 사용하면 각 요소가 특정 시점의 가속도를 나타내므로 시계열을 저장할 수 있습니다. 이를 배열의 배열의 배열로 정의했습니다. 이 양파를 껍질을 벗겨봅시다.
 
-* The first array is just a wrapper to hold the all of the data.
-* The second set of arrays contains one array per data sample taken. If our sampling rate is 100 and we sample data for 10 seconds, we'll have $100 * 10$, or 1000, arrays in this second set.
-* The third set of arrays is the pair of arrays enclosed within the second set. They both contain acceleration data in the $x$, $y$, and $z$ directions; the first representing user acceleration and the second, gravitational acceleration.
+* 첫 번째 배열은 모든 데이터를 담기 위한 래퍼일 뿐입니다.
+* 두 번째 배열 집합은 취해진 데이터 샘플당 하나의 배열을 포함합니다. 샘플링 속도가 100이고 10초 동안 데이터를 샘플링한다면, 이 두 번째 집합에 $100 * 10$, 즉 1000개의 배열이 있을 것입니다.
+* 세 번째 배열 집합은 두 번째 집합 내에 포함된 배열 쌍입니다. 둘 다 $x$, $y$, $z$ 방향의 가속도 데이터를 포함하며; 첫 번째는 사용자 가속도를, 두 번째는 중력 가속도를 나타냅니다.
 
-### The Pipeline
+### 파이프라인
 
-The input into our system will be data from an accelerometer, information on the user taking the walk (gender, stride, etc.), and information on the trial walk itself (sampling rate, actual steps taken, etc.). Our system will apply the signal processing solution, and output the number of steps calculated, the delta between the actual steps and calculated steps, the distance travelled, and the elapsed time. The entire process from input to output can be viewed as a pipeline (\aosafigref{500l.pedometer.pipeline}).
+우리 시스템의 입력은 가속도계의 데이터, 걷기를 수행하는 사용자에 대한 정보(성별, 보폭 등), 그리고 시험 걷기 자체에 대한 정보(샘플링 속도, 실제로 걸은 걸음 수 등)가 될 것입니다. 우리 시스템은 신호 처리 솔루션을 적용하고, 계산된 걸음 수, 실제 걸음과 계산된 걸음 사이의 차이, 이동 거리, 경과 시간을 출력할 것입니다. 입력에서 출력까지의 전체 과정은 파이프라인으로 볼 수 있습니다(\aosafigref{500l.pedometer.pipeline}).
 
 \aosafigure[240pt]{pedometer-images/pipeline.png}{The pipeline}{500l.pedometer.pipeline}
 
-In the spirit of separation of concerns, we'll write the code for each distinct component of the pipeline&mdash;parsing, processing, and analyzing&mdash;individually.
+관심사의 분리 정신에 따라, 파이프라인의 각각의 구별되는 구성 요소&mdash;파싱, 처리, 분석&mdash;에 대한 코드를 개별적으로 작성할 것입니다.
 
-### Parsing
+### 파싱
 
-Given that we want our data in the standard format as early as possible, it makes sense to write a parser that allows us to take our two known input formats and convert them to a standard output format as the first component of our pipeline. Our standard format splits out user acceleration and gravitational acceleration, which means that if our data is in the combined format, our parser will need to first pass it through a low-pass filter to convert it to the standard format.
+가능한 한 빨리 데이터를 표준 형식으로 만들고 싶으므로, 두 개의 알려진 입력 형식을 취하고 이를 표준 출력 형식으로 변환할 수 있는 파서를 파이프라인의 첫 번째 구성 요소로 작성하는 것이 합리적입니다. 우리의 표준 형식은 사용자 가속도와 중력 가속도를 분리하므로, 데이터가 결합 형식이라면 파서가 먼저 저역 통과 필터를 통과시켜 표준 형식으로 변환해야 할 것입니다.
 
 \aosafigure[240pt]{pedometer-images/input-data-workflow-1.png}{Initial workflow}{500l.pedometer.input1}
 
-In the future, if we ever have to add another input format, the only code we'll have to touch is this parser. Let's separate concerns once more, and create a `Parser` class to handle the parsing.
+향후 다른 입력 형식을 추가해야 한다면, 수정해야 할 코드는 이 파서뿐입니다. 관심사를 다시 한 번 분리하여, 파싱을 처리할 `Parser` 클래스를 만들어봅시다.
 
 ```ruby
 class Parser
@@ -391,40 +391,40 @@ class Parser
 end
 ```
 
-`Parser` has a class-level `run` method as well as an initializer. This is a pattern we'll use several times, so it's worth a discussion. Initializers should generally be used for setting up an object, and shouldn't do a lot of work. `Parser`'s initializer simply takes `data` in the combined or separated format and stores it in the instance variable `@data`. The `parse` instance method uses `@data` internally, and does the heavy lifting of parsing and setting the result in the standard format to `@parsed_data`. In our case, we'll never need to instantiate a `Parser` instance without having to immediately call `parse`. Therefore, we add a convenient class-level `run` method that instantiates an instance of `Parser`, calls `parse` on it, and returns the instance of the object. We can now pass our input data to `run`, knowing we'll receive an instance of `Parser` with `@parsed_data` already set.
+`Parser`는 클래스 레벨 `run` 메서드와 이니셜라이저를 가지고 있습니다. 이는 여러 번 사용할 패턴이므로 논의할 가치가 있습니다. 이니셜라이저는 일반적으로 객체를 설정하는 데 사용되어야 하며, 많은 작업을 수행해서는 안 됩니다. `Parser`의 이니셜라이저는 단순히 결합 또는 분리 형식의 `data`를 받아 인스턴스 변수 `@data`에 저장합니다. `parse` 인스턴스 메서드는 내부적으로 `@data`를 사용하고, 파싱의 무거운 작업을 수행하여 결과를 표준 형식으로 `@parsed_data`에 설정합니다. 우리의 경우, `parse`를 즉시 호출하지 않고 `Parser` 인스턴스를 인스턴스화해야 할 필요가 전혀 없습니다. 따라서 `Parser`의 인스턴스를 인스턴스화하고, 그것에 `parse`를 호출하며, 객체의 인스턴스를 반환하는 편리한 클래스 레벨 `run` 메서드를 추가합니다. 이제 입력 데이터를 `run`에 전달하여 `@parsed_data`가 이미 설정된 `Parser`의 인스턴스를 받을 것임을 알 수 있습니다.
 
-Let's take a look at our hard-working `parse` method. The first step in the process is to take string data and convert it to numerical data, giving us an array of arrays of arrays. Sound familiar? The next thing we do is ensure that the format is as expected. Unless we have exactly three elements per the innermost arrays, we throw an exception. Otherwise, we continue on.
+열심히 작업하는 `parse` 메서드를 살펴봅시다. 과정의 첫 번째 단계는 문자열 데이터를 가져와 수치 데이터로 변환하여 배열의 배열의 배열을 만드는 것입니다. 익숙하게 들리나요? 다음으로 하는 일은 형식이 예상된 대로인지 확인하는 것입니다. 최내부 배열당 정확히 세 개의 요소가 없다면, 예외를 던집니다. 그렇지 않으면 계속 진행합니다.
 
-Note the differences in `@parsed_data` between the two formats at this stage. In the *combined format* it contains arrays of exactly *one* array: 
+이 단계에서 두 형식 간의 `@parsed_data` 차이를 주목하세요. *결합 형식*에서는 정확히 *하나의* 배열의 배열들을 포함합니다:
 
 $$
 [[[x_1, y_1, z_1]], \ldots [[x_n, y_n, z_n]]
 $$
 
-In the *separated format* it contains arrays of exactly *two* arrays: 
+*분리 형식*에서는 정확히 *두 개의* 배열의 배열들을 포함합니다:
 
 $$[[[x_{u}^1,y_{u}^1,z_{u}^1], [x_{g}^1,y_{g}^1,z_{g}^1]], ... [[x_{u}^n,y_{u}^n,z_{u}^n], [x_{g}^n,y_{g}^n,z_{g}^n]]]$$
 
-The separated format is already in our desired standard format after this operation. Amazing. However, if the data is combined (or, equivalently, has exactly one array where the separated format would have two), then we proceed with two loops. The first loop splits total acceleration into gravitational and user, using `Filter` with a `:low_0_hz` type, and the second loop reorganizes the data into the standard format.
+분리 형식은 이 작업 후에 이미 우리가 원하는 표준 형식입니다. 놀랍습니다. 그러나 데이터가 결합되어 있다면(또는 동등하게, 분리 형식이 두 개를 가지는 곳에 정확히 하나의 배열을 가진다면), 두 개의 루프로 진행합니다. 첫 번째 루프는 `:low_0_hz` 타입으로 `Filter`를 사용하여 전체 가속도를 중력 가속도와 사용자 가속도로 분할하고, 두 번째 루프는 데이터를 표준 형식으로 재구성합니다.
 
-`parse` leaves us with `@parsed_data` holding data in the standard format, regardless of whether we started off with combined or separated data. What a relief!
+`parse`는 결합 또는 분리 데이터로 시작했는지에 관계없이 표준 형식의 데이터를 보유하는 `@parsed_data`를 남겨둡니다. 다행입니다!
 
-As our program becomes more sophisticated, one area for improvement is to make our users' lives easier by throwing exceptions with more specific error messages, allowing them to more quickly track down common input formatting problems.
+프로그램이 더 정교해짐에 따라, 개선할 수 있는 한 영역은 더 구체적인 오류 메시지로 예외를 던져 사용자의 삶을 더 쉽게 만드는 것입니다. 이를 통해 일반적인 입력 형식 문제를 더 빠르게 추적할 수 있습니다.
 
-### Processing
+### 처리
 
-Based on the solution we defined, we'll need our code to do a couple of things to our parsed data before we can count steps:
+우리가 정의한 솔루션을 기반으로, 걸음을 세기 전에 파싱된 데이터에 대해 코드가 몇 가지 일을 수행해야 합니다:
 
-1. Isolate movement in the direction of gravity using the dot product.
-2. Remove jumpy (high-frequency) and slow (low-frequency) peaks with a low-pass filter followed by a high-pass filter.
+1. 내적을 사용하여 중력 방향의 움직임을 분리하기.
+2. 저역 통과 필터에 이어 고역 통과 필터로 지터링(고주파) 및 느린(저주파) 피크를 제거하기.
 
-We'll handle short and bumpy peaks by avoiding them during step counting.
+짧고 거친 피크는 걸음 카운팅 중에 피함으로써 처리할 것입니다.
 
-Now that we have our data in the standard format, we can process it to get in into a state where we can analyze it to count steps (\aosafigref{500l.pedometer.input2}).
+이제 데이터가 표준 형식으로 되어 있으므로, 걸음을 세기 위해 분석할 수 있는 상태로 만들기 위해 처리할 수 있습니다(\aosafigref{500l.pedometer.input2}).
 
 \aosafigure[166pt]{pedometer-images/input-data-workflow-2.png}{Processing}{500l.pedometer.input2}
 
-The purpose of processing is to take our data in the standard format and incrementally clean it up to get it to a state as close as possible to our ideal sine wave. Our two processing operations, taking the dot product and filtering, are quite distinct, but both are intended to process our data, so we'll create one class called a `Processor`.
+처리의 목적은 표준 형식의 데이터를 가져와 점진적으로 정리하여 이상적인 사인파에 가능한 한 가까운 상태로 만드는 것입니다. 내적을 구하는 것과 필터링이라는 두 가지 처리 작업은 상당히 구별되지만, 둘 다 데이터를 처리하기 위한 것이므로 `Processor`라는 하나의 클래스를 만들 것입니다.
 
 ```ruby
 class Processor
@@ -456,15 +456,15 @@ class Processor
 end
 ```
 
-Again, we see the `run` and `initialize` methods pattern. `run` calls our two processor methods, `dot_product` and `filter`, directly. Each method accomplishes one of our two processing operations. `dot_product` isolates movement in the direction of gravity, and `filter` applies the low-pass and high-pass filters in sequence to remove jumpy and slow peaks.
+다시, `run`과 `initialize` 메서드 패턴을 봅니다. `run`은 두 개의 프로세서 메서드인 `dot_product`와 `filter`를 직접 호출합니다. 각 메서드는 두 가지 처리 작업 중 하나를 수행합니다. `dot_product`는 중력 방향의 움직임을 분리하고, `filter`는 지터링과 느린 피크를 제거하기 위해 저역 통과 및 고역 통과 필터를 순서대로 적용합니다.
 
-### Pedometer Functionality
+### 만보계 기능
 
-Provided information about the person using the pedometer is available, we can measure more than just steps. Our pedometer will measure **distance travelled** and **elapsed time**, as well as **steps taken**.
+만보계를 사용하는 사람에 대한 정보가 제공된다면, 걸음 수보다 더 많은 것을 측정할 수 있습니다. 우리의 만보계는 **걸은 거리**와 **경과 시간**뿐만 아니라 **걸음 수**도 측정할 것입니다.
 
-### Distance Travelled
+### 걸은 거리
 
-A mobile pedometer is generally used by one person. Distance travelled during a walk is calculated by multiplying the steps taken by the person's stride length. If the stride length is unknown, we can use optional user information like gender and height to approximate it. Let's create a `User` class to encapsulate this related information.
+모바일 만보계는 일반적으로 한 사람이 사용합니다. 걷기 중 이동한 거리는 걸음 수에 그 사람의 보폭 길이를 곱해서 계산됩니다. 보폭 길이를 알 수 없다면, 성별과 키 같은 선택적 사용자 정보를 사용하여 근사치를 구할 수 있습니다. 이 관련 정보를 캡슐화하는 `User` 클래스를 만들어봅시다.
 
 ```ruby
 class User
@@ -504,22 +504,22 @@ private
 end
 ```
 
-At the top of our class, we define constants to avoid hardcoding magic numbers and strings throughout. For the purposes of this discussion, let's assume that the values in `MULTIPLIERS` and `AVERAGES` have been determined from a large sample size of diverse people.
+클래스 상단에서, 전체에 걸쳐 매직 넘버와 문자열을 하드코딩하는 것을 피하기 위해 상수를 정의합니다. 이 논의의 목적상, `MULTIPLIERS`와 `AVERAGES`의 값들이 다양한 사람들의 큰 샘플 크기로부터 결정되었다고 가정하겠습니다.
 
-Our initializer accepts `gender`, `height`, and `stride` as optional arguments. If the optional parameters are passed in, our initializer sets instance variables of the same names, after some data formatting. We raise an exception for invalid values.
+이니셜라이저는 `gender`, `height`, `stride`를 선택적 인수로 받습니다. 선택적 매개변수가 전달되면, 이니셜라이저는 일부 데이터 포맷팅 후 같은 이름의 인스턴스 변수를 설정합니다. 유효하지 않은 값에 대해서는 예외를 발생시킵니다.
 
-Even when all optional parameters are provided, the input stride takes precedence. If it's not provided, the `calculate_stride` method determines the most accurate stride length possible for the user. This is done with an `if` statement:
+모든 선택적 매개변수가 제공되더라도, 입력된 보폭이 우선합니다. 제공되지 않으면, `calculate_stride` 메서드가 사용자에게 가능한 한 가장 정확한 보폭 길이를 결정합니다. 이는 `if` 문으로 수행됩니다:
 
-* The most accurate way to calculate stride length is to use a person's height and a multiplier based on gender, provided we have a valid gender and height.
-* A person's height is a better predictor of stride than their gender is. If we have height but not gender, we can multiply the height by the average of the two values in `MULTIPLIERS`.
-* If all we have is a gender, we can use the average stride length from `AVERAGES`.
-* Finally, if we don't have anything, we can take the average of the two values in `AVERAGES` and use that as our stride.
+* 보폭 길이를 계산하는 가장 정확한 방법은 유효한 성별과 키가 있는 경우 사람의 키와 성별에 기반한 승수를 사용하는 것입니다.
+* 사람의 키는 성별보다 보폭의 더 나은 예측 인자입니다. 키는 있지만 성별이 없다면, 키에 `MULTIPLIERS`의 두 값의 평균을 곱할 수 있습니다.
+* 성별만 있다면, `AVERAGES`의 평균 보폭 길이를 사용할 수 있습니다.
+* 마지막으로, 아무것도 없다면, `AVERAGES`의 두 값의 평균을 취하여 보폭으로 사용할 수 있습니다.
 
- Note that the further down the `if` statement we get, the less accurate our stride length becomes. In any case, our `User` class determines the stride length as best it can.
+ `if` 문에서 아래로 갈수록 보폭 길이의 정확도가 떨어진다는 점을 주목하세요. 어떤 경우든, `User` 클래스는 가능한 한 최선으로 보폭 길이를 결정합니다.
 
-### Elapsed Time
+### 경과 시간
 
-The time spent travelling is measured by dividing the number of data samples in our `Processor`'s `@parsed_data` by the sampling rate of the device, if we have it. Since the rate has more to do with the trial walk itself than the user, and the `User` class in fact does not have to be aware of the sampling rate, this is a good time to create a very small `Trial` class.
+이동에 소요된 시간은 우리 `Processor`의 `@parsed_data`에 있는 데이터 샘플 수를 기기의 샘플링 속도로 나누어 측정됩니다(있는 경우). 속도는 사용자보다는 시험 걷기 자체와 더 관련이 있고, `User` 클래스는 실제로 샘플링 속도를 알 필요가 없으므로, 매우 작은 `Trial` 클래스를 만들기에 좋은 때입니다.
 
 ```ruby
 class Trial
@@ -539,19 +539,19 @@ class Trial
 end
 ```
 
-All of the attribute readers in `Trial` are set in the initializer based on parameters passed in:
+`Trial`의 모든 속성 리더는 전달된 매개변수를 기반으로 이니셜라이저에서 설정됩니다:
 
-* `name` is a name for the specific trial, to help differentiate between the different trials.
-* `rate` is the sampling rate of the accelerometer during the trial.
-* `steps` is used to set the actual steps taken, so that we can record the difference between the actual steps the user took and the ones our program counted.
+* `name`은 특정 시험의 이름으로, 서로 다른 시험들을 구별하는 데 도움이 됩니다.
+* `rate`는 시험 중 가속도계의 샘플링 속도입니다.
+* `steps`는 실제로 걸은 걸음 수를 설정하는 데 사용되어, 사용자가 실제로 걸은 걸음과 우리 프로그램이 센 걸음 사이의 차이를 기록할 수 있습니다.
 
-Much like our `User` class, some information is optional. We're given the opportunity to input details of the trial, if we have it. If we don't have those details, our program bypasses calculating the additional results, such as time spent travelling. Another similarity to our `User` class is the prevention of invalid values.
+`User` 클래스와 마찬가지로, 일부 정보는 선택적입니다. 시험의 세부 정보가 있다면 입력할 기회가 주어집니다. 그러한 세부 정보가 없다면, 우리 프로그램은 이동에 소요된 시간과 같은 추가 결과 계산을 건너뜁니다. `User` 클래스와의 또 다른 유사점은 유효하지 않은 값의 방지입니다.
 
-### Steps Taken
+### 걸음 수
 
-It's time to implement our step counting strategy in code. So far, we have a `Processor` class that contains `@filtered_data`, which is our clean time series representing user acceleration in the direction of gravity. We also have classes that give us the necessary information about the user and the trial. What we're missing is a way to analyze `@filtered_data` with the information from `User` and `Trial`, and count steps, measure distance, and measure time.
+이제 코드로 걸음 카운팅 전략을 구현할 때입니다. 지금까지 우리는 중력 방향의 사용자 가속도를 나타내는 깨끗한 시계열인 `@filtered_data`를 포함하는 `Processor` 클래스를 가지고 있습니다. 또한 사용자와 시험에 대한 필요한 정보를 제공하는 클래스들도 있습니다. 빠진 것은 `User`와 `Trial`의 정보로 `@filtered_data`를 분석하고, 걸음을 세고, 거리를 측정하고, 시간을 측정하는 방법입니다.
 
-The analysis portion of our program is different from the data manipulation of the `Processor`, and different from the information collection and aggregation of the `User` and `Trial` classes. Let's create a new class called `Analyzer` to perform this data analysis.
+프로그램의 분석 부분은 `Processor`의 데이터 조작과 다르고, `User`와 `Trial` 클래스의 정보 수집 및 집계와도 다릅니다. 이 데이터 분석을 수행할 `Analyzer`라는 새로운 클래스를 만들어봅시다.
 
 ```ruby
 class Analyzer
@@ -606,40 +606,40 @@ class Analyzer
 end
 ```
 
-The first thing we do in `Analyzer` is define a `THRESHOLD` constant, which we'll use to avoid counting short peaks as steps. For the purposes of this discussion, let's assume we've analyzed numerous diverse data sets and determined a threshold value that accommodated the largest number of those data sets. The threshold can eventually become dynamic and vary with different users, based on the calculated versus actual steps they've taken; a learning algorithm, if you will.
+`Analyzer`에서 처음 하는 일은 짧은 피크를 걸음으로 카운트하는 것을 피하는 데 사용할 `THRESHOLD` 상수를 정의하는 것입니다. 이 논의의 목적상, 수많은 다양한 데이터 세트를 분석하여 그러한 데이터 세트의 가장 큰 수를 수용하는 임계값을 결정했다고 가정하겠습니다. 임계값은 결국 동적이 될 수 있고 계산된 걸음 대 실제 걸음을 기반으로 다양한 사용자에 따라 달라질 수 있습니다. 학습 알고리즘이라고 할 수 있겠죠.
 
-Our `Analyzer`'s initializer takes a `data` parameter and instances of `User` and `Trial`, and sets the instance variables `@data`, `@user`, and `@trial` to the passed-in parameters. The `run` method calls `measure_steps`, `measure_delta`, `measure_distance`, and `measure_time`. Let's take a look at each method.
+`Analyzer`의 이니셜라이저는 `data` 매개변수와 `User` 및 `Trial`의 인스턴스를 받아, 인스턴스 변수 `@data`, `@user`, `@trial`을 전달된 매개변수로 설정합니다. `run` 메서드는 `measure_steps`, `measure_delta`, `measure_distance`, `measure_time`을 호출합니다. 각 메서드를 살펴봅시다.
 
 #### `measure_steps`
 
-Finally! The step counting portion of our step counting app. The first thing we do in `measure_steps` is initialize two variables:
+드디어! 걸음 카운팅 앱의 걸음 카운팅 부분입니다. `measure_steps`에서 처음 하는 일은 두 변수를 초기화하는 것입니다:
 
-* `@steps` is used to count the number of steps.
-* `count_steps` is used for hysteresis to determine if we're allowed to count steps at a point in time.
+* `@steps`는 걸음 수를 카운트하는 데 사용됩니다.
+* `count_steps`는 특정 시점에서 걸음을 카운트할 수 있는지 결정하는 히스테리시스에 사용됩니다.
 
-We then iterate through `@processor.filtered_data`. If the current value is greater than or equal to `THRESHOLD`, and the previous value was less than `THRESHOLD`, then we've crossed the threshold in the positive direction, which could indicate a step. The `unless` statement skips ahead to the next data point if `count_steps` is `false`, indicating that we've already counted a step for that peak. If we haven't, we increment `@steps` by 1, and set `count_steps` to `false` to prevent any more steps from being counted for that peak. The next `if` statement sets `count_steps` to true once our time series has crossed the $x$-axis in the negative direction, and we're on to the next peak.
+그다음 `@processor.filtered_data`를 반복합니다. 현재 값이 `THRESHOLD`보다 크거나 같고, 이전 값이 `THRESHOLD`보다 작다면, 양의 방향으로 임계값을 넘은 것이며, 이는 걸음을 나타낼 수 있습니다. `unless` 문은 `count_steps`가 `false`인 경우 다음 데이터 포인트로 건너뛰며, 이는 해당 피크에 대해 이미 걸음을 카운트했음을 나타냅니다. 그렇지 않다면, `@steps`를 1 증가시키고 `count_steps`를 `false`로 설정하여 해당 피크에 대해 더 이상 걸음이 카운트되지 않도록 합니다. 다음 `if` 문은 시계열이 음의 방향으로 $x$-축을 넘으면 `count_steps`를 true로 설정하고, 다음 피크로 이동합니다.
 
-There we have it, the step counting portion of our program! Our `Processor` class did a lot of work to clean up the time series and remove frequencies that would result in counting false steps, so our actual step counting implementation is not complex.
+여기에 있습니다. 프로그램의 걸음 카운팅 부분입니다! `Processor` 클래스가 시계열을 정리하고 거짓 걸음 카운팅을 야기할 주파수들을 제거하는 많은 작업을 했으므로, 실제 걸음 카운팅 구현은 복잡하지 않습니다.
 
-It's worth noting that we store the entire time series for the walk in memory. Our trials are all short walks, so that's not currently a problem, but eventually we'd like to analyze long walks with large amounts of data. Ideally, we'd want to stream data in, only storing very small portions of the time series in memory. Keeping this in mind, we've put in the work to ensure that we only need the current data point and the data point before it. Additionally, we've implemented hysteresis using a Boolean value, so we don't need to look backward in the time series to ensure we've crossed the $x$-axis at 0.
+걷기에 대한 전체 시계열을 메모리에 저장한다는 점은 주목할 가치가 있습니다. 시험들은 모두 짧은 걷기이므로 현재로서는 문제가 되지 않지만, 결국 대량의 데이터가 있는 긴 걷기를 분석하고 싶을 것입니다. 이상적으로는 데이터를 스트리밍하여 시계열의 매우 작은 부분만 메모리에 저장하고 싶을 것입니다. 이를 염두에 두고, 현재 데이터 포인트와 그 이전 데이터 포인트만 필요하도록 하는 작업을 했습니다. 또한 불린 값을 사용하여 히스테리시스를 구현했으므로, 0에서 $x$-축을 넘었는지 확인하기 위해 시계열에서 뒤로 돌아볼 필요가 없습니다.
 
-There's a fine balance between accounting for likely future iterations of the product, and over-engineering a solution for every conceivable product direction under the sun. In this case, it's reasonable to assume that we'll have to handle longer walks in the near future, and the costs of accounting for that in step counting are fairly low.
+제품의 향후 반복 가능성을 고려하는 것과 모든 상상 가능한 제품 방향에 대해 솔루션을 과도하게 엔지니어링하는 것 사이에는 미묘한 균형이 있습니다. 이 경우, 가까운 미래에 더 긴 걷기를 처리해야 할 것이라고 가정하는 것이 합리적이며, 걸음 카운팅에서 이를 고려하는 비용은 상당히 낮습니다.
 
 #### `measure_delta`
 
-If the trial provides actual steps taken during the walk, `measure_delta` will return the difference between the calculated and actual steps.
+시험에서 걷기 중 실제로 걸은 걸음 수를 제공한다면, `measure_delta`는 계산된 걸음과 실제 걸음 사이의 차이를 반환할 것입니다.
 
 #### `measure_distance`
 
-The distance is measured by multiplying our user's stride by the number of steps. Since the distance depends on the step count, `measure_steps` must be called before `measure_distance`.
+거리는 사용자의 보폭에 걸음 수를 곱하여 측정됩니다. 거리는 걸음 수에 의존하므로, `measure_distance` 전에 `measure_steps`가 호출되어야 합니다.
 
 #### `measure_time`
 
-As long as we have a sampling rate, time is calculated by dividing the total number of samples in `filtered_data` by the sampling rate. It follows, then, that time is calculated in seconds.
+샘플링 속도가 있는 한, 시간은 `filtered_data`의 총 샘플 수를 샘플링 속도로 나누어 계산됩니다. 따라서 시간은 초 단위로 계산됩니다.
 
-### Tying It All Together With the Pipeline
+### 파이프라인으로 모두 연결하기
 
-Our `Parser`, `Processor`, and `Analyzer` classes, while useful individually, are definitely better together. Our program will often use them to run through the pipeline we introduced earlier. Since the pipeline will need to be run frequently, we'll create a `Pipeline` class to run it for us. \newpage
+`Parser`, `Processor`, `Analyzer` 클래스들은 개별적으로도 유용하지만, 함께일 때 확실히 더 좋습니다. 우리 프로그램은 앞서 소개한 파이프라인을 실행하기 위해 종종 이들을 사용할 것입니다. 파이프라인이 자주 실행되어야 하므로, 이를 실행할 `Pipeline` 클래스를 만들 것입니다. \newpage
 
 ```ruby
 class Pipeline
@@ -667,52 +667,52 @@ class Pipeline
 end
 ```
 
-We use our now-familiar `run` pattern and supply `Pipeline` with accelerometer data, and instances of `User` and `Trial`. The `feed` method implements the pipeline, which entails running `Parser` with the accelerometer data, then using the parser's parsed data to run `Processor`, and finally using the processor's filtered data to run `Analyzer`. The `Pipeline` keeps `@parser`, `@processor`, and `@analyzer` instance variables, so that the program has access to information from those objects for display purposes through the app.
+이제 익숙한 `run` 패턴을 사용하고 `Pipeline`에 가속도계 데이터와 `User` 및 `Trial`의 인스턴스를 제공합니다. `feed` 메서드는 파이프라인을 구현하며, 이는 가속도계 데이터로 `Parser`를 실행하고, 그다음 파서의 파싱된 데이터를 사용하여 `Processor`를 실행하고, 마지막으로 프로세서의 필터링된 데이터를 사용하여 `Analyzer`를 실행하는 것을 수반합니다. `Pipeline`은 `@parser`, `@processor`, `@analyzer` 인스턴스 변수들을 유지하므로, 프로그램이 앱을 통한 표시 목적으로 그러한 객체들의 정보에 접근할 수 있습니다.
 
-## Adding A Friendly Interface
+## 친근한 인터페이스 추가하기
 
-We're through the most labour intensive part of our program. Next, we'll build a web app to present the data in a format that is pleasing to a user. A web app naturally separates the data processing from the presentation of the data. Let's look at our app from a user's perspective before the code.
+우리 프로그램에서 가장 노동 집약적인 부분을 지나왔습니다. 다음으로, 사용자에게 즐거운 형식으로 데이터를 제시할 웹 앱을 구축할 것입니다. 웹 앱은 자연스럽게 데이터 처리와 데이터 표시를 분리합니다. 코드 전에 사용자의 관점에서 앱을 살펴봅시다.
 
-### A User Scenario
+### 사용자 시나리오
 
-When a user first enters the app by navigating to `/uploads`, they see a table of existing data and a form to submit new data by uploading an accelerometer output file and trial and user information (\aosafigref{500l.pedometer.app1}).
+사용자가 `/uploads`로 이동하여 앱에 처음 들어왔을 때, 기존 데이터의 테이블과 가속도계 출력 파일 및 시험과 사용자 정보를 업로드하여 새 데이터를 제출하는 양식을 봅니다(\aosafigref{500l.pedometer.app1}).
 
 \aosafigure[240pt]{pedometer-images/app1.png}{Upload view}{500l.pedometer.app1}
 
-Submitting the form stores the data to the file system, parses, processes, and analyzes it, and redirects back to `/uploads` with the new entry in the table.
+양식을 제출하면 데이터를 파일 시스템에 저장하고, 파싱, 처리, 분석한 후 테이블의 새 항목과 함께 `/uploads`로 다시 리디렉션됩니다.
 
-Clicking the **Detail** link for an entry presents the user with the following view in \aosafigref{500l.pedometer.app3}.
+항목의 **Detail** 링크를 클릭하면 사용자에게 \aosafigref{500l.pedometer.app3}의 다음 뷰가 제시됩니다.
 
 \aosafigure[240pt]{pedometer-images/app3.png}{Detail view}{500l.pedometer.app3}
 
-The information presented includes values input by the user through the upload form, values calculated by our program, and graphs of the time series following the dot product operation, and again following filtering. The user can navigate back to `/uploads` using the *Back to Uploads* link.
+제시된 정보에는 업로드 양식을 통해 사용자가 입력한 값, 우리 프로그램이 계산한 값, 내적 연산 후의 시계열 그래프, 그리고 필터링 후의 시계열 그래프가 포함됩니다. 사용자는 *Back to Uploads* 링크를 사용하여 `/uploads`로 다시 이동할 수 있습니다.
 
-Let's look at what the outlined functionality above implies for us, technically. We'll need two major components that we don't yet have:
+위에서 설명한 기능이 기술적으로 우리에게 무엇을 의미하는지 살펴봅시다. 아직 가지고 있지 않은 두 가지 주요 구성 요소가 필요할 것입니다:
 
-1. A way to store and retrieve user input data.
-2. A web application with a basic interface.
+1. 사용자 입력 데이터를 저장하고 검색하는 방법.
+2. 기본 인터페이스가 있는 웹 애플리케이션.
 
-Let's examine each of these two requirements.
+이 두 요구 사항을 각각 살펴봅시다.
 
-### 1. Storing and Retrieving Data
+### 1. 데이터 저장 및 검색
 
-Our app needs to store input data to, and retrieve data from, the file system. We'll create an `Upload` class to do this. Since the class deals only with the file system and doesn't relate directly to the implementation of the pedometer, we've left it out for brevity, but it's worth discussing its basic functionality. Our `Upload` class has three class-level methods for file system access and retrieval, all of which return one or more instances of `Upload`:
+앱은 파일 시스템에 입력 데이터를 저장하고, 파일 시스템에서 데이터를 검색해야 합니다. 이를 위해 `Upload` 클래스를 만들 것입니다. 이 클래스는 파일 시스템만을 다루고 만보계의 구현과 직접 관련이 없으므로, 간결성을 위해 생략했지만, 기본 기능을 논의할 가치가 있습니다. `Upload` 클래스는 파일 시스템 접근 및 검색을 위한 세 가지 클래스 레벨 메서드를 가지고 있으며, 모두 `Upload`의 하나 이상의 인스턴스를 반환합니다:
 
-* `create` takes a file along with user and trial information. It stores the file to the file system, under a filename it generates to contain the user and trial information. The `@file_path`, `@user`, and `@trial` instance variables allow access to the file path, user object, and trial object, respectively.
-* `find` takes a file path and returns an instance of `Upload`.
-* `all` returns an array of `Upload` instances, one for each accelerometer data file in the file system.
+* `create`는 사용자 및 시험 정보와 함께 파일을 받습니다. 사용자 및 시험 정보를 포함하도록 생성하는 파일명으로 파일을 파일 시스템에 저장합니다. `@file_path`, `@user`, `@trial` 인스턴스 변수들은 각각 파일 경로, 사용자 객체, 시험 객체에 대한 접근을 허용합니다.
+* `find`는 파일 경로를 받아 `Upload`의 인스턴스를 반환합니다.
+* `all`은 파일 시스템의 각 가속도계 데이터 파일에 대해 하나씩 `Upload` 인스턴스들의 배열을 반환합니다.
 
-#### Separation of Concerns in Upload
+#### Upload에서의 관심사 분리
 
-Once again, we've been wise to separate concerns in our program. All code related to storage and retrieval is contained in the `Upload` class. As our application grows, we'll likely want to use a database rather than saving everything to the file system. When the time comes for that, all we have to do it change the `Upload` class. This makes our refactoring simple and clean.
+다시 한번, 우리는 프로그램에서 관심사를 분리하는 것이 현명했습니다. 저장 및 검색과 관련된 모든 코드는 `Upload` 클래스에 포함되어 있습니다. 애플리케이션이 성장하면서, 파일 시스템에 모든 것을 저장하기보다는 데이터베이스를 사용하고 싶을 가능성이 높습니다. 그때가 되면, `Upload` 클래스만 변경하면 됩니다. 이는 리팩터링을 간단하고 깨끗하게 만듭니다.
 
-In the future, we can save `User` and `Trial` objects to the database. The `create`, `find`, and `all` methods in `Upload` will then be relevant to `User` and `Trial` as well. That means we'd likely refactor those out into their own class to deal with data storage and retrieval in general, and each of our `User`, `Trial`, and `Upload` classes would inherit from that class. We might eventually add helper query methods to that class, and continue building it up from there.
+향후에는 `User`와 `Trial` 객체들을 데이터베이스에 저장할 수 있습니다. 그러면 `Upload`의 `create`, `find`, `all` 메서드들이 `User`와 `Trial`에도 관련될 것입니다. 이는 일반적인 데이터 저장 및 검색을 다루는 자체 클래스로 그것들을 리팩터링할 가능성이 높다는 것을 의미하며, `User`, `Trial`, `Upload` 클래스들 각각이 그 클래스로부터 상속받을 것입니다. 결국 그 클래스에 헬퍼 쿼리 메서드들을 추가하고, 거기에서 계속 구축해나갈 수 있습니다.
 
-### 2. Building a Web Application
+### 2. 웹 애플리케이션 구축
 
-Web apps have been built many times over, so we'll leverage the important work of the open source community and use an existing framework to do the boring plumbing work for us. The Sinatra framework does just that. In the tool's own words, Sinatra is "a DSL for quickly creating web applications in Ruby". Perfect.
+웹 앱은 수없이 많이 구축되어 왔으므로, 오픈 소스 커뮤니티의 중요한 작업을 활용하고 지루한 배관 작업을 대신해줄 기존 프레임워크를 사용할 것입니다. Sinatra 프레임워크가 바로 그런 일을 합니다. 이 도구의 표현으로는, Sinatra는 "Ruby에서 웹 애플리케이션을 빠르게 생성하기 위한 DSL"입니다. 완벽합니다.
 
-Our web app will need to respond to HTTP requests, so we'll need a file that defines a route and associated code block for each combination of HTTP method and URL. Let's call it `pedometer.rb`.
+웹 앱은 HTTP 요청에 응답해야 하므로, HTTP 메서드와 URL의 각 조합에 대한 라우트와 관련 코드 블록을 정의하는 파일이 필요할 것입니다. 이를 `pedometer.rb`라고 부르겠습니다.
 
 ```ruby
 get '/uploads' do
@@ -743,26 +743,26 @@ post '/create' do
 end
 ```
 
-`pedometer.rb` allows our app to respond to HTTP requests for each of our routes. Each route's code block either retrieves data from, or stores data to, the file system through `Upload`, and then renders a view or redirects. The instance variables instantiated will be used directly in our views. The views simply display the data and aren't the focus of our app, so we we'll leave the code for them out of this chapter.
+`pedometer.rb`는 각 라우트에 대한 HTTP 요청에 앱이 응답할 수 있게 해줍니다. 각 라우트의 코드 블록은 `Upload`를 통해 파일 시스템에서 데이터를 검색하거나 파일 시스템에 데이터를 저장한 다음, 뷰를 렌더링하거나 리디렉션합니다. 인스턴스화된 인스턴스 변수들은 뷰에서 직접 사용될 것입니다. 뷰들은 단순히 데이터를 표시하고 앱의 초점이 아니므로, 이 장에서는 그것들을 위한 코드를 생략하겠습니다.
 
-Let's look at each of the routes in `pedometer.rb` individually.
+`pedometer.rb`의 각 라우트를 개별적으로 살펴봅시다.
 
 #### `GET /uploads`
 
-Navigating to `http://localhost:4567/uploads` sends an HTTP GET request to our app, triggering our `get '/uploads'` code. The code runs the pipeline for all of the uploads in the file system and renders the `uploads` view, which displays a list of the uploads, and a form to submit new uploads. If an error parameter is included, an error string is created, and the `uploads` view will display the error.
+`http://localhost:4567/uploads`로 이동하면 앱에 HTTP GET 요청을 보내, `get '/uploads'` 코드를 트리거합니다. 코드는 파일 시스템의 모든 업로드에 대해 파이프라인을 실행하고 업로드 목록과 새 업로드를 제출할 양식을 표시하는 `uploads` 뷰를 렌더링합니다. 오류 매개변수가 포함되어 있다면, 오류 문자열이 생성되고 `uploads` 뷰가 오류를 표시할 것입니다.
 
 #### `GET /upload/*`
 
-Clicking the **Detail** link for each upload sends an HTTP GET to `/upload` with the file path for that upload. The pipeline runs, and the `upload` view is rendered. The view displays the details of the upload, including the charts, which are created using a JavaScript library called HighCharts.
+각 업로드의 **Detail** 링크를 클릭하면 해당 업로드의 파일 경로와 함께 `/upload`로 HTTP GET을 보냅니다. 파이프라인이 실행되고 `upload` 뷰가 렌더링됩니다. 뷰는 HighCharts라는 JavaScript 라이브러리를 사용하여 생성된 차트를 포함하여 업로드의 세부 정보를 표시합니다.
 
 #### `POST /create`
 
-Our final route, an HTTP POST to `create`, is called when a user submits the form in the `uploads` view. The code block creates a new `Upload`, using the `params` hash to grab the values input by the user through the form, and redirects back to `/uploads`. If an error occurs in the creation process, the redirect to `/uploads` includes an error parameter to let the user know that something went wrong.
+마지막 라우트인 `create`로의 HTTP POST는 사용자가 `uploads` 뷰에서 양식을 제출할 때 호출됩니다. 코드 블록은 `params` 해시를 사용하여 사용자가 양식을 통해 입력한 값들을 가져와 새 `Upload`를 생성하고, `/uploads`로 다시 리디렉션합니다. 생성 과정에서 오류가 발생하면, `/uploads`로의 리디렉션에는 사용자에게 문제가 발생했음을 알리는 오류 매개변수가 포함됩니다.
 
-## A Fully Functional App
+## 완전히 기능하는 앱
 
-Voilà! We've built a fully functional app, with true applicability.
+좋습니다! 우리는 진정한 적용 가능성을 가진 완전히 기능하는 앱을 구축했습니다.
 
-The real world presents us with intricate, complex challenges. Software is uniquely capable of addressing these challenges at scale with minimal resources. As software engineers, we have the power to create positive change in our homes, our communities, and our world. Our training, academic or otherwise, likely equipped us with the problem-solving skills to write code that solves isolated, well-defined problems. As we grow and hone our craft, it's up to us to extend that training to address practical problems, tangled up with all of the messy realities of our world. I hope that this chapter gave you a taste of breaking down a real problem into small, addressable parts, and writing beautiful, clean, extensible code to build a solution.
+현실 세계는 복잡하고 정교한 도전 과제들을 제시합니다. 소프트웨어는 최소한의 자원으로 이러한 도전 과제들을 대규모로 해결할 수 있는 독특한 능력을 가지고 있습니다. 소프트웨어 엔지니어로서, 우리는 집, 커뮤니티, 세상에서 긍정적인 변화를 만들 수 있는 힘을 가지고 있습니다. 학문적이든 아니든 우리의 훈련은 고립된, 잘 정의된 문제들을 해결하는 코드를 작성할 수 있는 문제 해결 능력을 갖추게 해주었을 것입니다. 우리가 성장하고 기술을 연마해나가면서, 우리 세상의 지저분한 현실들과 얽혀있는 실용적인 문제들을 해결하도록 그 훈련을 확장하는 것은 우리에게 달려 있습니다. 이 장이 실제 문제를 작고 다룰 수 있는 부분들로 나누고, 솔루션을 구축하기 위한 아름답고, 깨끗하고, 확장 가능한 코드를 작성하는 맛을 제공했기를 바랍니다.
 
-Here's to solving interesting problems in an endlessly exciting world.
+끝없이 흥미진진한 세상에서 흥미로운 문제들을 해결하는 것을 위해 건배합니다.
