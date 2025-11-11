@@ -1,57 +1,57 @@
-title:  Dagoba: an in-memory graph database
+title:  Dagoba: 인메모리 그래프 데이터베이스
 author: Dann Toliver
 <markdown>
-_[Dann](https://twitter.com/dann) enjoys building things, like programming languages, databases, distributed systems, communities of smart friendly humans, and pony castles with his two year old._
+_[Dann](https://twitter.com/dann)은 프로그래밍 언어, 데이터베이스, 분산 시스템, 똑똑하고 친근한 인간들의 커뮤니티, 그리고 두 살짜리 딸과 함께 만드는 조랑말 성 같은 것들을 만드는 것을 즐긴다._
 </markdown>
-## Prologue
+## 프롤로그
 
-> "When we try to pick out anything by itself we find that it is bound fast by a thousand invisible cords that cannot be broken, to everything in the universe."
-> &mdash;John Muir
+> "우리가 무엇이든 홀로 떼어내려고 시도하면, 그것이 끊을 수 없는 수천 개의 보이지 않는 끈으로 우주의 모든 것과 단단히 결속되어 있음을 발견하게 된다."
+> &mdash;존 뮤어(John Muir)
 
-> "What went forth to the ends of the world to traverse not itself, God, the sun, Shakespeare, a commercial traveller, having itself traversed in reality itself becomes that self."
-> &mdash;James Joyce
+> "세상 끝까지 나아가 자신이 아닌 것, 신, 태양, 셰익스피어, 상업 여행자를 횡단한 것이, 실제로 자신을 횡단한 후에는 그 자신이 된다."
+> &mdash;제임스 조이스(James Joyce)
 
-\noindent A long time ago, when the world was still young, all data walked happily in single file. If you wanted your data to jump over a fence, you just set the fence down in its path and each datum jumped it in turn. Punch cards in, punch cards out. Life was easy and programming was a breeze.
+\noindent 오래전, 세상이 아직 젊었을 때, 모든 데이터는 한 줄로 줄지어 행복하게 걸어다녔다. 데이터가 울타리를 넘게 하고 싶다면, 그저 그 경로에 울타리를 놓기만 하면 각 데이터가 차례대로 넘어갔다. 펀치카드가 들어가고, 펀치카드가 나왔다. 삶은 쉬웠고 프로그래밍은 미풍이었다.
 
-Then came the random access revolution, and data grazed freely across the hillside. Herding data became a serious concern: if you can access any piece of data at any time, how do you know which one to pick next? Techniques were developed for corralling the data by forming links between items[^items], marshaling groups of units into formation through their linking assemblage. Questioning data meant picking a sheep and pulling along everything connected to it.
+그 다음 임의 접근 혁명이 왔고, 데이터는 언덕 곳곳에서 자유롭게 풀을 뜯었다. 데이터를 몰아가는 것이 심각한 관심사가 되었다: 언제든지 어떤 데이터에든 접근할 수 있다면, 다음에 어느 것을 선택해야 할지 어떻게 알 수 있을까? 항목들 사이의 링크를 형성하여 데이터를 둘러싸는 기법들이 개발되었고[^items], 연결 어셈블리를 통해 단위들의 그룹을 대형으로 정렬했다. 데이터를 질의한다는 것은 양 한 마리를 선택하고 그것과 연결된 모든 것을 함께 끌고 오는 의미였다.
 
-Later programmers departed from this tradition, imposing a set of rules on how data would be aggregated[^relationaltheory]. Rather than tying disparate data directly together they would cluster by content, decomposing data into bite-sized pieces, collected in pens and collared with name tags. Questions were posed declaratively, resulting in accumulating pieces of partially decomposed data (a state the relationalists refer to as "normal") into a frankencollection returned to the programmer.
+나중에 프로그래머들은 이 전통에서 벗어나, 데이터가 어떻게 집계될 것인지에 대한 일련의 규칙을 강요했다[^relationaltheory]. 서로 다른 데이터를 직접적으로 묶는 대신, 내용별로 클러스터를 만들어 데이터를 한 입 크기의 조각들로 분해하고, 우리에 모아서 이름표를 달았다. 질의는 선언적으로 제기되어, 부분적으로 분해된 데이터 조각들(관계형주의자들이 "정규"라고 부르는 상태)을 축적하여 프로그래머에게 반환되는 프랑켄컬렉션을 만들었다.
 
-For much of recorded history this relational model reigned supreme. Its dominance went unchallenged through two major language wars and countless skirmishes. It offered everything you could ask for in a model, for the small price of inefficiency, clumsiness and lack of scalability. For eons that was a price programmers were willing to pay. Then the internet happened.
+기록된 역사의 대부분 동안 이 관계형 모델이 최고로 군림했다. 그 지배력은 두 차례의 주요 언어 전쟁과 무수한 소규모 전투를 거치면서도 도전받지 않았다. 비효율성, 서투름, 확장성 부족이라는 작은 대가만 치르면 모델에서 요구할 수 있는 모든 것을 제공했다. 오랜 시간 동안 그것은 프로그래머들이 기꺼이 치를 의향이 있는 대가였다. 그러다 인터넷이 등장했다.
 
-The distributed revolution changed everything, again. Data broke free of spacial constraints and roamed from machine to machine. CAP-wielding theorists busted the relational monopoly, opening the door to new herding techniques&mdash;some of which hark back to the earliest attempts to domesticate random-access data. We're going to look at one of these, a style known as the graph database.
+분산 혁명이 모든 것을 다시 바꿨다. 데이터는 공간적 제약에서 벗어나 머신에서 머신으로 돌아다녔다. CAP를 휘두르는 이론가들이 관계형 독점을 깨뜨려, 새로운 목축 기법들의 문을 열었다&mdash;그 중 일부는 임의 접근 데이터를 길들이려는 초기 시도들로 거슬러 올라간다. 우리는 이 중 하나인 그래프 데이터베이스라고 알려진 스타일을 살펴볼 것이다.
 
-[^items]: One of the very first database designs was the hierarchical model, which grouped items into tree-shaped hierarchies and is still used as the basis of IBM's IMS product, a high-speed transaction processing system. It's influence can also been seen in XML, file systems and geographic information storage. The network model, invented by Charles Bachmann and standardized by CODASYL, generalized the hierarchical model by allowing multiple parents, forming a DAG instead of a tree. These navigational database models came in to vogue in the 1960s and continued their dominance until performance gains made relational databases usable in the 1980s.
+[^items]: 가장 초기의 데이터베이스 설계 중 하나는 계층형 모델이었는데, 이는 항목들을 트리 형태의 계층으로 그룹화했으며 여전히 고속 트랜잭션 처리 시스템인 IBM의 IMS 제품의 기반으로 사용되고 있다. 그 영향은 XML, 파일 시스템, 지리 정보 저장에서도 볼 수 있다. 찰스 배흐만(Charles Bachmann)이 발명하고 CODASYL이 표준화한 네트워크 모델은 다중 부모를 허용하여 트리 대신 DAG를 형성함으로써 계층형 모델을 일반화했다. 이러한 항해형 데이터베이스 모델들은 1960년대에 유행했고 1980년대 성능 향상으로 관계형 데이터베이스가 사용 가능해질 때까지 지배적이었다.
 
-[^relationaltheory]: Edgar F. Codd developed relational database theory while working at IBM, but Big Blue feared that a relational database would cannibalize the sales of IMS. While IBM eventually built a research prototype called System R, it was based around a new non-relational language called SEQUEL, instead of Codd's original Alpha language. The SEQUEL language was copied by Larry Ellison in his Oracle Database based on pre-launch conference papers, and the name changed to SQL to avoid trademark disputes.
+[^relationaltheory]: 에드거 F. 코드(Edgar F. Codd)는 IBM에서 일하면서 관계형 데이터베이스 이론을 개발했지만, 빅 블루(IBM)는 관계형 데이터베이스가 IMS의 판매를 잠식할 것을 우려했다. IBM은 결국 System R이라는 연구 프로토타입을 구축했지만, 이는 코드의 원래 알파 언어 대신 SEQUEL이라는 새로운 비관계형 언어를 기반으로 했다. SEQUEL 언어는 래리 엘리슨(Larry Ellison)이 출시 전 컨퍼런스 논문을 기반으로 Oracle Database에서 복사했고, 상표 분쟁을 피하기 위해 이름을 SQL로 바꿨다.
 
 
-## Take One
+## 첫 번째 시도
 
-Within this chapter we're going to build a graph database[^dagoba]. As we build it we're going to explore the problem space, generate multiple solutions for our design decisions, compare those solutions to understand the tradeoffs between them, and finally choose the right solution for our system. A higher-than-usual precedence is put on code compactness, but the process will otherwise mirror that used by software professionals since time immemorial. The purpose of this chapter is to teach this process. And to build a graph database[^purpose].
+이 챕터에서 우리는 그래프 데이터베이스를 구축할 것이다[^dagoba]. 구축하면서 문제 공간을 탐색하고, 설계 결정에 대한 여러 솔루션을 생성하며, 그 솔루션들을 비교하여 서로 간의 트레이드오프를 이해하고, 마지막으로 우리 시스템에 적합한 솔루션을 선택할 것이다. 코드 간결성에 평소보다 높은 우선순위가 주어지지만, 그 과정은 태고로부터 소프트웨어 전문가들이 사용해 온 것을 그대로 따를 것이다. 이 챕터의 목적은 이 과정을 가르치는 것이다. 그리고 그래프 데이터베이스를 구축하는 것이다[^purpose].
 
-[^dagoba]: This database started life as a library for managing Directed Acyclic Graphs, or DAGs. Its name "Dagoba" was originally intended to come with a silent 'h' at the end, an homage to the swampy fictional planet, but reading the back of a chocolate bar one day we discovered the sans-h version refers to a place for silently contemplating the connections between things, which seems even more fitting.
+[^dagoba]: 이 데이터베이스는 방향성 비순환 그래프(Directed Acyclic Graphs, DAGs)를 관리하는 라이브러리로 시작되었다. "Dagoba"라는 이름은 원래 늪지대의 가상 행성에 대한 오마주로 끝에 무음 'h'가 붙을 예정이었지만, 어느 날 초콜릿 바 뒷면을 읽다가 h가 없는 버전이 사물 간의 연결을 조용히 사색하는 장소를 의미한다는 것을 발견했는데, 이것이 더욱 적합해 보였다.
 
-[^purpose]: The two purposes of this chapter are to teach this process, to build a graph database, and to have fun.
+[^purpose]: 이 챕터의 두 가지 목적은 이 과정을 가르치는 것, 그래프 데이터베이스를 구축하는 것, 그리고 재미있게 하는 것이다.
 
-Using a graph database will allow us to solve some interesting problems in an elegant fashion. Graphs are a very natural data structure for exploring connections between things. A graph in this sense is a set of vertices and a set of edges; in other words, it's a bunch of dots connected by lines. And a database? A "data base" is like a fort for data. You put data in it and get data back out of it.
+그래프 데이터베이스를 사용하면 흥미로운 문제들을 우아한 방식으로 해결할 수 있다. 그래프는 사물 간의 연결을 탐색하기에 매우 자연스러운 데이터 구조다. 이런 의미에서 그래프는 정점의 집합과 간선의 집합이다; 다시 말해, 선으로 연결된 점들의 무리다. 그리고 데이터베이스는? "데이터 베이스"는 데이터를 위한 요새 같은 것이다. 데이터를 넣고 데이터를 다시 꺼낸다.
 
-So what kinds of problems can we solve with a graph database? Well, suppose that you enjoy tracking ancestral trees: parents, grandparents, cousins twice removed, that kind of thing. You'd like to develop a system that allows you to make natural and elegant queries like "Who are Thor's second cousins once removed?" or "What is Freyja's connection to the Valkyries?"
+그러면 그래프 데이터베이스로 어떤 종류의 문제를 해결할 수 있을까? 조상 나무를 추적하는 것을 좋아한다고 가정해보자: 부모, 조부모, 8촌 조카, 그런 류의 것들 말이다. "토르의 재종사촌은 누구인가?" 또는 "프레이야와 발키리들의 연결고리는 무엇인가?"와 같은 자연스럽고 우아한 질의를 할 수 있는 시스템을 개발하고 싶을 것이다.
 
-A reasonable schema for this data structure would be to have a table of entities and a table of relationships. A query for Thor's parents might look like
+이 데이터 구조에 대한 합리적인 스키마는 개체 테이블과 관계 테이블을 갖는 것이다. 토르의 부모에 대한 질의는 다음과 같을 것이다:
 
 ```sql
 SELECT e.* FROM entities as e, relationships as r
 WHERE r.out = "Thor" AND r.type = "parent" AND r.in = e.id
 ```
 
-But how do we extend that to grandparents? We need to do a subquery, or use some other type of vendor-specific extension to SQL. And by the time we get to second cousins once removed we're going to have *a lot* of SQL.
+하지만 조부모로 확장하려면 어떻게 해야 할까? 서브쿼리를 하거나, SQL에 대한 다른 유형의 벤더 특화 확장을 사용해야 한다. 그리고 재종사촌에 이를 때쯤이면 *엄청나게 많은* SQL이 필요할 것이다.
 
-What would we like to write? Something both concise and flexible; something that models our query in a natural way and extends to other queries like it. `second_cousins('Thor')` is concise, but it doesn't give us any flexibility. The SQL above is flexible, but lacks concision.
+우리가 쓰고 싶은 것은 무엇일까? 간결하면서도 유연한 것; 우리 질의를 자연스럽게 모델링하고 그와 유사한 다른 질의들로 확장되는 것. `second_cousins('Thor')`은 간결하지만 유연성을 제공하지 않는다. 위의 SQL은 유연하지만 간결성이 부족하다.
 
-Something like `Thor.parents.parents.parents.children.children.children` strikes a reasonably good balance. The primitives give us flexibility to ask many similar questions, but the query is concise and natural. This particular phrasing gives us too many results, as it includes first cousins and siblings, but we're going for gestalt here.
+`Thor.parents.parents.parents.children.children.children`과 같은 것은 꽤 좋은 균형을 이룬다. 기본 요소들이 많은 유사한 질문을 할 수 있는 유연성을 제공하지만, 질의는 간결하고 자연스럽다. 이 특별한 표현은 1촌사촌과 형제자매를 포함하므로 너무 많은 결과를 제공하지만, 우리는 여기서 게슈탈트를 추구하고 있다.
 
-What's the simplest thing we can build that gives us this kind of interface? We could make a list of vertices and a list of edges, just like the relational schema, and then build some helper functions. It might look something like this:
+이런 종류의 인터페이스를 제공하는 가장 간단한 것을 무엇을 만들 수 있을까? 관계형 스키마처럼 정점 목록과 간선 목록을 만들고, 몇 가지 도우미 함수를 구축할 수 있다. 다음과 같은 모습일 것이다:
 
 ```javascript
 V = [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ]
@@ -69,11 +69,11 @@ parents = function(vertices) {
 }
 ```
 
-The essence of the above function is to iterate over a list, evaluating some code for each item and building up an accumulator of results. That's not quite as clear as it could be, though, because the looping construct introduces some unnecessary complexity.
+위 함수의 본질은 목록을 반복하며, 각 항목에 대해 일부 코드를 평가하고 결과의 누적기를 구축하는 것이다. 하지만 루핑 구조가 불필요한 복잡성을 도입하기 때문에 가능한 한 명확하지는 않다.
 
-It'd be nice if there was a more specific looping construct designed for this purpose. As it happens, the `reduce` function does exactly that: given a list and a function, it evaluates the function for each element of the list, while threading the accumulator through each evaluation pass.
+이 목적을 위해 설계된 더 구체적인 루핑 구조가 있으면 좋을 것이다. 우연히 `reduce` 함수가 정확히 그런 일을 한다: 목록과 함수가 주어지면, 목록의 각 요소에 대해 함수를 평가하면서 각 평가 단계를 통해 누적기를 연결한다.
 
-Written in this more functional style our queries are shorter and clearer:
+이런 더 함수형 스타일로 작성하면 질의가 더 짧고 명확해진다:
 
 ```javascript
 parents  = (vertices) => E.reduce( (acc, [parent, child])
@@ -82,9 +82,9 @@ children = (vertices) => E.reduce( (acc, [parent, child])
          => vertices.includes(parent) ? acc.concat(child)  : acc , [] )
 ```
 
-Given a list of vertices we reduce over the edges, adding an edge's parent to the accumulator if the edge's child is in our input list. The `children` function is identical, but examines the edge's parent to determine whether to add the edge's child.
+정점 목록이 주어지면 간선들을 reduce하여, 간선의 자식이 입력 목록에 있으면 간선의 부모를 누적기에 추가한다. `children` 함수는 동일하지만, 간선의 자식을 추가할지 여부를 결정하기 위해 간선의 부모를 검사한다.
 
-Those functions are valid JavaScript, but use a few features which browsers haven't implemented as of this writing. This translated version will work today:
+이 함수들은 유효한 JavaScript이지만, 이 글을 쓰는 시점에서 브라우저가 아직 구현하지 않은 몇 가지 기능을 사용한다. 오늘날 작동할 번역된 버전은 다음과 같다:
 
 ```javascript
 parents  = function(x) { return E.reduce(
@@ -93,38 +93,38 @@ children = function(x) { return E.reduce(
   function(acc, e) { return ~x.indexOf(e[0]) ? acc.concat(e[1]) : acc }, [] )}
 ```
 
-Now we can say something like:
+이제 다음과 같이 말할 수 있다:
 
 ```javascript
     children(children(children(parents(parents(parents([8]))))))
 ```
 
-It reads backwards and gets us lost in silly parens, but is otherwise pretty close to what we wanted. Take a minute to look at the code. Can you see any ways to improve it?
+거꾸로 읽히고 바보 같은 괄호에 길을 잃게 되지만, 그 외에는 우리가 원했던 것과 꽤 비슷하다. 잠시 시간을 내어 코드를 살펴보자. 개선할 방법을 찾을 수 있는가?
 
-We're treating the edges as a global variable, which means we can only ever have one database at a time using these helper functions. That's pretty limiting.
+우리는 간선을 전역 변수로 다루고 있는데, 이는 이러한 도우미 함수를 사용하여 한 번에 하나의 데이터베이스만 가질 수 있다는 뜻이다. 꽤 제한적이다.
 
-We're also not using the vertices at all. What does that tell us? It implies that everything we need is in the edges array, which in this case is true: the vertex values are scalars, so they exist independently in the edges array. If we want to answer questions like "What is Freyja's connection to the Valkyries?" we'll need to add more data to the vertices, which means making them compound values, which means the edges array should reference vertices instead of copying their value.
+또한 정점을 전혀 사용하지 않고 있다. 이것이 우리에게 무엇을 말해주는가? 필요한 모든 것이 간선 배열에 있다는 것을 의미하며, 이 경우엔 그것이 맞다: 정점 값들이 스칼라이므로, 간선 배열에서 독립적으로 존재한다. "프레이야와 발키리들의 연결고리는 무엇인가?"와 같은 질문에 답하려면 정점에 더 많은 데이터를 추가해야 하는데, 이는 정점을 복합 값으로 만드는 것을 의미하고, 간선 배열이 정점의 값을 복사하는 대신 정점을 참조해야 한다는 뜻이다.
 
-The same holds true for our edges: they contain an "in" vertex and an "out" vertex[^vertexnote], but no elegant way to incorporate additional information. We'll need that to answer questions like "How many stepparents did Loki have?" or "How many children did Odin have before Thor was born?"
+우리 간선에 대해서도 같은 것이 적용된다: 간선은 "입력" 정점과 "출력" 정점을 포함하지만[^vertexnote], 추가 정보를 우아하게 통합할 방법이 없다. "로키의 계부모는 몇 명이었는가?" 또는 "오딘이 토르가 태어나기 전에 몇 명의 자식을 가졌는가?"와 같은 질문에 답하려면 그것이 필요할 것이다.
 
-You don't have to squint very hard to tell that the code for our two selectors looks very similar, which suggests there may be a deeper abstraction from which they spring.
+두 선택기의 코드가 매우 유사해 보인다는 것을 알기 위해 눈을 찡그릴 필요도 없는데, 이는 그들이 나오는 더 깊은 추상화가 있을 수 있음을 시사한다.
 
-Do you see any other issues?
+다른 문제점이 보이는가?
 
-[^vertexnote]: Notice that we're modeling edges as a pair of vertices. Also notice that those pairs are ordered, because we're using arrays. That means we're modeling a *directed graph*, where every edge has a starting vertex and an ending vertex. Our "dots and lines" visual model becomes a "dots and arrows" model.
-  This adds complexity to our model, because we have to keep track of the direction of edges, but it also allows us to ask more interesting questions, like "which vertices point to vertex 3?" or "which vertex has the most outgoing edges?" If we need to model an undirected graph we could add a reversed edge for each existing edge in our directed graph. It can be cumbersome to go the other direction: simulating a directed graph from an undirected one. Can you think of a way to do it?
+[^vertexnote]: 우리가 간선을 정점 쌍으로 모델링하고 있음을 주목하라. 또한 배열을 사용하고 있기 때문에 그 쌍들이 순서가 있다는 점도 주목하라. 즉, 모든 간선이 시작 정점과 끝 정점을 가지는 *방향성 그래프*를 모델링하고 있다는 뜻이다. 우리의 "점과 선" 시각적 모델이 "점과 화살표" 모델이 된다.
+  이는 간선의 방향을 추적해야 하기 때문에 모델에 복잡성을 추가하지만, "정점 3을 가리키는 정점은 어느 것인가?" 또는 "가장 많은 나가는 간선을 가진 정점은 어느 것인가?"와 같은 더 흥미로운 질문을 할 수 있게 해준다. 무방향 그래프를 모델링해야 한다면 방향성 그래프의 각 기존 간선에 대해 역방향 간선을 추가할 수 있다. 반대 방향으로 가는 것은 번거로울 수 있다: 무방향 그래프에서 방향성 그래프를 시뮬레이트하는 것 말이다. 그렇게 할 방법을 생각해볼 수 있는가?
 
-## Build a Better Graph
+## 더 나은 그래프 구축
 
-Let's solve a few of the problems we've discovered. Having our vertices and edges be global constructs limits us to one graph at a time, but we'd like to have more. To solve this we'll need some structure. Let's start with a namespace.
+우리가 발견한 몇 가지 문제를 해결해보자. 정점과 간선이 전역 구조라는 것은 한 번에 하나의 그래프로만 제한하지만, 더 많이 갖고 싶다. 이를 해결하려면 어떤 구조가 필요하다. 네임스페이스부터 시작해보자.
 
 ```javascript
 Dagoba = {}                                     // the namespace
 ```
 
-We'll use an object as our namespace. An object in JavaScript is mostly just an unordered set of key/value pairs. We only have four basic data structures to choose from in JavaScript, so we'll be using this one a lot. (A fun question to ask people at parties is "What are the four basic data structures in JavaScript?")
+객체를 네임스페이스로 사용할 것이다. JavaScript의 객체는 대부분 순서가 없는 키/값 쌍의 집합일 뿐이다. JavaScript에서는 선택할 수 있는 기본 데이터 구조가 네 개뿐이므로, 이것을 많이 사용할 것이다. (파티에서 사람들에게 물어볼 재미있는 질문은 "JavaScript의 네 가지 기본 데이터 구조는 무엇인가?"이다)
 
-Now we need some graphs. We can build these using a classic OOP pattern, but JavaScript offers us prototypal inheritance, which means we can build up a prototype object&mdash;we'll call it `Dagoba.G`&mdash;and then instantiate copies of that using a factory function. An advantage of this approach is that we can return different types of objects from the factory, instead of binding the creation process to a single class constructor. So we get some extra flexibility for free.
+이제 그래프가 몇 개 필요하다. 클래식 OOP 패턴을 사용하여 이를 구축할 수 있지만, JavaScript는 프로토타입 상속을 제공하므로 프로토타입 객체&mdash;우리는 `Dagoba.G`라고 부를 것이다&mdash;를 구축하고 팩토리 함수를 사용하여 그것의 복사본을 인스턴스화할 수 있다. 이 접근법의 장점은 생성 과정을 단일 클래스 생성자에 바인딩하는 대신 팩토리에서 다양한 유형의 객체를 반환할 수 있다는 것이다. 따라서 무료로 약간의 추가 유연성을 얻는다.
 
 ```javascript
 Dagoba.G = {}                                   // the prototype
@@ -145,22 +145,22 @@ Dagoba.graph = function(V, E) {                 // the factory
 }
 ```
 
-We'll accept two optional arguments: a list of vertices and a list of edges. JavaScript is rather lax about parameters, so all named parameters are optional and default to `undefined` if not supplied[^optionalparams]. We will often have the vertices and edges before building the graph and use the V and E parameters, but it's also common to not have those at creation time and to build the graph up programmatically[^graphbuilding].
+두 개의 선택적 인수를 받을 것이다: 정점 목록과 간선 목록. JavaScript는 매개변수에 대해 상당히 느슨하므로, 모든 명명된 매개변수는 선택사항이며 제공되지 않으면 기본적으로 `undefined`가 된다[^optionalparams]. 그래프를 구축하기 전에 정점과 간선을 가지고 있어서 V와 E 매개변수를 사용하는 경우가 많지만, 생성 시에는 그것들을 갖지 않고 프로그래밍 방식으로 그래프를 구축하는 것도 일반적이다[^graphbuilding].
 
-[^optionalparams]: It's also lax in the other direction: all functions are variadic, and all arguments are available by position via the `arguments` object, which is almost like an array but not quite. ("Variadic" is a fancy way of saying a function has indefinite arity. "A function has indefinite arity" is a fancy way of saying it takes a variable number of variables.)
+[^optionalparams]: 또한 다른 방향으로도 느슨하다: 모든 함수는 가변 인자이며, 모든 인수는 배열과 거의 비슷하지만 완전히 같지는 않은 `arguments` 객체를 통해 위치로 접근할 수 있다. ("가변 인자"는 함수가 불확정한 아리티를 가진다고 말하는 멋진 방식이다. "함수가 불확정한 아리티를 가진다"는 것은 가변 개수의 변수를 받는다고 말하는 멋진 방식이다.)
 
-[^graphbuilding]: The `Array.isArray` checks here are to distinguish our two different use cases, but in general we won't be doing many of the validations one would expect of production code, in order to focus on the architecture instead of the trash bins.
+[^graphbuilding]: 여기서 `Array.isArray` 검사는 우리의 두 가지 다른 사용 사례를 구별하기 위한 것이지만, 일반적으로 우리는 쓰레기통 대신 아키텍처에 집중하기 위해 프로덕션 코드에서 기대할 만한 많은 검증을 하지 않을 것이다.
 
-Then we create a new object that has all of our prototype's strengths and none of its weaknesses. We build a brand new array (one of the other basic JS data structures) for our edges, another for the vertices, a new object called `vertexIndex` and an ID counter&mdash;more on those latter two later. (Think: Why can't we just put these in the prototype?)
+그런 다음 프로토타입의 모든 장점과 단점이 없는 새 객체를 생성한다. 간선을 위한 완전히 새로운 배열(다른 기본 JS 데이터 구조 중 하나), 정점을 위한 또 다른 배열, `vertexIndex`라는 새 객체, 그리고 ID 카운터를 구축한다&mdash;후자 둘에 대해서는 나중에 더 설명한다. (생각해보자: 왜 이것들을 프로토타입에 그냥 넣을 수 없을까?)
 
-Then we call `addVertices` and `addEdges` from inside our factory, so let's define those now.
+그런 다음 팩토리 내부에서 `addVertices`와 `addEdges`를 호출하므로, 이제 그것들을 정의해보자.
 
 ```javascript
 Dagoba.G.addVertices = function(vs) { vs.forEach(this.addVertex.bind(this)) }
 Dagoba.G.addEdges    = function(es) { es.forEach(this.addEdge  .bind(this)) }
 ```
 
-Okay, that was too easy&mdash;we're just passing off the work to `addVertex` and `addEdge`. We should define those now too.
+좋아, 그건 너무 쉬웠다&mdash;우리는 그냥 `addVertex`와 `addEdge`에게 일을 넘기고 있다. 이제 그것들도 정의해야 한다.
 
 ```javascript
 Dagoba.G.addVertex = function(vertex) {         // accepts a vertex-like object
@@ -176,25 +176,25 @@ Dagoba.G.addVertex = function(vertex) {         // accepts a vertex-like object
 }
 ```
 
-If the vertex doesn't already have an `_id` property we assign it one using our autoid.[^autoid] If the `_id` already exists on a vertex in our graph then we reject the new vertex. Wait, when would that happen? And what exactly is a vertex?
+정점이 아직 `_id` 속성을 갖지 않으면 autoid를 사용하여 하나를 할당한다.[^autoid] `_id`가 이미 그래프의 정점에 존재한다면 새 정점을 거부한다. 잠깐, 그런 일이 언제 일어날까? 그리고 정점이 정확히 무엇인가?
 
-[^autoid]: Why can't we just use `this.vertices.length` here?
+[^autoid]: 왜 여기서 `this.vertices.length`를 그냥 사용할 수 없을까?
 
-In a traditional object-oriented system we would expect to find a vertex class, which all vertices would be an instance of. We're going to take a different approach and consider as a vertex any object containing the three properties `_id`, `_in` and `_out`. Why is that? Ultimately, it comes down to giving Dagoba control over which data is shared with the host application.
+전통적인 객체지향 시스템에서는 모든 정점이 인스턴스가 될 정점 클래스를 찾을 것으로 예상한다. 우리는 다른 접근법을 취하여 `_id`, `_in`, `_out` 세 속성을 포함하는 모든 객체를 정점으로 간주할 것이다. 왜 그럴까? 궁극적으로는 Dagoba가 호스트 애플리케이션과 어떤 데이터를 공유할지 제어할 수 있게 하는 것으로 귀결된다.
 
-If we create some `Dagoba.Vertex` instance inside the `addVertex` function, our internal data will never be shared with the host application. If we accept a `Dagoba.Vertex` instance as the argument to our `addVertex` function, the host application could retain a pointer to that vertex object and manipulate it at runtime, breaking our invariants.
+`addVertex` 함수 내부에서 `Dagoba.Vertex` 인스턴스를 생성한다면, 우리의 내부 데이터는 호스트 애플리케이션과 절대 공유되지 않을 것이다. `addVertex` 함수의 인수로 `Dagoba.Vertex` 인스턴스를 받는다면, 호스트 애플리케이션이 그 정점 객체에 대한 포인터를 유지하고 런타임에 조작하여 우리의 불변 조건을 깨뜨릴 수 있다.
 
-So if we create a vertex instance object, we're forced to decide up front whether we will always copy the provided data into a new object&mdash;potentially doubling our space usage&mdash;or allow the host application unfettered access to the database objects. There's a tension here between performance and protection, and the right balance depends on your specific use case.
+따라서 정점 인스턴스 객체를 생성한다면, 제공된 데이터를 항상 새 객체로 복사할 것인지&mdash;공간 사용량을 잠재적으로 두 배로 늘릴 수 있는&mdash;아니면 호스트 애플리케이션이 데이터베이스 객체에 자유롭게 접근할 수 있도록 허용할 것인지를 미리 결정해야 한다. 여기에는 성능과 보호 사이의 긴장이 있으며, 올바른 균형은 구체적인 사용 사례에 따라 달라진다.
 
-Duck typing on the vertex's properties allows us to make that decision at run time, by either deep copying[^deepcopying] the incoming data or using it directly as a vertex[^vertexdecision]. We don't always want to put the responsibility for balancing safety and performance in the hands of the user, but because these two sets of use cases diverge so widely the extra flexibility is important.
+정점 속성에 대한 덕 타이핑을 사용하면 들어오는 데이터를 깊이 복사하거나[^deepcopying] 정점으로 직접 사용하여[^vertexdecision] 런타임에 그 결정을 내릴 수 있다. 안전성과 성능의 균형을 잡는 책임을 항상 사용자의 손에 맡기고 싶지는 않지만, 이 두 가지 사용 사례가 너무 크게 갈라지기 때문에 추가적인 유연성이 중요하다.
 
-Now that we've got our new vertex we'll add it to our graph's list of vertices, add it to the `vertexIndex` for efficient lookup by `_id`, and add two additional properties to it: `_out` and `_in`, which will both become lists of edges[^edgelistadt].
+이제 새 정점을 얻었으니 그래프의 정점 목록에 추가하고, `_id`로 효율적인 조회를 위해 `vertexIndex`에 추가하고, 두 가지 추가 속성인 `_out`과 `_in`을 추가할 것이다. 둘 다 간선 목록이 될 것이다[^edgelistadt].
 
-[^deepcopying]: Often when faced with space leaks due to deep copying the solution is to use a path-copying persistent data structure, which allows mutation-free changes for only $\log{}N$ extra space. But the problem remains: if the host application retains a pointer to the vertex data then it can mutate that data any time, regardless of what strictures we impose in our database. The only practical solution is deep copying vertices, which doubles our space usage. Dagoba's original use case involves vertices that are treated as immutable by the host application, which allows us to avoid this issue, but requires a certain amount of discipline on the part of the user.
+[^deepcopying]: 깊은 복사로 인한 공간 누수에 직면했을 때 해결책은 종종 경로 복사 영속 데이터 구조를 사용하는 것인데, 이는 $\log{}N$ 추가 공간만으로 변경 없는 수정을 허용한다. 하지만 문제는 남아있다: 호스트 애플리케이션이 정점 데이터에 대한 포인터를 유지한다면 우리가 데이터베이스에 부과하는 제약과 관계없이 언제든지 그 데이터를 변경할 수 있다. 유일한 실용적 해결책은 정점을 깊이 복사하는 것인데, 이는 공간 사용량을 두 배로 늘린다. Dagoba의 원래 사용 사례는 호스트 애플리케이션에서 불변으로 처리되는 정점들을 포함하여 이 문제를 피할 수 있지만, 사용자 측에서 일정한 규율이 필요하다.
 
-[^vertexdecision]: We could make this decision based on a Dagoba-level configuration parameter, a graph-specific configuration, or possibly some type of heuristic.
+[^vertexdecision]: Dagoba 수준 구성 매개변수, 그래프 특정 구성, 또는 어떤 유형의 휴리스틱을 기반으로 이 결정을 내릴 수 있다.
 
-[^edgelistadt]: We use the term *list* to refer to the abstract data structure requiring push and iterate operations. We use JavaScript's "array" concrete data structure to fulfill the API required by the list abstraction. Technically both "list of edges" and "array of edges" are correct, so which we use at a given moment depends on context: if we are relying on the specific details of JavaScript arrays, like the `.length` property, we will say "array of edges". Otherwise we say "list of edges", as an indication that any list implementation would suffice.
+[^edgelistadt]: 우리는 푸시 및 반복 연산이 필요한 추상 데이터 구조를 가리키기 위해 *목록*이라는 용어를 사용한다. 목록 추상화가 요구하는 API를 충족하기 위해 JavaScript의 "배열" 구체적 데이터 구조를 사용한다. 기술적으로 "간선 목록"과 "간선 배열" 모두 올바르므로, 주어진 순간에 어떤 것을 사용하는지는 맥락에 따라 달라진다: `.length` 속성과 같은 JavaScript 배열의 특정 세부사항에 의존한다면 "간선 배열"이라고 말할 것이다. 그렇지 않으면 어떤 목록 구현이든 충분하다는 표시로 "간선 목록"이라고 말한다.
 
 ```javascript
 Dagoba.G.addEdge = function(edge) {             // accepts an edge-like object
@@ -212,7 +212,7 @@ Dagoba.G.addEdge = function(edge) {             // accepts an edge-like object
 }
 ```
 
-First we find both vertices which the edge connects, then reject the edge if it's missing either vertex. We'll use a helper function to log an error on rejection. All errors flow through this helper function, so we can override its behavior on a per-application basis. We could later extend this to allow `onError` handlers to be registered, so the host application could link in its own callbacks without overwriting the helper. We might allow such handlers to be registered per-graph, per-application, or both, depending on the level of flexibility required.
+먼저 간선이 연결하는 두 정점을 모두 찾은 다음, 어느 쪽 정점이 누락되었다면 간선을 거부한다. 거부 시 오류를 로깅하기 위해 도우미 함수를 사용할 것이다. 모든 오류가 이 도우미 함수를 통해 흐르므로 애플리케이션별로 동작을 재정의할 수 있다. 나중에 `onError` 핸들러를 등록할 수 있도록 확장하여, 호스트 애플리케이션이 도우미를 덮어쓰지 않고 자체 콜백을 연결할 수 있게 할 수 있다. 필요한 유연성 수준에 따라 그래프별, 애플리케이션별, 또는 둘 다에서 그런 핸들러를 등록할 수 있도록 허용할 수 있다.
 
 ```javascript
 Dagoba.error = function(msg) {
@@ -221,16 +221,16 @@ Dagoba.error = function(msg) {
 }
 ```
 
-Then we'll add our new edge to both vertices' edge lists: the edge's out vertex's list of out-side edges, and the in vertex's list of in-side edges.
+그런 다음 새 간선을 두 정점의 간선 목록에 추가할 것이다: 간선의 출력 정점의 출력 쪽 간선 목록과 입력 정점의 입력 쪽 간선 목록에.
 
-And that's all the graph structure we need for now!
+그리고 그것이 지금 필요한 그래프 구조의 전부다!
 
 
-## Enter the Query
+## 질의의 등장
 
-There are really only two parts to this system: the part that holds the graph and the part that answers questions about the graph. The part that holds the graph is pretty simple, as we've seen. The query part is a little trickier.
+이 시스템에는 실제로 두 부분만 있다: 그래프를 보유하는 부분과 그래프에 대한 질문에 답하는 부분. 그래프를 보유하는 부분은 우리가 본 바와 같이 꽤 간단하다. 질의 부분은 조금 더 까다롭다.
 
-We'll start just like before, with a prototype and a query factory.
+이전과 같이 프로토타입과 질의 팩토리로 시작할 것이다.
 
 ```javascript
 Dagoba.Q = {}
@@ -247,25 +247,25 @@ Dagoba.query = function(graph) {                // factory
 }
 ```
 
-Now's a good time to introduce some friends.
+이제 몇 가지 친구들을 소개할 좋은 때다.
 
-A *program* is a series of *steps*. Each step is like a pipe in a pipeline&mdash;a piece of data comes in one end, is transformed in some fashion, and goes out the other end. Our pipeline doesn't quite work like that, but it's a good first approximation.
+*프로그램*은 일련의 *단계*들이다. 각 단계는 파이프라인의 파이프와 같다&mdash;데이터 조각이 한 끝으로 들어와서 어떤 방식으로 변환되고 다른 끝으로 나간다. 우리의 파이프라인은 완전히 그렇게 작동하지는 않지만, 좋은 1차 근사다.
 
-Each step in our program can have *state*, and `query.state` is a list of per-step states that index correlates with the list of steps in `query.program`.
+프로그램의 각 단계는 *상태*를 가질 수 있으며, `query.state`는 `query.program`의 단계 목록과 색인이 상관관계가 있는 단계별 상태 목록이다.
 
-A *gremlin* is a creature that travels through the graph doing our bidding. A gremlin might be a surprising thing to find in a database, but they trace their heritage back to Tinkerpop's [Blueprints](http://euranova.eu/upl_docs/publications/an-empirical-comparison-of-graph-databases.pdf), and the [Gremlin and Pacer query languages](http://edbt.org/Proceedings/2013-Genova/papers/workshops/a29-holzschuher.pdf). They remember where they've been and allow us to find answers to interesting questions.
+*그렘린*은 우리의 명령을 수행하며 그래프를 여행하는 생물이다. 그렘린이 데이터베이스에서 발견되는 것은 놀라운 일일 수 있지만, 그들의 유산은 Tinkerpop의 [Blueprints](http://euranova.eu/upl_docs/publications/an-empirical-comparison-of-graph-databases.pdf)와 [Gremlin 및 Pacer 질의 언어](http://edbt.org/Proceedings/2013-Genova/papers/workshops/a29-holzschuher.pdf)로 거슬러 올라간다. 그들은 어디에 있었는지 기억하고 흥미로운 질문에 대한 답을 찾을 수 있게 해준다.
 
-Remember that question we wanted to answer about Thor's second cousins once removed? We decided `Thor.parents.parents.parents.children.children.children` was a pretty good way of expressing that. Each `parents` or `children` instance is a step in our program. Each of those steps contains a reference to its *pipetype*, which is the function that performs that step's operation.
+토르의 재종사촌에 대해 답하고 싶었던 질문을 기억하는가? 우리는 `Thor.parents.parents.parents.children.children.children`이 그것을 표현하는 꽤 좋은 방법이라고 결정했다. 각 `parents` 또는 `children` 인스턴스는 우리 프로그램의 단계다. 그 단계들 각각은 그 단계의 연산을 수행하는 함수인 *파이프타입*에 대한 참조를 포함한다.
 
-That query in our actual system might look like:
+우리의 실제 시스템에서 그 질의는 다음과 같을 것이다:
 
 ```javascript
     g.v('Thor').out().out().out().in().in().in()
 ```
 
-Each of the steps is a function call, and so they can take *arguments*. The interpreter passes the step's arguments to the step's pipetype function, so in the query `g.v('Thor').out(2, 3)` the `out` pipetype function would receive `[2, 3]` as its first parameter.
+각 단계는 함수 호출이므로 *인수*를 받을 수 있다. 인터프리터는 단계의 인수를 단계의 파이프타입 함수에 전달하므로, `g.v('Thor').out(2, 3)` 질의에서 `out` 파이프타입 함수는 첫 번째 매개변수로 `[2, 3]`을 받을 것이다.
 
-We'll need a way to add steps to our query. Here's a helper function for that:
+질의에 단계를 추가하는 방법이 필요하다. 이를 위한 도우미 함수가 여기 있다:
 
 ```javascript
 Dagoba.Q.add = function(pipetype, args) { // add a new step to the query
@@ -275,11 +275,11 @@ Dagoba.Q.add = function(pipetype, args) { // add a new step to the query
 }
 ```
 
-Each step is a composite entity, combining the pipetype function with the arguments to apply to that function. We could combine the two into a partially applied function at this stage, instead of using a tuple [^tupleadt], but then we'd lose some introspective power that will prove helpful later.
+각 단계는 파이프타입 함수와 그 함수에 적용할 인수를 결합한 복합 엔티티다. 튜플을 사용하는 대신 이 단계에서 둘을 부분적으로 적용된 함수로 결합할 수도 있지만[^tupleadt], 그러면 나중에 도움이 될 일부 내성적 힘을 잃을 것이다.
 
-[^tupleadt]: A tuple is another abstract data structure&mdash;one that is more constrained than a list. In particular a tuple has a fixed size: in this case we're using a 2-tuple (also known as a "pair" in the technical jargon of data structure researchers). Using the term for the most constrained abstract data structure required is a nicety for future implementors.
+[^tupleadt]: 튜플은 또 다른 추상 데이터 구조로&mdash;목록보다 더 제약이 있는 것이다. 특히 튜플은 고정된 크기를 가진다: 이 경우 우리는 2-튜플(데이터 구조 연구자들의 기술 용어로는 "쌍"이라고도 알려진)을 사용하고 있다. 필요한 가장 제약적인 추상 데이터 구조에 대한 용어를 사용하는 것은 미래의 구현자들을 위한 배려다.
 
-We'll use a small set of query initializers that generate a new query from a graph. Here's one that starts most of our examples: the `v` method. It builds a new query, then uses our `add` helper to populate the initial query program. This makes use of the `vertex` pipetype, which we'll look at soon.
+그래프에서 새 질의를 생성하는 작은 질의 초기화자 세트를 사용할 것이다. 여기 우리 예제 대부분을 시작하는 하나가 있다: `v` 메소드. 새 질의를 구축한 다음 우리의 `add` 도우미를 사용하여 초기 질의 프로그램을 채운다. 이것은 곧 살펴볼 `vertex` 파이프타입을 사용한다.
 
 ```javascript
 Dagoba.G.v = function() {                       // query initializer: g.v() -> query
@@ -289,55 +289,55 @@ Dagoba.G.v = function() {                       // query initializer: g.v() -> q
 }
 ```
 
-Note that `[].slice.call(arguments)` is JS parlance for "please pass me an array of this function's arguments". You would be forgiven for supposing that `arguments` is already an array, since it behaves like one in many situations, but it is lacking much of the functionality we utilize in modern JavaScript arrays.
+`[].slice.call(arguments)`는 "이 함수의 인수 배열을 주세요"라는 JS 용법이라는 점에 주목하라. `arguments`가 많은 상황에서 배열처럼 행동하므로 이미 배열이라고 가정하는 것은 용서받을 만하지만, 현대 JavaScript 배열에서 활용하는 기능 중 많은 부분이 부족하다.
 
-## The Problem with Being Eager
+## 성급함의 문제
 
-Before we look at the pipetypes themselves we're going to take a diversion into the exciting world of execution strategy. There are two main schools of thought: the Call By Value clan, also known as eager beavers, are strict in their insistence that all arguments be evaluated before the function is applied. Their opposing faction, the Call By Needians, are content to procrastinate until the last possible moment before doing anything&mdash;they are, in a word, lazy.
+파이프타입 자체를 살펴보기 전에 실행 전략의 흥미진진한 세계로 우회할 것이다. 주로 두 학파가 있다: 성급한 비버라고도 알려진 Call By Value 파벌은 함수가 적용되기 전에 모든 인수가 평가되어야 한다고 엄격하게 주장한다. 그들의 대립 파벌인 Call By Needian들은 무언가를 하기 전까지 가능한 한 마지막 순간까지 미루는 것에 만족한다&mdash;한 마디로, 그들은 게으르다.
 
-JavaScript, being a strict language, will process each of our steps as they are called. We would then expect the evaluation of `g.v('Thor').out().in()` to first find the Thor vertex, then find all vertices connected to it by outgoing edges, and from each of those vertices finally return all vertices they are connected to by inbound edges.
+엄격한 언어인 JavaScript는 호출되는 대로 각 단계를 처리할 것이다. 그러면 우리는 `g.v('Thor').out().in()`의 평가가 먼저 토르 정점을 찾고, 나가는 간선으로 연결된 모든 정점을 찾은 다음, 그 정점들 각각에서 마지막으로 들어오는 간선으로 연결된 모든 정점을 반환할 것이라고 예상할 것이다.
 
-In a non-strict language we would get the same result&mdash;the execution strategy doesn't make much difference here. But what if we added a few additional calls? Given how well-connected Thor is, our `g.v('Thor').out().out().out().in().in().in()` query may produce many results&mdash;in fact, because we're not limiting our vertex list to unique results, it may produce many more results than we have vertices in our total graph.
+비엄격 언어에서는 같은 결과를 얻을 것이다&mdash;실행 전략이 여기서는 큰 차이를 만들지 않는다. 하지만 몇 가지 호출을 더 추가한다면 어떨까? 토르가 얼마나 잘 연결되어 있는지를 고려하면, 우리의 `g.v('Thor').out().out().out().in().in().in()` 질의는 많은 결과를 생성할 수 있다&mdash;실제로, 정점 목록을 고유한 결과로 제한하지 않기 때문에 전체 그래프에 있는 정점보다 훨씬 많은 결과를 생성할 수 있다.
 
-We're probably only interested in getting a few unique results out, so we'll change the query a bit: `g.v('Thor').out().out().out().in().in().in().unique().take(10)`. Now our query produces at most 10 results. What happens if we evaluate this eagerly, though? We're still going to have to build up septillions of results before returning only the first 10.
+아마 몇 개의 고유한 결과만 얻는데 관심이 있을 것이므로, 질의를 약간 바꿔보자: `g.v('Thor').out().out().out().in().in().in().unique().take(10)`. 이제 우리 질의는 최대 10개의 결과를 생성한다. 하지만 이것을 성급하게 평가한다면 어떻게 될까? 처음 10개만 반환하기 전에 여전히 수십억 개의 결과를 구축해야 할 것이다.
 
-All graph databases have to support a mechanism for doing as little work as possible, and most choose some form of non-strict evaluation to do so. Since we're building our own interpreter, the lazy evaluation of our program is possible, but we may have to contend with some consequences.
-
-
-## Ramifications of Evaluation Strategy on our Mental Model
-
-Up until now our mental model for evaluation has been very simple:
-
-- request a set of vertices
-- pass the returned set as input to a pipe
-- repeat as necessary
-
-We would like to retain that model for our users, because it's easier to reason about, but as we've seen we can no longer use that model for the implementation. Having users think in a model that differs from the actual implementation is a source of much pain. A leaky abstraction is a small-scale version of this; in the large it can lead to frustration, cognitive dissonance and ragequits.
-
-Our case is nearly optimal for this deception, though: the answer to any query will be the same, regardless of execution model. The only difference is the performance. The tradeoff is between having all users learn a more complicated model prior to using the system, or forcing a subset of users to transfer from the simple model to the complicated model in order to better reason about query performance.
-
-Some factors to consider when wrestling with this decision are:
-
-- the relative cognitive difficulty of learning the simple model versus the more complex model;
-- the additional cognitive load imposed by first using the simple model and then advancing to the complex one versus skipping the simple and learning only the complex;
-- the subset of users required to make the transition, in terms of their proportional size, cognitive availability, available time, and so on.
-
-In our case this tradeoff makes sense. For most uses queries will return results fast enough that users needn't be concerned with optimizing their query structure or learning the deeper model. Those who will are the users writing advanced queries over large datasets, and they are also likely the users most well-equipped to transition to a new model. Additionally, our hope is that there is only a small increase in difficulty imposed by using the simple model before learning the more complex one.
-
-We'll go into more detail on this new model soon, but in the meantime here are some highlights to keep in mind during the next section:
-
-- Each pipe returns one result at a time, not a set of results. Each pipe may be activated many times while evaluating a query.
-- A read/write head controls which pipe is activated next. The head starts at the end of the pipeline, and its movement is directed by the result of the currently active pipe.
-- That result might be one of the aforementioned gremlins. Each gremlin represents a potential query result, and they carry state with them through the pipes. Gremlins cause the head to move to the right.
-- A pipe can return a result of 'pull', which signals the head that it needs input and moves it to the right.
-- A result of 'done' tells the head that nothing prior needs to be activated again, and moves the head left.
+모든 그래프 데이터베이스는 가능한 한 적은 작업을 수행하는 메커니즘을 지원해야 하며, 대부분은 그렇게 하기 위해 어떤 형태의 비엄격 평가를 선택한다. 우리가 자체 인터프리터를 구축하고 있으므로 프로그램의 지연 평가가 가능하지만, 몇 가지 결과에 대처해야 할 수도 있다.
 
 
-## Pipetypes
+## 평가 전략이 우리의 정신적 모델에 미치는 파급효과
 
-Pipetypes make up the core of our system. Once we understand how each one works, we'll have a better basis for understanding how they're invoked and sequenced together in the interpreter.
+지금까지 평가에 대한 우리의 정신적 모델은 매우 간단했다:
 
-We'll start by making a place to put our pipetypes, and a way to add new ones.
+- 정점 집합 요청
+- 반환된 집합을 파이프에 입력으로 전달
+- 필요에 따라 반복
+
+사용자들을 위해 그 모델을 유지하고 싶다. 추론하기가 더 쉽기 때문이다. 하지만 우리가 본 바와 같이 구현에는 더 이상 그 모델을 사용할 수 없다. 사용자가 실제 구현과 다른 모델로 생각하게 하는 것은 많은 고통의 원천이다. 누수되는 추상화는 이것의 소규모 버전이다; 대규모에서는 좌절, 인지 부조화, 분노 종료로 이어질 수 있다.
+
+하지만 우리의 경우는 이런 속임수에 대해 거의 최적이다: 질의에 대한 답은 실행 모델과 관계없이 동일할 것이다. 유일한 차이는 성능이다. 트레이드오프는 모든 사용자가 시스템을 사용하기 전에 더 복잡한 모델을 학습하게 하거나, 질의 성능을 더 잘 추론하기 위해 사용자의 일부를 간단한 모델에서 복잡한 모델로 전환하도록 강요하는 것 사이에 있다.
+
+이 결정과 씨름할 때 고려할 몇 가지 요소는:
+
+- 간단한 모델 대 더 복잡한 모델을 학습하는 상대적 인지적 어려움;
+- 간단한 모델을 먼저 사용한 후 복잡한 모델로 발전하는 것과 간단한 모델을 건너뛰고 복잡한 모델만 학습하는 것에 의해 부과되는 추가적인 인지 부하;
+- 전환이 필요한 사용자의 부분집합, 그들의 비례적 크기, 인지적 가용성, 가용 시간 등의 관점에서.
+
+우리의 경우 이 트레이드오프는 의미가 있다. 대부분의 용도에서 질의는 사용자가 질의 구조를 최적화하거나 더 깊은 모델을 학습하는 것을 걱정할 필요가 없을 만큼 충분히 빠르게 결과를 반환할 것이다. 그렇게 할 사람들은 대용량 데이터셋에 대해 고급 질의를 작성하는 사용자들이며, 그들은 또한 새로운 모델로 전환하기에 가장 잘 갖춰진 사용자들일 가능성이 높다. 또한, 더 복잡한 모델을 학습하기 전에 간단한 모델을 사용함으로써 부과되는 어려움의 증가가 작을 것이라는 희망이 있다.
+
+우리는 곧 이 새로운 모델에 대해 더 자세히 다룰 것이지만, 그동안 다음 섹션에서 염두에 둘 몇 가지 하이라이트가 있다:
+
+- 각 파이프는 결과 집합이 아니라 한 번에 하나의 결과를 반환한다. 질의를 평가하는 동안 각 파이프가 여러 번 활성화될 수 있다.
+- 읽기/쓰기 헤드가 다음에 활성화될 파이프를 제어한다. 헤드는 파이프라인의 끝에서 시작하고, 그 움직임은 현재 활성 파이프의 결과에 의해 지시된다.
+- 그 결과는 앞서 언급한 그렘린 중 하나일 수 있다. 각 그렘린은 잠재적인 질의 결과를 나타내며, 파이프를 통해 상태를 함께 운반한다. 그렘린은 헤드가 오른쪽으로 이동하게 한다.
+- 파이프는 'pull'의 결과를 반환할 수 있는데, 이는 헤드에게 입력이 필요하다는 신호를 보내고 헤드를 오른쪽으로 이동시킨다.
+- 'done' 결과는 헤드에게 이전의 것들이 다시 활성화될 필요가 없다고 말하고, 헤드를 왼쪽으로 이동시킨다.
+
+
+## 파이프타입
+
+파이프타입은 우리 시스템의 핵심을 구성한다. 각각이 어떻게 작동하는지 이해하면, 인터프리터에서 어떻게 호출되고 함께 순서화되는지 이해하기 위한 더 나은 기반을 갖게 될 것이다.
+
+파이프타입을 놓을 장소와 새로운 것을 추가하는 방법을 만드는 것부터 시작할 것이다.
 
 ```javascript
 Dagoba.Pipetypes = {}
@@ -349,11 +349,11 @@ Dagoba.addPipetype = function(name, fun) {              // adds a chainable meth
 }
 ```
 
-The pipetype's function is added to the list of pipetypes, and then a new method is added to the query object. Every pipetype must have a corresponding query method. That method adds a new step to the query program, along with its arguments.
+파이프타입의 함수가 파이프타입 목록에 추가되고, 그 다음 새로운 메소드가 질의 객체에 추가된다. 모든 파이프타입은 해당하는 질의 메소드를 가져야 한다. 그 메소드는 인수와 함께 질의 프로그램에 새로운 단계를 추가한다.
 
-When we evaluate `g.v('Thor').out('parent').in('parent')` the `v` call returns a query object, the `out` call adds a new step and returns the query object, and the `in` call does the same. This is what enables our method-chaining API.
+`g.v('Thor').out('parent').in('parent')`를 평가할 때 `v` 호출은 질의 객체를 반환하고, `out` 호출은 새로운 단계를 추가하고 질의 객체를 반환하며, `in` 호출도 같은 일을 한다. 이것이 우리의 메소드 체이닝 API를 가능하게 하는 것이다.
 
-Note that adding a new pipetype with the same name replaces the existing one, which allows runtime modification of existing pipetypes. What's the cost of this decision? What are the alternatives?
+같은 이름으로 새로운 파이프타입을 추가하면 기존 것을 교체한다는 점에 주목하라. 이는 기존 파이프타입의 런타임 수정을 허용한다. 이 결정의 비용은 무엇인가? 대안은 무엇인가?
 
 ```javascript
 Dagoba.getPipetype = function(name) {
