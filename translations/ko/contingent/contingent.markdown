@@ -248,7 +248,7 @@ Sphinx는 이 API 레퍼런스 문서와
    still has the old chapter title,
    and also needs to be rebuilt.
 
-What does Sphinx do? 
+Sphinx는 무엇을 할까요? 
 
 ```
    writing output... [ 50%] index
@@ -675,7 +675,7 @@ including our future selves,
 that the attribute is best treated
 as part of the invisible internal machinery of the class.
 
-Why are we using a `defaultdict` instead of a standard dict?
+표준 딕셔너리 대신 `defaultdict`를 사용하는 이유는 무엇일까요?
 A common problem when composing dicts
 with other data structures is handling missing keys.
 With a normal dict,
@@ -797,7 +797,7 @@ This `Graph` is telling Contingent that,
 when `api.rst` changes,
 `api.html` is now stale and must be rebuilt.
 
-How about `index.html`?
+`index.html`은 어떨까요?
 
 ```python
 >>> g.immediate_consequences_of('index.html')
@@ -854,17 +854,17 @@ to keep track of tasks and the relationships between them.
 If we look more closely at \aosafigref{500l.contingent.graph2}, however,
 we see that it is actually a little hand-wavy and vague:
 *how* is `api.html` produced from `api.rst`?
-How do we know that `index.html` needs the title from the tutorial?
-And how is this dependency resolved?
+`index.html`이 튜토리얼의 제목이 필요하다는 것을 어떻게 알 수 있을까요?
+그리고 이 의존성은 어떻게 해결될까요?
 
 Our intuitive notion of these ideas
 served when we were constructing consequences graphs by hand,
 but unfortunately computers are not terribly intuitive,
 so we will need to be more precise about what we want.
 
-What are the steps required to produce output from sources?
-How are these steps defined and executed?
-And how can Contingent know the connections between them?
+소스로부터 출력을 생성하는 데 필요한 단계는 무엇일까요?
+이러한 단계들은 어떻게 정의되고 실행될까요?
+그리고 Contingent는 이들 간의 연결을 어떻게 알 수 있을까요?
 
 Contingent에서 빌드 작업은 함수와 인수로 모델링됩니다.
 함수는 특정 프로젝트가 수행하는 방법을
@@ -1244,8 +1244,8 @@ read('tutorial.txt')
 The consequence of re-reading the `tutorial.txt` file
 and finding that its contents have changed
 is that we need to re-execute the `parse()` routine for that document.
-What happens if we render the entire set of documents?
-Will Contingent be able to learn the entire build process?
+전체 문서 세트를 렌더링하면 어떻게 될까요?
+Contingent가 전체 빌드 프로세스를 학습할 수 있을까요?
 
 ```python
 >>> for filename in 'index.txt', 'tutorial.txt', 'api.txt':
@@ -1536,7 +1536,7 @@ of solving generic problems with generic data structures,
 resulting in code that repeatedly uses a small set of ideas
 from the core data structures tuple, list, set, and dict.
 
-But does this not cause a problem?
+하지만 이것이 문제를 일으키지는 않을까요?
 
 범용 데이터 구조는 그 본질상 익명입니다.
 우리의 `project._cache`는 집합입니다.
