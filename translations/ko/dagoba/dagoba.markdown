@@ -926,13 +926,13 @@ thunk()                   // -> 6
 
 이 접근법에는 몇 가지 트레이드오프가 있다: 하나는 생성될 수 있는 잠재적으로 거대한 썽크 그래프 때문에 공간 성능에 대한 추론이 더 어려워진다는 것이다. 또 다른 하나는 이제 우리 프로그램이 단일 썽크로 표현되고, 그 시점에서는 할 수 있는 일이 많지 않다는 것이다.
 
-This second point isn't usually an issue, because of the phase separation between when our compiler runs its optimizations and when all the thunking occurs at runtime. In our case we don't have that advantage: because we're using method chaining to implement a fluent interface [^fluentinterface] if we also use thunks to achieve laziness we would thunk each new method as it is called, which means by the time we get to `run()` we have only a thunk as our input, and no way to optimize our query.
+두 번째 요점은 컴파일러가 최적화를 실행하는 시점과 런타임에 모든 썽킹이 발생하는 시점 사이의 단계 분리 때문에 보통은 문제가 되지 않는다. 우리의 경우에는 그 이점이 없다: 플루언트 인터페이스[^fluentinterface]를 구현하기 위해 메소드 체이닝을 사용하고 있는데, 지연성을 달성하기 위해 썽크도 사용한다면 호출될 때마다 새로운 메소드를 썽크로 감쌀 것이고, 이는 `run()`에 도달할 때쯤이면 입력으로 썽크만 가지게 되어 질의를 최적화할 방법이 없다는 뜻이다.
 
-[^fluentinterface]: Method chaining lets us write `g.v('Thor').in().out().run()` instead of the six lines of non-fluent JS required to accomplish the same thing.
+[^fluentinterface]: 메소드 체이닝을 사용하면 같은 작업을 수행하기 위해 필요한 비유창한 JS의 6줄 대신 `g.v('Thor').in().out().run()`으로 쓸 수 있다.
 
-Interestingly, our fluent interface hides another difference between our query language and regular programming languages. The query `g.v('Thor').in().out().run()` could be rewritten as `run(out(in(v(g, 'Thor'))))` if we weren't using method chaining. In JS we would first process `g` and `'Thor'`, then `v`, then `in`, `out` and `run`, working from the inside out. In a language with non-strict semantics we would work from the outside in, processing each consecutive nested layer of arguments only as needed.
+흥미롭게도, 우리의 플루언트 인터페이스는 질의 언어와 일반적인 프로그래밍 언어 사이의 또 다른 차이점을 숨긴다. `g.v('Thor').in().out().run()` 질의는 메소드 체이닝을 사용하지 않는다면 `run(out(in(v(g, 'Thor'))))`로 다시 쓸 수 있을 것이다. JS에서는 먼저 `g`와 `'Thor'`를 처리한 다음, `v`, `in`, `out`, `run` 순으로 안쪽에서 바깥쪽으로 작업할 것이다. 비엄격 의미론을 가진 언어에서는 바깥쪽에서 안쪽으로 작업하며, 필요에 따라 연속된 중첩된 인수 층만을 처리한다.
 
-So if we start evaluating our query at the end of the statement, with `run`, and work our way back to `v('Thor')`, calculating results only as needed, then we've effectively achieved non-strictness. The secret is in the linearity of our queries. Branches complicate the process graph and also introduce opportunities for duplicate calls, which require memoization to avoid wasted work. The simplicity of our query language means we can implement an equally simple interpreter based on our linear read/write head model.
+따라서 문장의 끝에서 `run`으로 시작하여 질의를 평가하고 `v('Thor')`로 되돌아가면서 필요한 경우에만 결과를 계산한다면, 우리는 효과적으로 비엄격성을 달성한 것이다. 비밀은 우리 질의의 선형성에 있다. 분기는 프로세스 그래프를 복잡하게 만들고 중복 호출의 기회를 도입하여, 낭비된 작업을 피하기 위해 메모화가 필요하다. 우리 질의 언어의 단순함은 선형 읽기/쓰기 헤드 모델을 기반으로 한 동등하게 단순한 인터프리터를 구현할 수 있게 해준다.
 
 런타임 최적화를 허용하는 것 외에도, 이 스타일은 계측의 용이성과 관련된 많은 다른 이점들을 가진다: 히스토리, 되돌리기 가능성, 단계별 디버깅, 질의 통계. 프로그램을 단일 썽크로 축소하는 대신 가상 머신 평가기로 남겨두고 인터프리터를 제어하기 때문에, 이 모든 것들을 동적으로 추가하기 쉽다.
 
@@ -977,13 +977,13 @@ Dagoba.Q.run = function() {                 // a machine for query processing
     }
 ```
 
-To handle the 'pull' case we first set `maybe_gremlin` [^maybegremlin] to false. We're overloading our 'maybe' here by using it as a channel to pass the 'pull' and 'done' signals, but once one of those signals is sucked out we go back to thinking of this as a proper 'maybe'.
+'pull' 경우를 처리하기 위해 먼저 `maybe_gremlin`[^maybegremlin]을 false로 설정한다. 여기서는 'pull'과 'done' 신호를 전달하는 채널로 사용하여 'maybe'를 오버로드하고 있지만, 그 신호들 중 하나가 빨려나가면 다시 이것을 적절한 'maybe'로 생각하게 된다.
 
-[^maybegremlin]: We call it `maybe_gremlin` to remind ourselves that it could be a gremlin, or it could be something else. Also because originally it was either a gremlin or Nothing.
+[^maybegremlin]: 그것이 그렘린일 수도 있고 다른 것일 수도 있다는 것을 스스로에게 상기시키기 위해 `maybe_gremlin`이라고 부른다. 또한 원래는 그렘린이거나 Nothing이었기 때문이기도 하다.
 
-If the step before us isn't 'done' [^stepnotdone] we'll move the head backward and try again. Otherwise, we mark ourselves as 'done' and let the head naturally fall forward.
+우리 앞의 단계가 'done'이 아니라면[^stepnotdone] 헤드를 뒤로 이동시키고 다시 시도할 것이다. 그렇지 않으면, 우리 자신을 'done'으로 표시하고 헤드가 자연스럽게 앞으로 떨어지게 한다.
 
-[^stepnotdone]: Recall that done starts at -1, so the first step's predecessor is always done.
+[^stepnotdone]: done이 -1에서 시작하므로, 첫 번째 단계의 전임자는 항상 done이라는 점을 기억하라.
 
 ```javascript
     if(maybe_gremlin == 'done') {           // 'done' tells us the pipe is finished
@@ -992,7 +992,7 @@ If the step before us isn't 'done' [^stepnotdone] we'll move the head backward a
     }
 ```
 
-Handling the 'done' case is even easier: set `maybe_gremlin` to false and mark this step as 'done'.
+'done' 경우를 처리하는 것은 훨씬 더 쉽다: `maybe_gremlin`을 false로 설정하고 이 단계를 'done'으로 표시한다.
 
 ```javascript
     pc++                                    // move on to the next pipe
@@ -1006,9 +1006,9 @@ Handling the 'done' case is even easier: set `maybe_gremlin` to false and mark t
   }
 ```
 
-We're done with the current step, and we've moved the head to the next one. If we're at the end of the program and `maybe_gremlin` contains a gremlin, we'll add it to the results, set `maybe_gremlin` to false and move the head back to the last step in the program.
+현재 단계를 완료했고, 헤드를 다음 단계로 이동했다. 프로그램의 끝에 있고 `maybe_gremlin`이 그렘린을 포함한다면, 그것을 결과에 추가하고, `maybe_gremlin`을 false로 설정하고 헤드를 프로그램의 마지막 단계로 되돌릴 것이다.
 
-This is also the initialization state, since `pc` starts as `max`. So we start here and work our way back, and end up here again at least once for each final result the query returns.
+`pc`가 `max`로 시작하므로 이것은 초기화 상태이기도 하다. 따라서 우리는 여기서 시작해서 되돌아가며 작업하고, 질의가 반환하는 각 최종 결과에 대해 적어도 한 번씩 다시 여기로 돌아온다.
 
 ```javascript
   results = results.map(function(gremlin) { // return projected results, or vertices
@@ -1019,14 +1019,14 @@ This is also the initialization state, since `pc` starts as `max`. So we start h
 }
 ```
 
-We're out of the driver loop now: the query has ended, the results are in, and we just need to process and return them. If any gremlin has its result set we'll return that, otherwise we'll return the gremlin's final vertex. Are there other things we might want to return? What are the tradeoffs here?
+이제 드라이버 루프에서 벗어났다: 질의가 끝났고, 결과가 들어왔으며, 그것들을 처리하고 반환하기만 하면 된다. 그렘린이 결과 세트를 가지고 있다면 그것을 반환할 것이고, 그렇지 않으면 그렘린의 최종 정점을 반환할 것이다. 반환하고 싶을 만한 다른 것들이 있을까? 여기서의 트레이드오프는 무엇인가?
 
 
 ## 쿼리 트랜스포머
 
 이제 우리 질의 프로그램을 위한 멋지고 간결한 인터프리터를 가지고 있지만, 여전히 놓치고 있는 것이 있다. 모든 현대 DBMS는 시스템의 필수적인 부분으로 질의 최적화기를 갖추고 있다. 비관계형 데이터베이스의 경우, 질의 계획을 최적화하는 것이 관계형 사촌들에서 보는 기하급수적 속도 향상을 거의 가져다주지는 않지만[^dboptimize], 여전히 데이터베이스 설계의 중요한 측면이다.
 
-[^dboptimize]: Or, more pointedly, a poorly phrased query is less likely to yield exponential slowdowns. As an end-user of an RDBMS the aesthetics of query quality can often be quite opaque.
+[^dboptimize]: 더 정확히 말하면, 잘못 구성된 질의가 기하급수적 속도 저하를 가져올 가능성이 낮다. RDBMS의 최종 사용자로서 질의 품질의 미학은 종종 상당히 불투명할 수 있다.
 
 합리적으로 질의 최적화기라고 부를 수 있는 가장 간단한 것은 무엇일까? 음, 실행하기 전에 질의 프로그램들을 변환하는 작은 함수들을 작성할 수 있다. 프로그램을 입력으로 전달하고 다른 프로그램을 출력으로 받을 것이다.
 
@@ -1044,20 +1044,20 @@ Dagoba.addTransformer = function(fun, priority) {
 }
 ```
 
-Now we can add query transformers to our system. A query transformer is a function that accepts a program and returns a program, plus a priority level. Higher priority transformers are placed closer to the front of the list. We're ensuring `fun` is a function, because we're going to evaluate it later [^paramdomain].
+이제 우리 시스템에 질의 트랜스포머를 추가할 수 있다. 질의 트랜스포머는 프로그램을 받아들이고 프로그램을 반환하는 함수에 우선순위 수준을 더한 것이다. 더 높은 우선순위의 트랜스포머들이 목록의 앞쪽에 더 가깝게 배치된다. 나중에 평가할 것이기 때문에 `fun`이 함수인지 확인하고 있다[^paramdomain].
 
-[^paramdomain]: Note that we're keeping the domain of the priority parameter open, so it can be an integer, a rational, a negative number, or even things like Infinity or NaN.
+[^paramdomain]: 우선순위 매개변수의 도메인을 열어두고 있으므로, 정수, 유리수, 음수, 또는 심지어 Infinity나 NaN 같은 것들도 될 수 있다는 점에 주목하라.
 
 막대한 수의 트랜스포머 추가가 없을 것이라고 가정하고, 새로운 것을 추가하기 위해 목록을 선형적으로 걸을 것이다. 이 가정이 거짓으로 판명되는 경우를 위해 메모를 남겨둘 것이다&mdash;이진 검색이 긴 목록에 대해서는 훨씬 더 시간 최적이지만, 약간의 복잡성을 추가하고 짧은 목록을 실제로는 빠르게 하지 못한다.
 
-To run these transformers we're going to inject a single line of code in to the top of our interpreter:
+이 트랜스포머들을 실행하기 위해 우리 인터프리터의 상단에 한 줄의 코드를 삽입할 것이다:
 
 ```javascript
 Dagoba.Q.run = function() {                     // our virtual machine for querying
   this.program = Dagoba.transform(this.program) // activate the transformers
 ```
 
-We'll use that to call this function, which just passes our program through each transformer in turn:
+우리는 그것을 사용하여 이 함수를 호출할 것인데, 이 함수는 단지 우리 프로그램을 각 트랜스포머를 통해 차례대로 전달한다:
 
 ```javascript
 Dagoba.transform = function(program) {
@@ -1067,20 +1067,20 @@ Dagoba.transform = function(program) {
 }
 ```
 
-Up until this point, our engine has traded simplicity for performance, but one of the nice things about this strategy is that it leaves doors open for global optimizations that may have been unavailable if we had opted to optimize locally as we designed the system.
+이 시점까지 우리 엔진은 성능을 위해 단순성을 희생해왔지만, 이 전략의 좋은 점 중 하나는 시스템을 설계할 때 지역적으로 최적화하기로 선택했다면 사용할 수 없었을 전역 최적화의 문을 열어둔다는 것이다.
 
-Optimizing a program can often increase complexity and reduce the elegance of the system, making it harder to reason about and maintain. Breaking abstraction barriers for performance gains is one of the more egregious forms of optimization, but even something seemingly innocuous like embedding performance-oriented code into business logic makes maintenance more difficult.
+프로그램을 최적화하는 것은 종종 복잡성을 증가시키고 시스템의 우아함을 감소시켜, 추론하고 유지보수하기 어렵게 만들 수 있다. 성능 향상을 위해 추상화 장벽을 깨뜨리는 것은 더욱 심각한 형태의 최적화 중 하나지만, 성능 지향적 코드를 비즈니스 로직에 임베딩하는 것처럼 겉보기에 무해해 보이는 것조차 유지보수를 더 어렵게 만든다.
 
-In light of that, this type of "orthogonal optimization" is particularly appealing. We can add optimizers in modules or even user code, instead of having them tightly coupled to the engine. We can test them in isolation, or in groups, and with the addition of generative testing we could even automate that process, ensuring that our available optimizers play nicely together.
+이런 점에서, 이런 유형의 "직교 최적화"는 특히 매력적이다. 엔진에 밀접하게 결합되는 대신, 모듈이나 심지어 사용자 코드에서 최적화기를 추가할 수 있다. 우리는 그것들을 독립적으로 또는 그룹으로 테스트할 수 있고, 생성 테스트의 추가로 그 과정을 자동화하여 사용 가능한 최적화기들이 함께 잘 작동하도록 보장할 수도 있다.
 
-We can also use this transformer system to add new functionality unrelated to optimization. Let's look at a case of that now.
+또한 이 트랜스포머 시스템을 사용하여 최적화와 관련 없는 새로운 기능을 추가할 수도 있다. 이제 그런 경우를 살펴보자.
 
 
 ## Aliases
 
-Making a query like `g.v('Thor').out().in()` is quite compact, but is this Thor's siblings or his mates? Neither interpretation is fully satisfying. It'd be nicer to say what mean: either `g.v('Thor').parents().children()` or `g.v('Thor').children().parents()`.
+`g.v('Thor').out().in()`와 같은 질의를 만드는 것은 꽤 간결하지만, 이것은 토르의 형제자매인가 아니면 그의 동료들인가? 어느 해석도 완전히 만족스럽지 않다. 우리가 의미하는 바를 말하는 것이 더 좋을 것이다: `g.v('Thor').parents().children()` 또는 `g.v('Thor').children().parents()` 중 하나로.
 
-We can use query transformers to make aliases with just a couple of extra helper functions:
+몇 개의 추가 도우미 함수만으로 질의 트랜스포머를 사용하여 별칭을 만들 수 있다:
 
 ```javascript
 Dagoba.addAlias = function(newname, oldname, defaults) {
@@ -1096,11 +1096,11 @@ Dagoba.addAlias = function(newname, oldname, defaults) {
 }
 ```
 
-We're adding a new name for an existing step, so we'll need to create a query transformer that converts the new name to the old name whenever it's encountered. We'll also need to add the new name as a method on the main query object, so it can be pulled into the query program.
+기존 단계에 새로운 이름을 추가하고 있으므로, 새로운 이름이 만날 때마다 기존 이름으로 변환하는 질의 트랜스포머를 생성해야 한다. 또한 새로운 이름을 메인 질의 객체의 메소드로 추가하여, 질의 프로그램으로 가져올 수 있게 해야 한다.
 
-If we could capture missing method calls and route them to a handler function then we might be able to run this transformer with a lower priority, but there's currently no way to do that. Instead we will run it with a high priority of 100 so the aliased methods are added before they are invoked.
+누락된 메소드 호출을 캡처하여 핸들러 함수로 라우팅할 수 있다면 이 트랜스포머를 더 낮은 우선순위로 실행할 수 있을 것이지만, 현재로서는 그렇게 할 방법이 없다. 대신 별칭 메소드들이 호출되기 전에 추가되도록 높은 우선순위인 100으로 실행할 것이다.
 
-We call another helper to merge the incoming step's arguments with the alias's default arguments. If the incoming step is missing an argument then we'll use the alias's argument for that slot.
+들어오는 단계의 인수들을 별칭의 기본 인수들과 병합하기 위해 다른 도우미를 호출한다. 들어오는 단계에 인수가 누락되어 있다면 그 슬롯에 별칭의 인수를 사용할 것이다.
 
 ```javascript
 Dagoba.extend = function(list, defaults) {
