@@ -1091,135 +1091,135 @@ class Leader(Role):
 
 이 기법의 마법은 테스팅에서 ``Leader``에게 가짜 클래스들을 줄 수 있어 ``Scout``와 ``Commander``로부터 분리되어 테스트될 수 있다는 것입니다.
 
-#### Interface Correctness
+#### 인터페이스 정확성
 
-One pitfall of a focus on small units is that it does not test the interfaces between units.
-For example, unit tests for the acceptor role verify the format of the ``accepted`` attribute of the ``Promise`` message, and the unit tests for the scout role supply well-formatted values for the attribute.
-Neither test checks that those formats match.
+작은 단위에 집중하는 것의 한 가지 함정은 단위들 간의 인터페이스를 테스트하지 않는다는 것입니다.
+예를 들어, 수락자 역할에 대한 단위 테스트는 ``Promise`` 메시지의 ``accepted`` 속성 형식을 확인하고, 스카우트 역할에 대한 단위 테스트는 해당 속성에 대해 잘 형식화된 값을 제공합니다.
+하지만 두 테스트 모두 그 형식들이 일치하는지 확인하지는 않습니다.
 
-One approach to fixing this issue is to make the interfaces self-enforcing.
-In Cluster, the use of named tuples and keyword arguments avoids any disagreement over messages' attributes.
-Because the only interaction between role classes is via messages, this covers a large part of the interface.
+이 문제를 해결하는 한 가지 접근법은 인터페이스를 자체 강제하도록 만드는 것입니다.
+Cluster에서 명명된 튜플과 키워드 인수의 사용은 메시지 속성에 대한 모든 불일치를 피합니다.
+역할 클래스들 간의 유일한 상호작용이 메시지를 통해 이루어지기 때문에, 이는 인터페이스의 큰 부분을 다룹니다.
 
-For specific issues such as the format of ``accepted_proposals``, both the real and test data can be verified using the same function, in this case ``verifyPromiseAccepted``.
-The tests for the acceptor use this method to verify each returned ``Promise``, and the tests for the scout use it to verify every fake ``Promise``.
+``accepted_proposals`` 형식과 같은 특정 문제들의 경우, 실제 데이터와 테스트 데이터 모두 동일한 함수(이 경우 ``verifyPromiseAccepted``)를 사용하여 검증할 수 있습니다.
+수락자에 대한 테스트는 이 메서드를 사용하여 반환된 각 ``Promise``를 검증하고, 스카우트에 대한 테스트는 이를 사용하여 모든 가짜 ``Promise``를 검증합니다.
 
-#### Integration Testing
+#### 통합 테스팅
 
-The final bulwark against interface problems and design errors is integration testing.
-An integration test assembles multiple units together and tests their combined effect.
-In our case, that means building a network of several nodes, injecting some requests into it, and verifying the results.
-If there are any interface issues not discovered in unit testing, they should cause the integration tests to fail quickly.
+인터페이스 문제와 설계 오류에 대한 최후의 방벽은 통합 테스팅입니다.
+통합 테스트는 여러 단위를 함께 조립하고 그들의 결합된 효과를 테스트합니다.
+우리의 경우, 이는 여러 노드의 네트워크를 구축하고, 여기에 몇 가지 요청을 주입하고, 결과를 검증하는 것을 의미합니다.
+단위 테스팅에서 발견되지 않은 인터페이스 문제가 있다면, 통합 테스트가 빠르게 실패하도록 해야 합니다.
 
-Because the protocol is intended to handle node failure gracefully, we test a few failure scenarios as well, including the untimely failure of the active leader.
+프로토콜이 노드 실패를 우아하게 처리하도록 설계되었기 때문에, 활성 리더의 적절하지 않은 실패를 포함하여 몇 가지 실패 시나리오도 테스트합니다.
 
-Integration tests are harder to write than unit tests, because they are less well-isolated.
-For Cluster, this is clearest in testing the failed leader, as any node could be the active leader.
-Even with a deterministic network, a change in one message alters the random number generator's state and thus unpredictably changes later events.
-Rather than hard-coding the expected leader, the test code must dig into the internal state of each leader to find one that believes itself to be active.
+통합 테스트는 잘 격리되지 않기 때문에 단위 테스트보다 작성하기 어렵습니다.
+Cluster의 경우, 이는 실패한 리더를 테스트할 때 가장 명확하게 나타나는데, 어떤 노드든 활성 리더가 될 수 있기 때문입니다.
+결정론적 네트워크를 사용하더라도, 하나의 메시지 변경이 랜덤 수 생성기의 상태를 바꾸어 나중 이벤트들을 예측할 수 없게 변경시킵니다.
+예상되는 리더를 하드코딩하는 대신, 테스트 코드는 각 리더의 내부 상태를 파헤쳐서 자신이 활성 상태라고 믿는 것을 찾아야 합니다.
 
-#### Fuzz Testing
+#### 퍼즈 테스팅
 
-It's very difficult to test resilient code: it is likely to be resilient to its own bugs, so integration tests may not detect even very serious bugs.
-It is also hard to imagine and construct tests for every possible failure mode.
+복원력 있는 코드를 테스트하는 것은 매우 어렵습니다: 자신의 버그에 대해서도 복원력이 있을 가능성이 높으므로, 통합 테스트도 매우 심각한 버그조차 발견하지 못할 수 있습니다.
+또한 모든 가능한 실패 모드에 대한 테스트를 상상하고 구성하는 것도 어렵습니다.
 
-A common approach to this sort of problem is "fuzz testing": running the code repeatedly with randomly changing inputs until something breaks.
-When something *does* break, all of the debugging support becomes critical: if the failure can't be reproduced, and the logging information isn't sufficient to find the bug, then you can't fix it!
+이런 종류의 문제에 대한 일반적인 접근법은 "퍼즈 테스팅"입니다: 무언가가 깨질 때까지 무작위로 변하는 입력으로 코드를 반복적으로 실행하는 것입니다.
+무언가가 실제로 *깨질* 때, 모든 디버깅 지원이 중요해집니다: 실패를 재현할 수 없고 로깅 정보가 버그를 찾기에 충분하지 않다면 수정할 수 없습니다!
 
-I performed some manual fuzz testing of cluster during development, but a full fuzz-testing infrastructure is beyond the scope of this project.
+개발 중에 클러스터에 대한 수동 퍼즈 테스팅을 수행했지만, 완전한 퍼즈 테스팅 인프라는 이 프로젝트의 범위를 벗어납니다.
 
-## Power Struggles
+## 권력 투쟁
 
 
-A cluster with many active leaders is a very noisy place, with scouts sending ever-increasing ballot numbers to acceptors, and no ballots being decided.
-A cluster with no active leader is quiet, but equally nonfunctional.
-Balancing the implementation so that a cluster almost always agrees on exactly one leader is remarkably difficult.
+많은 활성 리더가 있는 클러스터는 매우 시끄러운 곳으로, 스카우트들이 수락자들에게 계속 증가하는 투표 번호를 보내지만 어떤 투표도 결정되지 않습니다.
+활성 리더가 없는 클러스터는 조용하지만, 똑같이 기능하지 않습니다.
+클러스터가 거의 항상 정확히 하나의 리더에 동의하도록 구현의 균형을 맞추는 것은 놀랍도록 어렵습니다.
 
-It's easy enough to avoid fighting leaders: when preempted, a leader just accepts its new inactive status.
-However, this easily leads to a case where there are no active leaders, so an inactive leader will try to become active every time it gets a ``Propose`` message.
+싸우는 리더들을 피하는 것은 충분히 쉽습니다: 선점당할 때, 리더는 그냥 새로운 비활성 상태를 받아들입니다.
+하지만 이는 활성 리더가 없는 경우로 쉽게 이어지므로, 비활성 리더는 ``Propose`` 메시지를 받을 때마다 활성 상태가 되려고 시도할 것입니다.
 
-If the whole cluster doesn't agree on which member is the active leader, there's trouble: different replicas send ``Propose`` messages to different leaders, leading to battling scouts.
-So it's important that leader elections be decided quickly, and that all cluster members find out about the result as quickly as possible.
+전체 클러스터가 어떤 구성원이 활성 리더인지에 동의하지 않으면 문제가 됩니다: 서로 다른 복제본들이 서로 다른 리더들에게 ``Propose`` 메시지를 보내어 스카우트들이 싸우게 됩니다.
+따라서 리더 선출이 빠르게 결정되고, 모든 클러스터 구성원들이 가능한 한 빠르게 결과를 알아내는 것이 중요합니다.
 
-Cluster handles this by detecting a leader change as quickly as possible: when an acceptor sends a ``Promise``, chances are good that the promised member will be the next leader.
-Failures are detected with a heartbeat protocol.
+Cluster는 가능한 한 빠르게 리더 변경을 감지함으로써 이를 처리합니다: 수락자가 ``Promise``를 보낼 때, 약속받은 구성원이 다음 리더가 될 가능성이 높습니다.
+실패는 하트비트 프로토콜로 감지됩니다.
 
-## Further Extensions
+## 추가 확장
 
-Of course, there are plenty of ways we could extend and improve this implementation.
+물론 이 구현을 확장하고 개선할 수 있는 많은 방법들이 있습니다.
 
-### Catching Up
+### 따라잡기
 
-In "pure" Multi-Paxos, nodes which fail to receive messages can be many slots behind the rest of the cluster.
-As long as the state of the distributed state machine is never accessed except via state machine transitions, this design is functional.
-To read from the state, the client requests a state-machine transition that does not actually alter the state, but which returns the desired value.
-This transition is executed cluster-wide, ensuring that it returns the same value everywhere, based on the state at the slot in which it is proposed.
+"순수한" Multi-Paxos에서 메시지를 받지 못한 노드들은 클러스터의 나머지보다 많은 슬롯 뒤처질 수 있습니다.
+분산 상태 머신의 상태가 상태 머신 전환을 통해서만 접근되는 한, 이 설계는 기능적입니다.
+상태에서 읽기 위해, 클라이언트는 실제로 상태를 변경하지는 않지만 원하는 값을 반환하는 상태 머신 전환을 요청합니다.
+이 전환은 클러스터 전체에서 실행되어, 제안된 슬롯에서의 상태를 기반으로 모든 곳에서 동일한 값을 반환하도록 보장합니다.
 
-Even in the optimal case, this is slow, requiring several round trips just to read a value.
-If a distributed object store made such a request for every object access, its performance would be dismal.
-But when the node receiving the request is lagging behind, the request delay is much greater as that node must catch up to the rest of the cluster before making a successful proposal.
+최적의 경우에도, 이는 단지 값을 읽기 위해 여러 라운드 트립이 필요하여 느립니다.
+분산 객체 저장소가 모든 객체 접근에 대해 그런 요청을 한다면, 그 성능은 형편없을 것입니다.
+하지만 요청을 받는 노드가 뒤처져 있을 때, 그 노드는 성공적인 제안을 하기 전에 클러스터의 나머지를 따라잡아야 하므로 요청 지연이 훨씬 큽니다.
 
-A simple solution is to implement a gossip-style protocol, where each replica periodically contacts other replicas to share the highest slot it knows about and to request information on unknown slots.
-Then even when a ``Decision`` message was lost, the replica would quickly find out about the decision from one of its peers.
+간단한 해결책은 가십 스타일 프로토콜을 구현하는 것으로, 각 복제본이 주기적으로 다른 복제본들에게 연락하여 자신이 알고 있는 가장 높은 슬롯을 공유하고 알려지지 않은 슬롯에 대한 정보를 요청합니다.
+그러면 ``Decision`` 메시지가 손실되더라도, 복제본은 피어 중 하나로부터 결정에 대해 빠르게 알아낼 것입니다.
 
-### Consistent Memory Usage
+### 일관된 메모리 사용량
 
-A cluster-management library provides reliability in the presence of unreliable components.
-It shouldn't add unreliability of its own.
-Unfortunately, Cluster will not run for long without failing due to ever-growing memory use and message size.
+클러스터 관리 라이브러리는 신뢰할 수 없는 구성 요소들이 있는 상황에서 신뢰성을 제공합니다.
+자체적인 신뢰성 없음을 추가해서는 안 됩니다.
+불행히도, Cluster는 계속 증가하는 메모리 사용량과 메시지 크기로 인해 실패하지 않고 오래 실행되지 않을 것입니다.
 
-In the protocol definition, acceptors and replicas form the "memory" of the protocol, so they need to remember everything.
-These classes never know when they will receive a request for an old slot, perhaps from a lagging replica or leader.
-To maintain correctness, then, they keep a list of every decision, ever, since the cluster was started.
-Worse, these decisions are transmitted between replicas in ``Welcome`` messages, making these messages enormous in a long-lived cluster.
+프로토콜 정의에서 수락자와 복제본은 프로토콜의 "메모리"를 형성하므로, 모든 것을 기억해야 합니다.
+이 클래스들은 아마도 뒤처진 복제본이나 리더로부터 오래된 슬롯에 대한 요청을 언제 받을지 결코 알지 못합니다.
+따라서 정확성을 유지하기 위해, 클러스터가 시작된 이후 모든 결정의 목록을 보관합니다.
+더 나쁜 것은, 이런 결정들이 ``Welcome`` 메시지에서 복제본들 간에 전송되어, 오래 살아있는 클러스터에서 이런 메시지들을 거대하게 만든다는 것입니다.
 
-One technique to address this issue is to periodically "checkpoint" each node's state, keeping information about some limited number of decisions on hand.
-Nodes which are so out of date that they have not committed all slots up to the checkpoint must "reset" themselves by leaving and re-joining the cluster.
+이 문제를 해결하는 한 가지 기법은 각 노드의 상태를 주기적으로 "체크포인트"하여, 제한된 수의 결정에 대한 정보를 손에 두는 것입니다.
+체크포인트까지의 모든 슬롯을 커밋하지 않을 정도로 뒤처진 노드들은 클러스터를 떠나고 다시 참여함으로써 스스로를 "재설정"해야 합니다.
 
-#### Persistent Storage
+#### 영구 저장소
 
-While it's OK for a minority of cluster members to fail, it's not OK for an acceptor to "forget" any of the values it has accepted or promises it has made.
+클러스터 구성원의 소수가 실패하는 것은 괜찮지만, 수락자가 자신이 수락한 값이나 한 약속을 "잊어버리는" 것은 괜찮지 않습니다.
 
-Unfortunately, this is exactly what happens when a cluster member fails and restarts: the newly initialized Acceptor instance has no record of the promises its predecessor made.
-The problem is that the newly-started instance takes the place of the old.
+불행히도, 이것이 클러스터 구성원이 실패하고 재시작할 때 정확히 일어나는 일입니다: 새로 초기화된 Acceptor 인스턴스는 선임자가 한 약속에 대한 기록이 없습니다.
+문제는 새로 시작된 인스턴스가 기존 것의 자리를 차지한다는 것입니다.
 
-There are two ways to solve this issue.
-The simpler solution involves writing acceptor state to disk and re-reading that state on startup.
-The more complex solution is to remove failed cluster members from the cluster, and require that new members be added to the cluster.
-This kind of dynamic adjustment of the cluster membership is called a "view change".
+이 문제를 해결하는 두 가지 방법이 있습니다.
+더 간단한 해결책은 수락자 상태를 디스크에 쓰고 시작 시 그 상태를 다시 읽는 것을 포함합니다.
+더 복잡한 해결책은 실패한 클러스터 구성원들을 클러스터에서 제거하고, 새로운 구성원들이 클러스터에 추가되도록 요구하는 것입니다.
+클러스터 구성원의 이런 종류의 동적 조정을 "뷰 변경"이라고 합니다.
 
-#### View Changes
+#### 뷰 변경
 
-Operations engineers need to be able to resize clusters to meet load and availability requirements.
-A simple test project might begin with a minimal cluster of three nodes, where any one can fail without impact.
-When that project goes "live", though, the additional load will require a larger cluster.
+운영 엔지니어들은 부하와 가용성 요구사항을 충족하기 위해 클러스터 크기를 조정할 수 있어야 합니다.
+간단한 테스트 프로젝트는 하나가 실패해도 영향 없이 최소 3개 노드의 클러스터로 시작할 수 있습니다.
+하지만 그 프로젝트가 "라이브"로 갈 때, 추가 부하로 인해 더 큰 클러스터가 필요할 것입니다.
 
-Cluster, as written, cannot change the set of peers in a cluster without restarting the entire cluster.
-Ideally, the cluster would be able to maintain a consensus about its membership, just as it does about state machine transitions.
-This means that the set of cluster members (the *view*) can be changed by special view-change proposals.
-But the Paxos algorithm depends on universal agreement about the members in the cluster, so we must define the view for each slot.
+현재 작성된 Cluster는 전체 클러스터를 재시작하지 않고는 클러스터의 피어 집합을 변경할 수 없습니다.
+이상적으로는, 클러스터가 상태 머신 전환에 대해서와 마찬가지로 자신의 구성원에 대한 합의를 유지할 수 있어야 합니다.
+이는 클러스터 구성원의 집합(*뷰*)이 특별한 뷰 변경 제안에 의해 변경될 수 있음을 의미합니다.
+하지만 Paxos 알고리즘은 클러스터 구성원에 대한 보편적 합의에 의존하므로, 각 슬롯에 대한 뷰를 정의해야 합니다.
 
-Lamport addresses this challenge in the final paragraph of "Paxos Made Simple":
+Lamport는 "Paxos Made Simple"의 마지막 문단에서 이 문제를 다룹니다:
 
-> We can allow a leader to get $\alpha$ commands ahead by letting the set of servers that execute instance $i+\alpha$ of the consensus algorithm be specified by the state after execution of the $i$th state machine command.  (Lamport, 2001)
+> 합의 알고리즘의 인스턴스 $i+\alpha$를 실행하는 서버 집합이 $i$번째 상태 머신 명령 실행 후의 상태에 의해 지정되도록 함으로써 리더가 $\alpha$ 명령을 앞서 갈 수 있게 할 수 있습니다.  (Lamport, 2001)
 
-The idea is that each instance of Paxos (slot) uses the view from $\alpha$ slots earlier.
-This allows the cluster to work on, at most, $\alpha$ slots at any one time, so a very small value of $\alpha$ limits concurrency, while a very large value of $\alpha$ makes view changes slow to take effect.
+아이디어는 Paxos의 각 인스턴스(슬롯)가 $\alpha$ 슬롯 이전의 뷰를 사용한다는 것입니다.
+이는 클러스터가 한 번에 최대 $\alpha$ 슬롯에서 작업할 수 있게 하므로, $\alpha$의 매우 작은 값은 동시성을 제한하는 반면, $\alpha$의 매우 큰 값은 뷰 변경이 효과를 나타내는 것을 느리게 만듭니다.
 
-In early drafts of this implementation (dutifully preserved in the git history!), I implemented support for view changes (using $\alpha$ in place of 3).
-This seemingly simple change introduced a great deal of complexity:
+이 구현의 초기 초안에서(git 히스토리에 충실히 보존되어 있습니다!), 뷰 변경 지원을 구현했습니다(3 대신 $\alpha$를 사용하여).
+이 겉보기에 간단한 변경은 엄청난 복잡성을 도입했습니다:
 
-* tracking the view for each of the last $\alpha$ committed slots and correctly sharing this with new nodes,
-* ignoring proposals for which no slot is available,
-* detecting failed nodes,
-* properly serializing multiple competing view changes, and
-* communicating view information between the leader and replica.
+* 마지막 $\alpha$ 커밋된 슬롯들 각각에 대한 뷰를 추적하고 이를 새 노드들과 올바르게 공유하기,
+* 사용할 수 있는 슬롯이 없는 제안들을 무시하기,
+* 실패한 노드들을 감지하기,
+* 여러 경쟁하는 뷰 변경들을 적절히 직렬화하기, 그리고
+* 리더와 복제본 간 뷰 정보를 소통하기.
 
-The result was far too large for this book! \newpage
+그 결과는 이 책에는 너무 컸습니다! \newpage
 
-## References
+## 참고문헌
 
-In addition to the original Paxos paper and Lamport's follow-up "Paxos Made Simple"[^simple], our implementation added extensions that were informed by several other resources. The role names were taken from "Paxos Made Moderately Complex"[^complex]. "Paxos Made Live"[^live] was helpful regarding snapshots in particular, and ["Paxos Made Practical"](http://www.scs.stanford.edu/~dm/home/papers/paxos.pdf) described view changes (although not of the type described here.) Liskov's "From Viewstamped Replication to Byzantine Fault Tolerance"[^tolerance] provided yet another perspective on view changes. Finally, a [Stack Overflow discussion](http://stackoverflow.com/questions/21353312/in-part-time-parliament-why-does-using-the-membership-from-decree-n-3-work-to) was helpful in learning how members are added and removed from the system.
+원래 Paxos 논문과 Lamport의 후속작 "Paxos Made Simple"[^simple] 외에도, 우리의 구현은 여러 다른 자료들로부터 얻은 정보를 바탕으로 확장을 추가했습니다. 역할 이름들은 "Paxos Made Moderately Complex"[^complex]에서 가져왔습니다. "Paxos Made Live"[^live]는 특히 스냅샷과 관련하여 도움이 되었고, ["Paxos Made Practical"](http://www.scs.stanford.edu/~dm/home/papers/paxos.pdf)은 뷰 변경을 설명했습니다(여기서 설명한 유형은 아니지만). Liskov의 "From Viewstamped Replication to Byzantine Fault Tolerance"[^tolerance]는 뷰 변경에 대한 또 다른 관점을 제공했습니다. 마지막으로, [Stack Overflow 토론](http://stackoverflow.com/questions/21353312/in-part-time-parliament-why-does-using-the-membership-from-decree-n-3-work-to)은 구성원이 시스템에 어떻게 추가되고 제거되는지 배우는 데 도움이 되었습니다.
 
 [^simple]: L. Lamport, "Paxos Made Simple," ACM SIGACT News (Distributed Computing Column) 32, 4 (Whole Number 121, December 2001) 51-58.
 [^complex]: R. Van Renesse and D. Altinbuken, "Paxos Made Moderately Complex," ACM Comp. Survey 47, 3, Article 42 (Feb. 2015)
