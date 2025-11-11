@@ -26,8 +26,7 @@ _Daniel Rocco는 Python, 커피, 크래프트 맥주, 스타우트, 객체 및 �
 
 ACM 소프트웨어 시스템 상을 수상한
 표준 `make` 빌드 시스템은
-was first developed in 1976.
-이를 재귀적으로 수행할 수 있게 해줍니다.
+1976년에 처음 개발되었습니다. 이를 재귀적으로 수행할 수 있게 해줍니다.
 A program, for example, might depend upon an object file
 which itself depends upon the corresponding source code:
 
@@ -39,49 +38,46 @@ which itself depends upon the corresponding source code:
             cc -C -o main.o main.c
 ```
 
-Should `make` discover, upon its next invocation,
-that the `main.c` source code file
-now has a more recent modify time than `main.o`,
-then it will not only rebuild the `main.o` object file
-but will also rebuild `prog` itself.
+`make`는 다음 번 실행 시 `main.c` 소스 코드 파일이
+`main.o`보다 최근에 수정되었음을 발견하면,
+`main.o` 객체 파일을 다시 빌드할 뿐만 아니라
+`prog` 자체도 다시 빌드할 것입니다.
 
-Build systems are a common semester project
-assigned to undergraduate computer science students —
-not only because build systems are used in nearly all software projects,
-but because their construction involves fundamental data structures
-and algorithms involving directed graphs
-(which this chapter will later discuss in more detail).
+빌드 시스템은 전산학과 학부생들에게 주어지는
+일반적인 한 학기 프로젝트입니다.
+빌드 시스템이 거의 모든 소프트웨어 프로젝트에서 사용되기 때문만이 아니라,
+이들의 구성이 방향 그래프와 관련된 기본적인 데이터 구조와
+알고리즘을 포함하기 때문입니다
+(이 장에서는 나중에 더 자세히 논의할 예정입니다).
 
-With decades of use and practice behind build systems,
-one might expect them to have become completely general-purpose
-and ready for even the most extravagant demands.
-But, in fact, one kind of common interaction between build artifacts —
-the problem of dynamic cross-referencing —
-is handled so poorly by most build systems
-that in this chapter we are inspired
-to not only rehearse the classic solution
-and data structures used to solve the `make` problem,
-but to extend that solution dramatically, to a far more demanding domain.
+빌드 시스템이 수십 년간 사용되고 실용화되어 왔음에도 불구하고,
+완전히 범용적이 되어 가장 까다로운 요구사항까지 충족할 수 있게
+되었으리라 기대할 수 있을 것입니다.
+하지만 사실, 빌드 산출물 간의 일반적인 상호작용의 한 종류인
+동적 상호 참조 문제는 대부분의 빌드 시스템에서 너무도 제대로 다루어지지 못하고 있어서,
+이 장에서는 `make` 문제를 해결하는 데 사용되는
+고전적인 솔루션과 데이터 구조를 재연할 뿐만 아니라,
+그 솔루션을 훨씬 더 까다로운 영역으로 극적으로 확장하는 것에
+영감을 받았습니다.
 
-The problem, again, is cross-referencing.
-Where do cross-references tend to emerge?
-In text documents, documentation, and printed books! \newpage
+다시 말하자면, 문제는 상호 참조입니다.
+상호 참조가 주로 어디서 나타나는가요?
+텍스트 문서, 문서화, 그리고 인쇄된 책에서입니다! \newpage
 
-## The Problem: Building Document Systems
+## 문제: 문서 시스템 빌드하기
 
-Systems to rebuild formatted documents from source 
-always seem to do too much work, or too little.
+소스로부터 포맷된 문서를 재빌드하는 시스템들은
+항상 너무 많은 작업을 하거나, 너무 적은 작업을 하는 것 같습니다.
 
-They do too much work
-when they respond to a minor edit
-by making you wait for unrelated chapters
-to be re-parsed and re-formatted.
-But they can also rebuild too little,
-leaving you with an inconsistent final product.
+이들은 사소한 편집에 반응하여
+관련 없는 장들이 다시 파싱되고 재포맷되기를
+기다리게 만들 때 너무 많은 작업을 합니다.
+하지만 때로는 너무 적은 재빌드를 하여
+일관성 없는 최종 결과물을 남기기도 합니다.
 
-Consider [Sphinx](http://sphinx-doc.org/), the document builder
-that is used for both the official Python language documentation
-and many other projects in the Python community.
+공식 Python 언어 문서와 Python 커뮤니티의
+많은 다른 프로젝트에서 사용되는 문서 빌더인
+[Sphinx](http://sphinx-doc.org/)를 생각해 보세요.
 A Sphinx project’s `index.rst`
 will usually include a table of contents:
 
@@ -275,7 +271,7 @@ This can happen for many kinds of cross reference that Sphinx supports:
 chapter titles, section titles, paragraphs,
 classes, methods, and functions.
 
-## Build Systems and Consistency
+## 빌드 시스템과 일관성
 
 The problem outlined above is not specific to Sphinx.
 Not only does it haunt other document systems, like LaTeX,
@@ -328,7 +324,7 @@ while performing the fewest possible rebuild steps.
 While it can be applied to any problem domain,
 we will run it against a small version of the problem outlined above.
 
-## Linking Tasks to Make a Graph
+## 그래프를 만들기 위한 작업 연결
 
 Any build system needs a way to link inputs and outputs.
 The three markup texts in our discussion above,
@@ -539,7 +535,7 @@ at either end of the edge.
 But in return for this redundancy,
 the data structure supports the fast lookup that Contingent needs.
 
-## The Proper Use of Classes
+## 클래스의 적절한 사용
 
 You may have been surprised
 by the absence of classes in the above discussion
@@ -855,7 +851,7 @@ will eventually have Contingent do for us:
 the graph `g` captures the inputs and consequences
 for the various artifacts in our project's documentation.
 
-## Learning Connections
+## 연결 학습
 
 We now have a way for Contingent
 to keep track of tasks and the relationships between them.
@@ -1299,7 +1295,7 @@ at its disposal,
 Contingent knows all the things to rebuild
 if the inputs to any tasks change.
 
-## Chasing Consequences
+## 결과 추적
 
 Once the initial build has run to completion,
 Contingent needs to monitor the input files for changes.
@@ -1529,7 +1525,7 @@ nevertheless returned the same value, means that all further
 downstream tasks were insulated from the change
 and did not get re-invoked.
 
-## Conclusion
+## 결론
 
 There exist languages and programming methodologies
 under which Contingent would be a suffocating forest of tiny classes,
