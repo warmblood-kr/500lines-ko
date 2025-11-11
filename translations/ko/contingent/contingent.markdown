@@ -660,27 +660,26 @@ class Graph:
         self._consequences_of = defaultdict(set)
 ```
 
-The leading underscore
-in front of the attribute names `_inputs_of` and `_consequences_of`
-is a common convention in the Python community
-to signal that an attribute is private.
-This convention is one way the community suggests
-that programmers pass messages and warnings
-through space and time to each other.
-Recognizing the need to signal differences between
-public and internal object attributes,
-the community adopted the single leading underscore
-as a concise and fairly consistent indicator
-to other programmers,
-including our future selves,
-that the attribute is best treated
-as part of the invisible internal machinery of the class.
+속성 이름 `_inputs_of`와 `_consequences_of` 앞의
+선행 밑줄은 해당 속성이 비공개임을
+나타내는 Python 커뮤니티의 일반적인 관례입니다.
+이 관례는 프로그래머들이 공간과 시간을 통해
+서로에게 메시지와 경고를 전달하는 방법 중 하나로
+커뮤니티가 제안하는 것입니다.
+공개 및 내부 객체 속성 간의 차이를
+신호할 필요성을 인식하여,
+커뮤니티는 미래의 우리 자신을 포함한
+다른 프로그래머들에게 해당 속성이
+클래스의 보이지 않는 내부 기계장치의 일부로
+가장 잘 취급된다는 것을 나타내는
+간결하고 상당히 일관된 지표로
+단일 선행 밑줄을 채택했습니다.
 
 표준 딕셔너리 대신 `defaultdict`를 사용하는 이유는 무엇일까요?
-A common problem when composing dicts
-with other data structures is handling missing keys.
-With a normal dict,
-retrieving a key that does not exist raises a `KeyError`:
+딕셔너리를 다른 데이터 구조와 결합할 때
+일반적인 문제는 누락된 키를 처리하는 것입니다.
+일반적인 딕셔너리에서는
+존재하지 않는 키를 검색하면 `KeyError`가 발생합니다:
 
 ```python
 >>> consequences_of = {}
@@ -690,8 +689,9 @@ Traceback (most recent call last):
 KeyError: 'index.rst'
 ```
 
-Using a normal dict requires special checks throughout the code
-to handle this specific case, for example when adding a new edge:
+일반적인 딕셔너리를 사용하려면 이 특정한 경우를 처리하기 위해
+코드 전체에 특별한 검사가 필요하며,
+예를 들어 새로운 엣지를 추가할 때가 그렇습니다:
 
 ```python
     # Special case to handle “we have not seen this task yet”:
@@ -702,11 +702,11 @@ to handle this specific case, for example when adding a new edge:
     self._consequences_of[input_task].add(consequence_task)
 ```
 
-This need is so common that Python includes a special utility,
-the `defaultdict`, which lets you provide a function
-that returns a value for absent keys.
-When we ask about an edge that the `Graph` hasn't yet seen,
-we will get back an empty `set` instead of an exception:
+이러한 필요성이 너무 일반적이어서 Python은 특별한 유틸리티인
+`defaultdict`를 포함하고 있으며, 이는 부재하는 키들에 대한
+값을 반환하는 함수를 제공할 수 있게 해줍니다.
+`Graph`가 아직 보지 못한 엣지에 대해 물어볼 때,
+예외 대신 빈 `set`을 돌려받게 될 것입니다:
 
 ```python
 >>> from collections import defaultdict
@@ -715,9 +715,10 @@ we will get back an empty `set` instead of an exception:
 set()
 ```
 
-Structuring our implementation this way means that
-each key’s first use can look identical
-to second and subsequent times that a particular key is used:
+이런 방식으로 구현을 구조화한다는 것은
+각 키의 첫 번째 사용이
+특정 키가 두 번째 및 후속 사용되는 것과
+동일하게 보일 수 있음을 의미합니다:
 
 ```python
 >>> consequences_of['index.rst'].add('index.html')
@@ -725,9 +726,9 @@ to second and subsequent times that a particular key is used:
 True
 ```
 
-Given these techniques, let’s examine the implementation
-of `add_edge`, which we earlier used
-to build the graph for \aosafigref{500l.contingent.graph}.
+이러한 기술들을 고려할 때, 앞서 \aosafigref{500l.contingent.graph}에 대한
+그래프를 구축하는 데 사용했던
+`add_edge`의 구현을 살펴봅시다.
 
 ```python
     def add_edge(self, input_task, consequence_task):
@@ -736,26 +737,25 @@ to build the graph for \aosafigref{500l.contingent.graph}.
         self._inputs_of[consequence_task].add(input_task)
 ```
 
-This method hides the fact that two, not one,
-storage steps are required for each new edge
-so that we know about it in both directions.
-And notice how `add_edge()` does not know or care
-whether either node has been seen before.
-Because the inputs and consequences data structures
-are each a `defaultdict(set)`,
-the `add_edge()` method remains blissfully ignorant
-as to the novelty of a node —
-the `defaultdict` takes care of the difference
-by creating a new `set` object on the fly.
-As we saw above, `add_edge()` would be
-three times longer had we not used `defaultdict`.
-More importantly, it would be more difficult
-to understand and reason about the resulting code.
-This implementation demonstrates a Pythonic
-approach to problems: simple, direct, and concise.
+이 메서드는 각각의 새로운 엣지에 대해
+하나가 아니라 두 개의 저장 단계가 필요하다는 사실을 숨겨서
+양 방향으로 그것에 대해 알 수 있게 합니다.
+그리고 `add_edge()`가 어느 노드가 이전에 본 적이 있는지
+알지도 못하고 신경 쓰지도 않는다는 점에 주목하세요.
+입력과 결과 데이터 구조가 각각 `defaultdict(set)`이기 때문에,
+`add_edge()` 메서드는 노드의 새로움에 대해
+행복하게 무지한 상태를 유지합니다 —
+`defaultdict`가 즉석에서 새로운 `set` 객체를 생성하여
+차이점을 처리해줍니다.
+위에서 봤듯이, `defaultdict`를 사용하지 않았다면
+`add_edge()`는 세 배나 길어졌을 것입니다.
+더 중요한 것은, 결과 코드를 이해하고 추론하기가
+더 어려워졌을 것입니다.
+이 구현은 파이썬다운 문제 접근법을 보여줍니다:
+간단하고, 직접적이며, 간결합니다.
 
-Callers should also be given a simple way to visit every edge
-without having to learn how to traverse our data structure:
+호출자들에게는 우리의 데이터 구조를 순회하는 방법을 배우지 않고도
+모든 엣지를 방문할 수 있는 간단한 방법이 제공되어야 합니다:
 
 ```python
     def edges(self):
@@ -764,15 +764,15 @@ without having to learn how to traverse our data structure:
                        for b in self.sorted(self._consequences_of[a])]
 ```
 
-The `Graph.sorted()` method
-makes an attempt to sort the nodes
-in a natural sort order
-(such as alphabetical)
-that can provide a stable output order for the user.
+`Graph.sorted()` 메서드는
+사용자에게 안정적인 출력 순서를 제공할 수 있는
+자연스러운 정렬 순서(예: 알파벳순)로
+노드들을 정렬하려고 시도합니다.
 
-By using this traversal method we can see that,
-following our three “add” method calls earlier,
-`g` now represents the same graph that we saw in \aosafigref{500l.contingent.graph}.
+이 순회 메서드를 사용하여
+앞서 세 번의 "add" 메서드 호출을 따라
+`g`가 이제 \aosafigref{500l.contingent.graph}에서 봤던
+같은 그래프를 표현한다는 것을 알 수 있습니다.
 
 ```python
 >>> from pprint import pprint
