@@ -506,15 +506,10 @@ Processing에는 이미지 조작을 지원하는 몇 가지 [내장 메서드](
 
 \aosafigure[240pt]{image-filters-images/architecture.jpg}{아키텍처 다이어그램}{500l.imagefilters.architecture}
 
-### Wrapper Classes and Tests
-Briefly mentioned above, there are two wrapper classes (`IFAImage` and
-`PixelColorHelper`) that wrap library methods for testability. This is because,
-in Java, the keyword "final" indicates a method that cannot be overridden or hidden by
-subclasses, which means they cannot be mocked.
+### 래퍼 클래스와 테스트
+앞서 간략히 언급했듯이, 테스트 가능성을 위해 라이브러리 메서드들을 감싸는 두 개의 래퍼 클래스(`IFAImage`와 `PixelColorHelper`)가 있습니다. 이는 Java에서 "final" 키워드가 하위 클래스에 의해 오버라이드되거나 숨겨질 수 없는 메서드를 나타내기 때문이며, 이는 그것들을 모킹할 수 없다는 것을 의미합니다.
 
-`PixelColorHelper` wraps methods on the applet. This means we need to pass the
-applet in to each method call. (Alternatively, we could make it a field and set
-it on initialization.)
+`PixelColorHelper`는 애플릿의 메서드들을 감싸는 래퍼입니다. 이는 각 메서드 호출에 애플릿을 전달해야 한다는 것을 의미합니다. (대안으로, 필드로 만들고 초기화 시에 설정할 수도 있습니다.)
 
 ```java
 package com.catehuston.imagefilter.color;
@@ -562,9 +557,7 @@ public class PixelColorHelper {
 }
 ```
 
-`IFAImage` is a wrapper around `PImage`, so in our app we don’t initialize a
-`PImage`, but rather an `IFAImage` — although we do have to expose the
-`PImage` so that it can be rendered.
+`IFAImage`는 `PImage` 주변의 래퍼이므로, 우리 앱에서는 `PImage`를 초기화하지 않고 대신 `IFAImage`를 초기화합니다 — 하지만 렌더링할 수 있도록 `PImage`를 노출해야 합니다.
 
 ```java
 package com.catehuston.imagefilter.model;
@@ -628,22 +621,9 @@ public class IFAImage {
 }
 ```
 
-Finally, we have our simple container class, `HSBColor`. Note that it is
-immutable (once created, it cannot be changed). Immutable objects are better
-for thread safety (something we have no need of here!) but are also easier to
-understand and reason about. In general, I tend to make simple model classes
-immutable unless I find a good reason for them not to be.
+마지막으로, 간단한 컨테이너 클래스인 `HSBColor`가 있습니다. 이것은 불변(immutable)이라는 점에 주목하세요(한번 생성되면 변경될 수 없습니다). 불변 객체는 스레드 안전성에 더 좋고(여기서는 필요하지 않지만!), 이해하고 추론하기도 더 쉽습니다. 일반적으로 저는 그렇게 하지 않을 합리적인 이유를 찾지 못하는 한 간단한 모델 클래스들을 불변으로 만드는 경향이 있습니다.
 
-Some of you may know that there are already classes representing color in
-[Processing](https://www.processing.org/reference/color_datatype.html) and in
-[Java itself](https://docs.oracle.com/javase/7/docs/api/java/awt/Color.html).
-Without going too much into the details of these, both of them are more focused
-on RGB color, and the Java class in particular adds way more complexity than we
-need. We would probably be okay if we did want to use Java’s `awt.Color`; however
-[awt GUI components cannot be used in
-Processing](http://processing.org/reference/javadoc/core/processing/core/PApplet.html),
-so for our purposes creating this simple container class to hold these
-bits of data we need is easiest.
+여러분 중 일부는 이미 [Processing](https://www.processing.org/reference/color_datatype.html)과 [Java 자체](https://docs.oracle.com/javase/7/docs/api/java/awt/Color.html)에 색상을 나타내는 클래스들이 있다는 것을 알고 있을 것입니다. 이것들의 세부사항에 너무 깊이 들어가지는 않겠지만, 둘 다 RGB 색상에 더 중점을 두고 있으며, 특히 Java 클래스는 우리가 필요한 것보다 훨씬 더 복잡합니다. Java의 `awt.Color`를 사용하고 싶다면 아마 괜찮을 것입니다. 하지만 [awt GUI 컴포넌트는 Processing에서 사용할 수 없으므로](http://processing.org/reference/javadoc/core/processing/core/PApplet.html), 우리 목적상 필요한 데이터 비트들을 담을 이 간단한 컨테이너 클래스를 만드는 것이 가장 쉽습니다.
 
 ```java
 package com.catehuston.imagefilter.model;
@@ -662,11 +642,9 @@ public class HSBColor {
 }
 ```
 
-### ColorHelper and Associated Tests
+### ColorHelper와 관련 테스트
 
-`ColorHelper` is where all the image manipulation lives. The methods in this
-class could be static if not for needing a `PixelColorHelper`. (Although we
-won’t get into the debate about the merits of static methods here.)
+`ColorHelper`는 모든 이미지 조작이 이루어지는 곳입니다. 이 클래스의 메서드들은 `PixelColorHelper`가 필요하지 않다면 static일 수 있습니다. (하지만 여기서는 static 메서드의 장점에 대한 논쟁에는 들어가지 않겠습니다.)
 
 ```java
 package com.catehuston.imagefilter.color;
@@ -774,29 +752,19 @@ public class ColorHelper {
 }
 ```
 
-We don't want to test this with whole images, because we want images that we
-know the properties of and reason about. We approximate this by mocking the
-images and making them return an array of pixels — in this case, 5. This
-allows us to
-verify that the behavior is as expected. Earlier we covered the concept of mock
-objects, and here we see their use. We are using
-[Mockito](http://docs.mockito.googlecode.com/hg/org/mockito/Mockito.html) as
-our mock object framework.
+전체 이미지로 테스트하고 싶지 않습니다. 속성을 알고 추론할 수 있는 이미지를 원하기 때문입니다. 이미지를 모킹하고 픽셀 배열(이 경우 5개)을 반환하도록 만들어 이를 근사화합니다. 이를 통해 동작이 예상대로 작동하는지 검증할 수 있습니다. 앞서 목 객체의 개념을 다뤘는데, 여기서 그 사용을 볼 수 있습니다. 우리는 목 객체 프레임워크로 [Mockito](http://docs.mockito.googlecode.com/hg/org/mockito/Mockito.html)를 사용하고 있습니다.
 
-To create a mock we use the `@Mock` annotation on an instance variable, and it will be mocked at runtime by the
-`MockitoJUnitRunner`.
+목을 생성하기 위해 인스턴스 변수에 `@Mock` 어노테이션을 사용하며, `MockitoJUnitRunner`에 의해 런타임에 모킹됩니다.
 
-To stub (set the behavior of) a method, we use: 
+메서드의 동작을 스텁(설정)하기 위해 다음을 사용합니다:
 
 ```java
     when(mock.methodCall()).thenReturn(value)
 ```
 
-To verify a method was called, we use `verify(mock.methodCall())`.
+메서드가 호출되었는지 검증하기 위해 `verify(mock.methodCall())`을 사용합니다.
 
-We'll show a few example test cases here; if you'd like to see the rest, visit
-the source folder for this project in the [_500 Lines or Less_ GitHub
-repository](https://github.com/aosabook/500lines/tree/master/image-filters).
+여기서 몇 가지 예제 테스트 케이스를 보여드리겠습니다. 나머지를 보고 싶다면 [_500 Lines or Less_ GitHub 저장소](https://github.com/aosabook/500lines/tree/master/image-filters)에서 이 프로젝트의 소스 폴더를 방문하세요.
 
 ```java
 package com.catehuston.imagefilter.color;
@@ -892,21 +860,18 @@ public class ColorHelperTest {
 
 \newpage
 
-Notice that:
+다음 사항에 주목하세요:
 
-- We use the `MockitoJUnit` runner.
-- We mock `PApplet`, `IFAImage` (created for expressly this purpose), and `ImageColorHelper`.
-- Test methods are annotated with `@Test`[^habits]. If you want to ignore a test (e.g., whilst debugging) you can add the annotation `@Ignore`.
-- In `setup()`, we create the pixel array and have the mock image always return it.
-- Helper methods make it easier to set expectations for recurring tasks (e.g., `set*ForPixel()`).
+- `MockitoJUnit` 러너를 사용합니다.
+- `PApplet`, `IFAImage`(이 목적을 위해 명시적으로 생성됨), 그리고 `ImageColorHelper`를 모킹합니다.
+- 테스트 메서드는 `@Test`[^habits]로 어노테이션됩니다. 테스트를 무시하고 싶다면(예: 디버깅하는 동안) `@Ignore` 어노테이션을 추가할 수 있습니다.
+- `setup()`에서 픽셀 배열을 생성하고 목 이미지가 항상 그것을 반환하도록 합니다.
+- 헬퍼 메서드들은 반복되는 작업(예: `set*ForPixel()`)에 대한 기대값 설정을 더 쉽게 만들어줍니다.
 
-[^habits]: Method names in tests need not start with `test` as of JUnit 4, but habits are hard to break.
+[^habits]: JUnit 4부터는 테스트 메서드 이름이 `test`로 시작할 필요가 없지만, 습관은 고치기 어렵습니다.
 
-### Image State and Associated Tests
-`ImageState` holds the current "state" of the image — the image itself, and the
-settings and filters that will be applied. We'll omit the full implementation
-of `ImageState` here, but we'll show how it can be tested. You can visit the source
-repository for this project to see the full details.
+### ImageState와 관련 테스트
+`ImageState`는 이미지의 현재 "상태" — 이미지 자체와 적용될 설정 및 필터들 — 를 보유합니다. 여기서는 `ImageState`의 전체 구현을 생략하지만, 어떻게 테스트할 수 있는지 보여드리겠습니다. 전체 세부사항을 보려면 이 프로젝트의 소스 저장소를 방문할 수 있습니다.
 
 ```java
 package com.catehuston.imagefilter.model;
@@ -1099,25 +1064,19 @@ public class ImageStateTest {
 }
 ```
 
-\newpage Notice that:
+\newpage 다음 사항에 주목하세요:
 
-- We exposed a protected initialization method `set` for testing that helps us quickly get the system under test into a specific state.
-- We mock `PApplet`, `ColorHelper`, and `IFAImage` (created expressly for this purpose).
-- This time we use a helper (`assertState()`) to simplify asserting the state of the image.
+- 테스트를 위해 protected 초기화 메서드 `set`을 노출했는데, 이는 테스트 대상 시스템을 특정 상태로 빠르게 만드는 데 도움이 됩니다.
+- `PApplet`, `ColorHelper`, 그리고 `IFAImage`(이 목적을 위해 명시적으로 생성됨)를 모킹합니다.
+- 이번에는 이미지의 상태를 검증하는 것을 단순화하기 위해 헬퍼(`assertState()`)를 사용합니다.
 
-#### Measuring test coverage
-I use [EclEmma](http://www.eclemma.org/installation.html#marketplace) to
-measure test coverage within Eclipse. Overall for the app we have 81% test
-coverage, with none of `ImageFilterApp` covered, 94.8% for `ImageState`, and
-100% for `ColorHelper`.
+#### 테스트 커버리지 측정
+저는 Eclipse 내에서 테스트 커버리지를 측정하기 위해 [EclEmma](http://www.eclemma.org/installation.html#marketplace)를 사용합니다. 전체적으로 앱의 테스트 커버리지는 81%이며, `ImageFilterApp`은 전혀 커버되지 않았고, `ImageState`는 94.8%, `ColorHelper`는 100%입니다.
 
 ### ImageFilterApp
-This is where everything is tied together, but we want as little as possible
-here. The App is hard to unit test (much of it is layout), but because we've pushed so much of the app's functionality into our own tested classes, we're able to assure ourselves that the important parts are working as intended.  
+이곳은 모든 것이 함께 연결되는 곳이지만, 가능한 한 적게 유지하고 싶습니다. 앱은 단위 테스트하기 어렵지만(대부분이 레이아웃), 앱의 기능 중 많은 부분을 자체 테스트된 클래스들로 밀어넣었기 때문에 중요한 부분들이 의도한 대로 작동하고 있다는 것을 확신할 수 있습니다.
 
-We set the size of the app, and do the layout. (These things are verified by
-running the app and making sure it looks okay — no matter how good the test coverage,
-this step should not be skipped!)
+앱의 크기를 설정하고 레이아웃을 합니다. (이런 것들은 앱을 실행하고 제대로 보이는지 확인함으로써 검증됩니다 — 테스트 커버리지가 아무리 좋아도 이 단계는 건너뛰면 안 됩니다!)
 
 ```java
 package com.catehuston.imagefilter.app;
@@ -1255,42 +1214,22 @@ public class ImageFilterApp extends PApplet {
 }
 ```
 
-Notice that:
+다음 사항에 주목하세요:
 
-- Our implementation extends `PApplet`.
-- Most work is done in `ImageState`.
-- `fileSelected()` is the callback for `selectInput()`.
-- `static final` constants are defined up at the top.
+- 우리 구현은 `PApplet`을 확장합니다.
+- 대부분의 작업은 `ImageState`에서 이루어집니다.
+- `fileSelected()`는 `selectInput()`의 콜백입니다.
+- `static final` 상수들이 맨 위에 정의되어 있습니다.
 
-## The Value of Prototyping
-In real world programming, we spend a lot of time on productionisation work.
-Making things look just so. Maintaining 99.9%
-uptime. We spend more time on corner cases than refining algorithms.
+## 프로토타이핑의 가치
+실제 프로그래밍에서 우리는 제품화 작업에 많은 시간을 보냅니다. 모든 것을 완벽하게 보이게 만들고, 99.9% 가동률을 유지하는 것이죠. 알고리즘을 개선하는 것보다 예외 상황에 더 많은 시간을 보냅니다.
 
-These constraints and requirements are important for our users. However there’s
-also space for freeing ourselves from them to play and explore.
+이러한 제약사항과 요구사항들은 사용자들에게 중요합니다. 하지만 그런 것들로부터 자유로워져 놀고 탐험할 수 있는 공간도 있습니다.
 
-Eventually, I decided to port this to a native mobile app. Processing has an
-Android library, but as many mobile developers do, I opted to go iOS first. I
-had years of iOS experience, although I’d done little with CoreGraphics, but I
-don’t think even if I had had this idea initially, I would have been able to
-build it straight away on iOS. The platform forced me to operate in the RGB
-color space, and made it hard to extract the pixels from the image (hello, C).
-Memory and waiting was a major risk. 
+결국, 저는 이것을 네이티브 모바일 앱으로 포팅하기로 결정했습니다. Processing에는 Android 라이브러리가 있지만, 많은 모바일 개발자들이 그러하듯 저는 iOS를 먼저 선택했습니다. 저는 수년간의 iOS 경험이 있었지만 CoreGraphics로는 거의 작업해본 적이 없었는데, 처음에 이 아이디어를 가졌더라도 iOS에서 바로 구축할 수 있었을 것 같지는 않습니다. 플랫폼이 RGB 색공간에서 작업하도록 강제했고, 이미지에서 픽셀을 추출하기 어렵게 만들었습니다(안녕, C언어). 메모리와 대기 시간이 주요 위험요소였습니다.
 
-There were exhilarating moments,
-when it worked for the first time. When it first ran on my device... without
-crashing. When I optimized memory usage by 66% and cut seconds off the runtime.
-And there were large periods of time locked away in a dark room, cursing
-intermittently.
+처음 작동했을 때, 처음 제 기기에서 실행되었을 때... 충돌 없이 말이죠. 메모리 사용량을 66% 최적화하고 런타임에서 몇 초를 절약했을 때 짜릿한 순간들이 있었습니다. 그리고 어두운 방에 갇혀서 간헐적으로 욕하며 보낸 긴 시간들도 있었습니다.
 
-Because I had my prototype, I could explain to my business partner and our
-designer what I was thinking and what the app would do. It meant I deeply
-understood how it would work, and it was just a question of making it work
-nicely on this other platform. I knew what I was aiming for, so at the end of a
-long day shut away fighting with it and feeling like I had little to show for
-it I kept going… and hit an exhilarating moment and milestone the following
-morning.
+프로토타입이 있었기 때문에, 저는 비즈니스 파트너와 디자이너에게 제가 생각하고 있는 것과 앱이 할 일을 설명할 수 있었습니다. 그것이 어떻게 작동할지 깊이 이해한다는 것을 의미했고, 단지 이 다른 플랫폼에서 잘 작동하게 만드는 것의 문제였습니다. 제가 목표로 하는 바를 알고 있었기 때문에, 그것과 씨름하며 하루 종일 갇혀 있고 보여줄 것이 거의 없다고 느끼는 긴 하루가 끝날 때도 계속할 수 있었습니다... 그리고 다음 날 아침 짜릿한 순간과 이정표에 도달했습니다.
 
-So, how do you find the dominant color in an image? There’s an app for
-that: [Show & Hide](http://showandhide.com).
+그래서, 이미지에서 주요 색상을 어떻게 찾을까요? 그를 위한 앱이 있습니다: [Show & Hide](http://showandhide.com).
