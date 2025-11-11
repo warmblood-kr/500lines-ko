@@ -1,47 +1,46 @@
-title: Clustering by Consensus
+title: 합의를 통한 클러스터링
 author: Dustin J. Mitchell
 <markdown>
-_Dustin is an open source software developer and release engineer at Mozilla.
-He has worked on projects as varied as a host configuration system in Puppet, a
-Flask-based web framework, unit tests for firewall configurations, and a
-continuous integration framework in Twisted Python. Find him as [\@djmitche](http://github.com/djmitche) on
-GitHub or at [dustin@mozilla.com](mailto:dustin@mozilla.com)._
+_Dustin은 Mozilla의 오픈 소스 소프트웨어 개발자이자 릴리스 엔지니어입니다.
+Puppet의 호스트 구성 시스템, Flask 기반 웹 프레임워크, 방화벽 구성을 위한 단위 테스트,
+Twisted Python의 지속적 통합 프레임워크 등 다양한 프로젝트에서 작업했습니다. GitHub에서 [\@djmitche](http://github.com/djmitche)로,
+이메일로는 [dustin@mozilla.com](mailto:dustin@mozilla.com)에서 찾을 수 있습니다._
 </markdown>
-## Introduction
+## 소개
 
-In this chapter, we'll explore implementation of a network protocol designed to support reliable distributed computation.
-Network protocols can be difficult to implement correctly, so we'll look at some techniques for minimizing bugs and for catching and fixing the remaining few.
-Building reliable software, too, requires some special development and debugging techniques.
+이 장에서는 신뢰성 있는 분산 컴퓨팅을 지원하도록 설계된 네트워크 프로토콜의 구현을 살펴보겠습니다.
+네트워크 프로토콜은 올바르게 구현하기 어려울 수 있으므로, 버그를 최소화하고 남은 몇 가지 버그를 포착하고 수정하는 기법을 살펴보겠습니다.
+신뢰성 있는 소프트웨어 구축에도 특별한 개발 및 디버깅 기법이 필요합니다.
 
-## Motivating Example
+## 동기 부여 예제
 
-The focus of this chapter is on the protocol implementation, but as a motivating example let's consider a simple bank account management service.
-In this service, each account has a current balance and is identified with an account number.
-Users access the accounts by requesting operations like "deposit", "transfer", or "get-balance".
-The "transfer" operation operates on two accounts at once -- the source and destination accounts -- and must be rejected if the source account's balance is too low.
+이 장의 초점은 프로토콜 구현에 있지만, 동기 부여 예제로 간단한 은행 계좌 관리 서비스를 생각해보겠습니다.
+이 서비스에서 각 계좌는 현재 잔액을 가지며 계좌 번호로 식별됩니다.
+사용자는 "입금", "이체", "잔액 조회"와 같은 작업을 요청하여 계좌에 접근합니다.
+"이체" 작업은 두 계좌(출금 계좌와 입금 계좌)에서 동시에 작동하며, 출금 계좌의 잔액이 부족할 경우 거부되어야 합니다.
 
-If the service is hosted on a single server, this is easy to implement: use a lock to make sure that transfer operations don't run in parallel, and verify the source account's balance in that method.
-However, a bank cannot rely on a single server for its critical account balances.
-Instead, the service is *distributed* over multiple servers, with each running a separate instance of exactly the same code.
-Users can then contact any server to perform an operation.
+서비스가 단일 서버에서 호스팅된다면 구현하기 쉽습니다: 이체 작업이 병렬로 실행되지 않도록 잠금을 사용하고, 해당 메서드에서 출금 계좌의 잔액을 확인하면 됩니다.
+그러나 은행은 중요한 계좌 잔액을 단일 서버에 의존할 수 없습니다.
+대신 서비스는 여러 서버에 *분산*되어 있으며, 각 서버는 정확히 동일한 코드의 별도 인스턴스를 실행합니다.
+사용자는 작업을 수행하기 위해 어떤 서버든 연결할 수 있습니다.
 
-In a naive implementation of distributed processing, each server would keep a local copy of every account's balance.
-It would handle any operations it received, and send updates for account balances to other servers.
-But this approach introduces a serious failure mode: if two servers process operations for the same account at the same time, which new account balance is correct?
-Even if the servers share operations with one another instead of balances, two simultaneous transfers out of an account might overdraw the account.
+분산 처리의 단순한 구현에서는 각 서버가 모든 계좌 잔액의 로컬 복사본을 유지합니다.
+서버는 수신된 모든 작업을 처리하고, 계좌 잔액 업데이트를 다른 서버에 전송합니다.
+그러나 이 접근법은 심각한 실패 모드를 도입합니다: 두 서버가 동시에 같은 계좌에 대한 작업을 처리한다면, 어떤 새로운 계좌 잔액이 올바른 것일까요?
+서버들이 잔액 대신 작업을 서로 공유한다고 해도, 계좌에서 동시에 두 번의 이체가 발생하면 계좌가 마이너스가 될 수 있습니다.
 
-Fundamentally, these failures occur when servers use their local state to perform operations, without first ensuring that the local state matches the state on other servers.
-For example, imagine that server A receives a transfer operation from Account 101 to Account 202, when server B has already processed another transfer of Account 101's full balance to Account 202, but not yet informed server A.
-The local state on server A is different from that on server B, so server A incorrectly allows the transfer to complete, even though the result is an overdraft on Account 101.
+근본적으로 이러한 실패는 서버가 로컬 상태가 다른 서버의 상태와 일치하는지 먼저 확인하지 않고 로컬 상태를 사용하여 작업을 수행할 때 발생합니다.
+예를 들어, 서버 A가 계좌 101에서 계좌 202로의 이체 작업을 받았는데, 서버 B가 이미 계좌 101의 전체 잔액을 계좌 202로 이체하는 다른 작업을 처리했지만 아직 서버 A에 알리지 않은 상황을 상상해보세요.
+서버 A의 로컬 상태는 서버 B의 상태와 다르므로, 서버 A는 잘못되게 이체를 완료하도록 허용하며, 그 결과 계좌 101이 마이너스가 됩니다.
 
-## Distributed State Machines
+## 분산 상태 머신
 
-The technique for avoiding such problems is called a "distributed state machine".
-The idea is that each server executes exactly the same deterministic state machine on exactly the same inputs.
-By the nature of state machines, then, each server will see exactly the same outputs.
-Operations such as "transfer" or "get-balance", together with their parameters (account numbers and amounts) represent the inputs to the state machine.
+이러한 문제를 피하는 기법을 "분산 상태 머신"이라고 합니다.
+아이디어는 각 서버가 정확히 동일한 입력에 대해 정확히 동일한 결정적 상태 머신을 실행한다는 것입니다.
+상태 머신의 특성상 각 서버는 정확히 동일한 출력을 보게 됩니다.
+"이체"나 "잔액 조회"와 같은 작업과 그 매개변수(계좌 번호 및 금액)가 상태 머신의 입력을 나타냅니다.
 
-The state machine for this application is simple:
+이 애플리케이션의 상태 머신은 간단합니다:
 
 ```python
     def execute_operation(state, operation):
@@ -60,78 +59,78 @@ The state machine for this application is simple:
             return state, state.accounts[operation.account]
 ```
 
-Note that executing the "get-balance" operation does not modify the state, but is still implemented as a state transition.
-This guarantees that the returned balance is the latest information in the cluster of servers, and is not based on the (possibly stale) local state on a single server.
+"잔액 조회" 작업을 실행해도 상태를 수정하지 않지만, 여전히 상태 전환으로 구현됩니다.
+이는 반환된 잔액이 서버 클러스터의 최신 정보이며, 단일 서버의 (오래된 가능성이 있는) 로컬 상태를 기반으로 하지 않음을 보장합니다.
 
-This may look different than the typical state machine you'd learn about in a computer science course.
-Rather than a finite set of named states with labeled transitions, this machine's state is the collection of account balances, so there are infinite possible states.
-Still, the usual rules of deterministic state machines apply: starting with the same state and processing the same operations will always produce the same output.
+이것은 컴퓨터 과학 과정에서 배우는 일반적인 상태 머신과 다르게 보일 수 있습니다.
+레이블이 붙은 전환을 가진 유한한 명명된 상태 집합이 아니라, 이 머신의 상태는 계좌 잔액의 모음이므로 무한한 가능한 상태가 있습니다.
+그러나 결정적 상태 머신의 일반적인 규칙이 적용됩니다: 동일한 상태에서 시작하여 동일한 작업을 처리하면 항상 동일한 출력을 생성합니다.
 
-So, the distributed state machine technique ensures that the same operations occur on each host.
-But the problem remains of ensuring that every server agrees on the inputs to the state machine.
-This is a problem of *consensus*, and we'll address it with a derivative of the Paxos algorithm.
+따라서 분산 상태 머신 기법은 각 호스트에서 동일한 작업이 발생하도록 보장합니다.
+그러나 모든 서버가 상태 머신의 입력에 대해 동의하도록 보장하는 문제가 남아 있습니다.
+이것은 *합의*의 문제이며, 우리는 Paxos 알고리즘의 파생을 사용하여 이를 해결할 것입니다.
 
-## Consensus by Paxos
+## Paxos를 통한 합의
 
-Paxos was described by Leslie Lamport in a fanciful paper, first submitted in 1990 and eventually published in 1998, entitled "The Part-Time Parliament"[^parttime].
-Lamport's paper has a great deal more detail than we will get into here, and is a fun read.
-The references at the end of the chapter describe some extensions of the algorithm that we have adapted in this implementation.
+Paxos는 Leslie Lamport가 1990년에 처음 제출하고 1998년에 결국 출판된 "The Part-Time Parliament"[^parttime]라는 제목의 상상력 넘치는 논문에서 설명되었습니다.
+Lamport의 논문은 우리가 여기서 다룰 것보다 훨씬 더 자세한 내용을 담고 있으며, 재미있게 읽을 수 있습니다.
+이 장 끝의 참고 문헌은 우리가 이 구현에서 적응한 알고리즘의 일부 확장을 설명합니다.
 
-The simplest form of Paxos provides a way for a set of servers to agree on one value, for all time.
-Multi-Paxos builds on this foundation by agreeing on a numbered sequence of facts, one at a time.
-To implement a distributed state machine, we use Multi-Paxos to agree on each state-machine input, and execute them in sequence.
+Paxos의 가장 간단한 형태는 서버 집합이 영원히 하나의 값에 동의하는 방법을 제공합니다.
+Multi-Paxos는 이 기반 위에 구축되어 번호가 매겨진 사실 시퀀스에 대해 한 번에 하나씩 동의합니다.
+분산 상태 머신을 구현하기 위해, 우리는 Multi-Paxos를 사용하여 각 상태 머신 입력에 동의하고 순서대로 실행합니다.
 
 [^parttime]: L. Lamport, "The Part-Time Parliament," ACM Transactions on Computer Systems, 16(2):133–169, May 1998.
 
 ### Simple Paxos
 
-So let's start with "Simple Paxos", also known as the Synod protocol, which provides a way to agree on a single value that can never change.
-The name Paxos comes from the mythical island in "The Part-Time Parliament", where lawmakers vote on legislation through a process Lamport dubbed the Synod protocol.
+"Simple Paxos"부터 시작해보겠습니다. 이는 Synod 프로토콜이라고도 불리며, 절대 변경될 수 없는 단일 값에 대해 합의하는 방법을 제공합니다.
+Paxos라는 이름은 "The Part-Time Parliament"의 신화적인 섬에서 유래되었으며, 여기서 입법자들이 Lamport가 Synod 프로토콜이라고 명명한 과정을 통해 법안에 투표합니다.
 
-The algorithm is a building block for more complex algorithms, as we'll see below.
-The single value we'll agree on in this example is the first transaction processed by our hypothetical bank.
-While the bank will process transactions every day, the first transaction will only occur once and never change, so we can use Simple Paxos to agree on its details.
+이 알고리즘은 아래에서 보겠지만 더 복잡한 알고리즘의 구성 요소입니다.
+이 예제에서 우리가 합의할 단일 값은 가상의 은행에서 처리된 첫 번째 거래입니다.
+은행은 매일 거래를 처리하지만, 첫 번째 거래는 한 번만 발생하고 절대 변경되지 않으므로 Simple Paxos를 사용하여 그 세부 사항에 대해 합의할 수 있습니다.
 
-The protocol operates in a series of ballots, each led by a single member of the cluster, called the proposer.
-Each ballot has a unique ballot number based on an integer and the proposer's identity.
-The proposer's goal is to get a majority of cluster members, acting as acceptors, to accept its value, but only if another value has not already been decided.
+프로토콜은 일련의 투표로 작동하며, 각 투표는 제안자(proposer)라고 불리는 클러스터의 단일 구성원이 주도합니다.
+각 투표는 정수와 제안자의 신원을 기반으로 한 고유한 투표 번호를 가집니다.
+제안자의 목표는 수락자(acceptor) 역할을 하는 클러스터 구성원의 과반수가 자신의 값을 수락하도록 하는 것이지만, 다른 값이 이미 결정되지 않았을 때만 가능합니다.
 
-\aosafigure[240pt]{cluster-images/ballot.png}{A Ballot}{500l.cluster.ballot}
+\aosafigure[240pt]{cluster-images/ballot.png}{투표}{500l.cluster.ballot}
 
-A ballot begins with the proposer sending a ``Prepare`` message with the ballot number *N* to the acceptors and waiting to hear from a majority (\aosafigref{500l.cluster.ballot}.)
+투표는 제안자가 투표 번호 *N*과 함께 ``Prepare`` 메시지를 수락자들에게 보내고 과반수로부터 응답을 기다리는 것으로 시작됩니다(\aosafigref{500l.cluster.ballot}).
 
-The ``Prepare`` message is a request for the accepted value (if any) with the highest ballot number less than *N*.
-Acceptors respond with a ``Promise`` containing any value they have already accepted, and promising not to accept any ballot numbered less than *N* in the future.
-If the acceptor has already made a promise for a larger ballot number, it includes that number in the ``Promise``, indicating that the proposer has been pre-empted.
-In this case, the ballot is over, but the proposer is free to try again in another ballot (and with a larger ballot number).
+``Prepare`` 메시지는 *N*보다 작은 가장 높은 투표 번호를 가진 수락된 값(있다면)에 대한 요청입니다.
+수락자들은 이미 수락한 값(있다면)을 포함하는 ``Promise``로 응답하며, 앞으로 *N*보다 작은 번호의 투표는 수락하지 않겠다고 약속합니다.
+수락자가 이미 더 큰 투표 번호에 대해 약속을 한 경우, ``Promise``에 해당 번호를 포함하여 제안자가 선점되었음을 나타냅니다.
+이 경우 투표는 끝나지만, 제안자는 다른 투표에서(그리고 더 큰 투표 번호로) 다시 시도할 수 있습니다.
 
-When the proposer has heard back from a majority of the acceptors, it sends an ``Accept`` message, including the ballot number and value, to all acceptors.
-If the proposer did not receive any existing value from any acceptor, then it sends its own desired value.
-Otherwise, it sends the value from the highest-numbered promise.
+제안자가 수락자의 과반수로부터 응답을 받으면, 투표 번호와 값을 포함하는 ``Accept`` 메시지를 모든 수락자에게 보냅니다.
+제안자가 어떤 수락자로부터도 기존 값을 받지 않았다면, 자신이 원하는 값을 보냅니다.
+그렇지 않으면, 가장 높은 번호의 약속에서 온 값을 보냅니다.
 
-Unless it would violate a promise, each acceptor records the value from the ``Accept`` message as accepted and replies with an ``Accepted`` message.
-The ballot is complete and the value decided when the proposer has heard its ballot number from a majority of acceptors.
+약속을 위반하지 않는 한, 각 수락자는 ``Accept`` 메시지의 값을 수락된 것으로 기록하고 ``Accepted`` 메시지로 응답합니다.
+제안자가 수락자의 과반수로부터 자신의 투표 번호를 들었을 때 투표가 완료되고 값이 결정됩니다.
 
-Returning to the example, initially no other value has been accepted, so the acceptors all send back a ``Promise`` with no value, and the proposer sends an ``Accept`` containing its value, say:
+예제로 돌아가서, 처음에는 다른 값이 수락되지 않았으므로 수락자들은 모두 값이 없는 ``Promise``를 보내고, 제안자는 다음과 같은 자신의 값을 포함하는 ``Accept``를 보냅니다:
 
 ```python
     operation(name='deposit', amount=100.00, destination_account='Mike DiBernardo')
 ```
 
-If another proposer later initiates a ballot with a lower ballot number and a different operation (say, a transfer to acount ``'Dustin J. Mitchell'``), the acceptors will simply not accept it.
-If that ballot has a larger ballot number, then the ``Promise`` from the acceptors will inform the proposer about Michael's $100.00 deposit operation, and the proposer will send that value in the ``Accept`` message instead of the transfer to Dustin.
-The new ballot will be accepted, but in favor of the same value as the first ballot.
+나중에 다른 제안자가 더 낮은 투표 번호와 다른 작업(예: ``'Dustin J. Mitchell'`` 계좌로의 이체)으로 투표를 시작하면, 수락자들은 단순히 이를 수락하지 않습니다.
+해당 투표가 더 큰 투표 번호를 가진다면, 수락자들의 ``Promise``는 Michael의 $100.00 입금 작업에 대해 제안자에게 알려주고, 제안자는 Dustin으로의 이체 대신 해당 값을 ``Accept`` 메시지에서 보낼 것입니다.
+새로운 투표는 수락되지만, 첫 번째 투표와 동일한 값을 위해서입니다.
 
-In fact, the protocol will never allow two different values to be decided, even if the ballots overlap, messages are delayed, or a minority of acceptors fail.
+실제로 이 프로토콜은 투표가 겹치거나, 메시지가 지연되거나, 소수의 수락자가 실패하더라도 두 개의 서로 다른 값이 결정되는 것을 절대 허용하지 않습니다.
 
-When multiple proposers make a ballot at the same time, it is easy for neither ballot to be accepted.
-Both proposers then re-propose, and hopefully one wins, but the deadlock can continue indefinitely if the timing works out just right.
+여러 제안자가 동시에 투표를 할 때, 어떤 투표도 수락되지 않기 쉽습니다.
+그러면 두 제안자 모두 다시 제안하고, 하나가 이기기를 바라지만, 타이밍이 정확히 맞으면 교착 상태가 무한정 계속될 수 있습니다.
 
-Consider the following sequence of events:
+다음 일련의 사건을 고려해보세요:
 
-* Proposer A performs the ``Prepare``/``Promise`` phase for ballot number 1.
-* Before Proposer A manages to get its proposal accepted, Proposer B performs a \newline ``Prepare``/``Promise`` phase for ballot number 2.
-* When Proposer A finally sends its ``Accept`` with ballot number 1, the acceptors reject it because they have already promised ballot number 2.
+* 제안자 A가 투표 번호 1에 대해 ``Prepare``/``Promise`` 단계를 수행합니다.
+* 제안자 A가 자신의 제안을 수락받기 전에, 제안자 B가 투표 번호 2에 대해 \newline ``Prepare``/``Promise`` 단계를 수행합니다.
+* 제안자 A가 마침내 투표 번호 1로 ``Accept``를 보낼 때, 수락자들은 이미 투표 번호 2를 약속했기 때문에 이를 거부합니다.
 * Proposer A reacts by immediately sending a ``Prepare`` with a higher ballot number (3), before Proposer B can send its ``Accept`` message.
 * Proposer B's subsequent ``Accept`` is rejected, and the process repeats.
 
