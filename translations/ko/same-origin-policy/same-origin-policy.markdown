@@ -1,146 +1,64 @@
-title: The Same-Origin Policy
+title: 동일 출처 정책
 author: Eunsuk Kang, Santiago Perez De Rosso, and Daniel Jackson
 <markdown>
-_Eunsuk Kang is a PhD candidate and a member of the Software Design Group at MIT. He received his SM (Master of Science) in Computer Science from MIT (2010), and a Bachelor of Software Engineering from the University of Waterloo (2007). His research projects have focused on developing tools and techniques for software modeling and verification, with applications to security and safety-critical systems._
+_Eunsuk Kang은 MIT 소프트웨어 설계 그룹(Software Design Group)의 박사과정 학생이자 멤버입니다. 그는 MIT에서 컴퓨터 과학 석사 학위(2010)를, 워털루 대학교에서 소프트웨어 공학 학사 학위(2007)를 받았습니다. 그의 연구 프로젝트는 보안 및 안전 중요 시스템에 적용되는 소프트웨어 모델링 및 검증 도구와 기법 개발에 중점을 두고 있습니다._
 
-_Santiago Perez De Rosso is a PhD student in the Software Design Group at MIT. He received his SM in Computer Science from MIT (2015), and an undergraduate degree from ITBA (2011). He used to work at Google, developing frameworks and tools to make engineers more productive (2012). He currently spends most of his time thinking about design and version control._
+_Santiago Perez De Rosso는 MIT 소프트웨어 설계 그룹의 박사과정 학생입니다. 그는 MIT에서 컴퓨터 과학 석사 학위(2015)를, ITBA에서 학사 학위(2011)를 받았습니다. 그는 Google에서 엔지니어들의 생산성을 높이는 프레임워크와 도구를 개발하는 일을 했으며(2012), 현재는 대부분의 시간을 설계와 버전 관리에 대해 생각하며 보내고 있습니다._
 
-_Daniel Jackson is a professor in the Department of Electrical Engineering and Computer Science at MIT, and leads the Software Design Group in the Computer Science and Artificial Intelligence Laboratory. He received an MA from Oxford University (1984) in Physics, and his SM (1988) and PhD (1992) in Computer Science from MIT. He was a software engineer for Logica UK Ltd. (1984-1986), Assistant Professor of Computer Science at Carnegie Mellon University (1992-1997), and has been at MIT since 1997. He has broad interests in software engineering, especially in development methods, design and specification, formal methods, and safety critical systems._
+_Daniel Jackson은 MIT 전기공학 및 컴퓨터과학과(Department of Electrical Engineering and Computer Science) 교수이며, 컴퓨터과학 및 인공지능 연구소(Computer Science and Artificial Intelligence Laboratory)의 소프트웨어 설계 그룹을 이끌고 있습니다. 그는 옥스퍼드 대학교에서 물리학 석사 학위(1984)를, MIT에서 컴퓨터 과학 석사(1988)와 박사 학위(1992)를 받았습니다. Logica UK Ltd.에서 소프트웨어 엔지니어로 근무했고(1984-1986), 카네기 멜론 대학교에서 컴퓨터과학과 조교수를 역임했으며(1992-1997), 1997년부터 MIT에 재직하고 있습니다. 그는 소프트웨어 공학 분야, 특히 개발 방법론, 설계 및 명세, 형식적 방법론, 안전 중요 시스템에 폭넓은 관심을 가지고 있습니다._
 </markdown>
-## Introduction
+## 도입
 
-The same-origin policy (SOP) is an important part of the security
-mechanism of every modern browser. It controls when scripts running in
-a browser can communicate with one another (roughly, when they
-originate from the same website). First introduced in Netscape
-Navigator, the SOP now plays a critical role in the security of web
-applications; without it, it would be far easier for a malicious
-hacker to peruse your private photos on Facebook, read your email, or
-empty your bank account.
+동일 출처 정책(Same-Origin Policy, SOP)은 모든 현대 브라우저의 보안 메커니즘에서 중요한 부분입니다. 이 정책은 브라우저에서 실행되는 스크립트들이 언제 서로 통신할 수 있는지를 제어합니다(대략적으로는, 같은 웹사이트에서 출처한 경우). 넷스케이프 네비게이터에서 처음 도입된 SOP는 이제 웹 애플리케이션 보안에서 중요한 역할을 담당하고 있습니다. SOP가 없다면, 악의적인 해커가 페이스북의 개인 사진을 훔쳐보거나, 이메일을 읽거나, 은행 계좌를 비우는 것이 훨씬 쉬워질 것입니다.
 
-But the SOP is far from perfect. At times, it is too restrictive;
-there are cases (such as mashups) in which scripts from different
-origins should be able to share a resource but cannot. At other times
-it is not restrictive enough, leaving corner cases that can be
-exploited using common attacks such as cross-site request forgery.
-Furthermore, the design of the SOP has evolved organically over the
-years and puzzles many developers.
+하지만 SOP는 완벽하지 않습니다. 때로는 너무 제한적이어서, 서로 다른 출처의 스크립트들이 리소스를 공유해야 하는 경우(매시업 등)에도 불가능한 상황이 있습니다. 반대로 때로는 충분히 제한적이지 않아서, 사이트 간 요청 위조(cross-site request forgery)와 같은 일반적인 공격에 의해 악용될 수 있는 코너 케이스들이 남아있기도 합니다. 게다가 SOP의 설계는 수년에 걸쳐 유기적으로 진화해왔기 때문에 많은 개발자들을 당황시키고 있습니다.
 
-The goal of this chapter is to capture the essence of
-this important&mdash;yet often misunderstood&mdash;feature. In particular, we
-will attempt to answer the following questions:
+이 장의 목표는 중요하지만 종종 오해받는 이 기능의 본질을 파악하는 것입니다. 특히 다음과 같은 질문들에 대답해보고자 합니다:
 
-* Why is the SOP necessary? What are the types of security violations that it prevents?
-* How is the behavior of a web application affected by the SOP?
-* What are different mechanisms for bypassing the SOP? 
-* How secure are these mechanisms? What are potential security issues that they introduce?
+* SOP가 왜 필요한가? 이것이 방지하는 보안 위반의 유형은 무엇인가?
+* 웹 애플리케이션의 동작은 SOP에 의해 어떻게 영향을 받는가?
+* SOP를 우회하는 여러 메커니즘들은 무엇인가?
+* 이러한 메커니즘들은 얼마나 안전한가? 이들이 도입하는 잠재적 보안 문제는 무엇인가?
 
-Covering the SOP in its entirety is a daunting task, given the
-complexity of the parts that are involved&mdash;web servers, browsers,
-HTTP, HTML documents, client-side scripts, and so on. We
-would likely get bogged down by the gritty details of all these parts
-(and consume our 500 lines before even reaching SOP). But how can we
-hope to be precise without representing crucial details?
+SOP를 전체적으로 다루는 것은 관련된 부분들의 복잡성을 고려하면 어려운 작업입니다—웹 서버, 브라우저, HTTP, HTML 문서, 클라이언트 측 스크립트 등등 말입니다. 이러한 모든 부분들의 세부 사항에 얽매이게 되면 (SOP에 도달하기도 전에 500라인을 모두 소비하게 될 것입니다). 하지만 중요한 세부 사항을 표현하지 않고서는 어떻게 정확성을 기대할 수 있을까요?
 
-## Modeling with Alloy
+## Alloy를 활용한 모델링
 
-This chapter is somewhat different from others in this book. Instead
-of building a working implementation, we will construct an executable
-model that serves as a simple yet precise description of the
-SOP. Like an implementation, the model can be executed to explore
-dynamic behaviors of the system, but unlike an implementation, the
-model omits low-level details that may get in the way of understanding
-the essential concepts.
+이 장은 이 책의 다른 장들과는 다소 다릅니다. 실제로 동작하는 구현체를 만드는 대신, SOP의 간단하면서도 정확한 설명 역할을 하는 실행 가능한 모델을 구축할 것입니다. 구현체와 마찬가지로 이 모델은 시스템의 동적 행동을 탐색하기 위해 실행될 수 있지만, 구현체와는 달리 핵심 개념을 이해하는 데 방해가 될 수 있는 저수준 세부 사항들은 생략합니다.
 
-The approach we take might be called “agile modeling” because of its
-similarities to agile programming. We work incrementally, assembling
-the model bit by bit. Our evolving model is at every point something
-that can be executed. We formulate and run tests as we go, so that by
-the end we have not only the model itself but also a collection of
-_properties_ that it satisfies.
+우리가 취하는 접근 방식은 애자일 프로그래밍과의 유사성 때문에 "애자일 모델링"이라고 불릴 수 있습니다. 우리는 점진적으로 작업하며, 모델을 조각조각 조립해 나갑니다. 진화하는 우리의 모델은 매 순간 실행할 수 있는 상태입니다. 진행하면서 테스트를 공식화하고 실행하므로, 결국에는 모델 자체뿐만 아니라 그것이 만족하는 _속성들_의 모음도 얻게 됩니다.
 
-To construct this model, we use _Alloy_, a language for modeling and
-analyzing software design. An Alloy model cannot be executed in the
-traditional sense of program execution. Instead, a model can be (1)
-_simulated_ to produce an _instance_, which represents a valid
-scenario or configuration of a system, and (2) _checked_ to see
-whether the model satisfies a desired property.
+이 모델을 구축하기 위해 우리는 소프트웨어 설계를 모델링하고 분석하는 언어인 _Alloy_를 사용합니다. Alloy 모델은 전통적인 프로그램 실행 의미에서 실행될 수 없습니다. 대신, 모델은 (1) 시스템의 유효한 시나리오나 구성을 나타내는 _인스턴스_를 생성하기 위해 _시뮬레이션_되거나, (2) 모델이 원하는 속성을 만족하는지 확인하기 위해 _검사_될 수 있습니다.
 
-Despite the above similarities, agile modeling differs from agile
-programming in one key respect: Although we'll be running tests, we
-actually won't be writing any. Alloy's analyzer generates test cases
-automatically, and all that needs to be provided is the property to be
-checked. Needless to say, this saves a lot of trouble (and text). The
-analyzer actually executes all possible test cases up to a certain
-size (called a _scope_); this typically means generating all starting
-states with at most some number of objects, and then choosing
-operations and arguments to apply up to some number of steps. Because
-so many tests (typically billions) are executed, and because all
-possible configurations that a state can take are covered (albeit
-within the scope), this analysis tends to expose bugs more effectively
-than conventional testing (and is sometimes described as "bounded verification").
+위의 유사점들에도 불구하고, 애자일 모델링은 한 가지 핵심적인 면에서 애자일 프로그래밍과 다릅니다: 테스트를 실행하기는 하지만, 실제로는 테스트를 작성하지 않습니다. Alloy의 분석기가 테스트 케이스를 자동으로 생성하며, 제공해야 하는 것은 검사할 속성뿐입니다. 말할 필요도 없이, 이는 많은 수고(와 텍스트)를 덜어줍니다. 분석기는 실제로 특정 크기(스코프_scope_라고 함)까지의 모든 가능한 테스트 케이스를 실행합니다. 이는 일반적으로 최대 몇 개의 객체를 가진 모든 시작 상태를 생성한 다음, 몇 단계까지 적용할 연산과 인수를 선택하는 것을 의미합니다. 매우 많은 테스트(일반적으로 수십억 개)가 실행되고, 상태가 취할 수 있는 모든 가능한 구성이 (스코프 내에서나마) 커버되기 때문에, 이러한 분석은 기존의 테스트보다 더 효과적으로 버그를 노출하는 경향이 있습니다(때로는 "경계 검증"이라고 설명되기도 합니다).
 
-### Simplifications
+### 단순화
 
-Because the SOP operates in the context of browsers, servers, HTTP, 
-and so on, a complete description would be overwhelming. So
-our model (like all models) abstracts away irrelevant aspects, such as
-how network packets are structured and routed. But it also simplifies
-some relevant aspects, which means that the model cannot fully account
-for all possible security vulnerabilities.
+SOP는 브라우저, 서버, HTTP 등의 맥락에서 동작하므로, 완전한 설명은 압도적일 것입니다. 따라서 우리 모델은 (모든 모델이 그렇듯이) 네트워크 패킷이 구조화되고 라우팅되는 방법과 같이 관련 없는 측면들을 추상화합니다. 하지만 일부 관련 있는 측면들도 단순화하는데, 이는 모델이 가능한 모든 보안 취약점을 완전히 설명할 수 없다는 것을 의미합니다.
 
-For example, we treat HTTP requests like remote procedure calls,
-ignoring the fact that responses to requests might come out of
-order. We also assume that DNS (the domain name service) is static, so
-we cannot consider attacks in which a DNS binding changes during an
-interaction. In principle, though, it would be possible to extend our
-model to cover all these aspects, although it's in the very nature of
-security analysis that no model (even if it represents the entire
-codebase) can be guaranteed to be complete.
+예를 들어, 우리는 HTTP 요청을 원격 프로시저 호출처럼 다루며, 요청에 대한 응답이 순서대로 오지 않을 수 있다는 사실을 무시합니다. 또한 DNS(도메인 네임 서비스)가 정적이라고 가정하므로, 상호작용 중에 DNS 바인딩이 변경되는 공격은 고려할 수 없습니다. 하지만 원칙적으로는 이러한 모든 측면을 다루도록 모델을 확장하는 것이 가능할 것입니다. 다만 보안 분석의 본질상 어떤 모델도 (전체 코드베이스를 표현하더라도) 완전하다고 보장될 수는 없습니다.
 
-## Roadmap
+## 로드맵
 
-Here is the order in which we will proceed with our model of the
-SOP. We will begin by building models of three key components that we
-need in order for us to talk about the SOP: HTTP, the
-browser, and client-side scripting. We will build on top of these
-basic models to define what it means for a web application to be
-_secure_, and then introduce the SOP as a mechanism that attempts to
-achieve the required security properties.
+다음은 SOP 모델을 진행할 순서입니다. 우리는 SOP에 대해 논의하기 위해 필요한 세 가지 핵심 구성요소의 모델을 구축하는 것으로 시작할 것입니다: HTTP, 브라우저, 그리고 클라이언트 측 스크립팅입니다. 이러한 기본 모델들을 바탕으로 웹 애플리케이션이 _안전하다_는 것이 무엇을 의미하는지 정의하고, 그런 다음 필요한 보안 속성들을 달성하려고 시도하는 메커니즘으로서 SOP를 도입할 것입니다.
 
-We will then see that the SOP can sometimes be too restrictive,
-getting in the way of a web application's proper functioning.  So we will
-introduce four different techniques that are commonly used to bypass
-the restrictions that are imposed by the policy.
+그 후 SOP가 때때로 너무 제한적이어서 웹 애플리케이션의 적절한 기능에 방해가 될 수 있음을 보게 될 것입니다. 따라서 정책에 의해 부과되는 제한을 우회하기 위해 일반적으로 사용되는 네 가지 다른 기법들을 소개할 것입니다.
 
-Feel free to explore the sections in any order you'd like. If you are
-new to Alloy, we recommend starting with the first three sections
-(HTTP, Browser, and Script), as they introduce some of the basic
-concepts of the modeling language. While you are making your way
-through the chapter, we also encourage you to play with the models in
-the Alloy Analyzer; run them, explore the generated scenarios, and try
-making modifications and seeing their effects. It is [freely
-available for download](http://alloy.mit.edu).
+원하는 순서대로 자유롭게 섹션들을 탐색해보세요. Alloy를 처음 접한다면, 모델링 언어의 기본 개념들을 소개하는 처음 세 섹션(HTTP, 브라우저, 스크립트)부터 시작하는 것을 권합니다. 이 장을 진행하는 동안, Alloy 분석기에서 모델들을 가지고 놀아보기를 권장합니다; 실행해보고, 생성된 시나리오들을 탐색하고, 수정을 해보면서 그 효과를 확인해보세요. Alloy 분석기는 [무료로 다운로드할 수 있습니다](http://alloy.mit.edu).
 
-## Model of the Web
+## 웹의 모델
 
 ### HTTP
 
-The first step in building an Alloy model is to declare some sets of
-objects. Let's start with resources:
+Alloy 모델을 구축하는 첫 번째 단계는 객체들의 집합을 선언하는 것입니다. 리소스부터 시작해보겠습니다:
 
 ```alloy
 sig Resource {}
 ```
 
-The keyword `sig` identifies this as an Alloy _signature_
-declaration. This introduces a set of resource objects; think of
-these, just like the objects of a class with no instance variables, as
-blobs that have identity but no content. When the analysis runs, this
-set will be determined, just as a class in an object-oriented language
-comes to denote a set of objects when the program executes.
+키워드 `sig`는 이것이 Alloy _시그니처_ 선언임을 나타냅니다. 이것은 리소스 객체들의 집합을 도입합니다. 인스턴스 변수가 없는 클래스의 객체들처럼, 이들을 정체성은 있지만 내용은 없는 덩어리로 생각하세요. 분석이 실행될 때 이 집합이 결정될 것이며, 이는 객체지향 언어에서 프로그램이 실행될 때 클래스가 객체들의 집합을 나타내게 되는 것과 같습니다.
 
-Resources are named by URLs (*uniform resource locators*):
+리소스들은 URL(*uniform resource locators*)로 명명됩니다:
 
 ```alloy
 sig Url {
@@ -153,29 +71,11 @@ sig Protocol, Port, Path {}
 sig Domain { subsumes: set Domain }
 ```
 
-Here we have five signature declarations, introducing a set of URLs
-and four additional sets for each of the basic kinds of objects they
-comprise. Within the URL declaration, we have four _fields_. Fields are
-like instance variables in a class; if `u` is a URL, for example, then
-`u.protocol` would represent the protocol of that URL (just like dot
-in Java). But in fact, as we'll see later, these fields are
-relations. You can think of each one as if it were a two-column
-database table. Thus `protocol` is a table with the first column
-containing URLs and the second column containing protocols. And the
-innocuous looking dot operator is in fact a rather general kind of
-relational join, so that you could also write `protocol.p` for all the
-URLs with a protocol `p`&mdash;but more on that later.
+여기서 우리는 다섯 개의 시그니처 선언을 가지고 있으며, URL들의 집합과 그것들을 구성하는 기본 객체 종류들 각각에 대한 네 개의 추가 집합을 도입하고 있습니다. URL 선언 내에서 우리는 네 개의 _필드_를 가지고 있습니다. 필드는 클래스의 인스턴스 변수와 같습니다. 예를 들어, `u`가 URL이라면 `u.protocol`은 그 URL의 프로토콜을 나타낼 것입니다(Java의 점 연산자와 같이). 하지만 사실, 나중에 보겠지만 이러한 필드들은 관계입니다. 각각을 두 열로 된 데이터베이스 테이블처럼 생각할 수 있습니다. 따라서 `protocol`은 첫 번째 열에 URL들을, 두 번째 열에 프로토콜들을 포함하는 테이블입니다. 그리고 무해해 보이는 점 연산자는 사실 상당히 일반적인 종류의 관계형 조인이므로, 프로토콜 `p`를 가진 모든 URL에 대해 `protocol.p`라고 쓸 수도 있습니다—하지만 이에 대한 자세한 내용은 나중에 설명하겠습니다.
 
-Note that paths, unlike URLs, are treated as if they have
-no structure&mdash;a simplification. The keyword `lone` (which can be
-read "less than or equal to one") says that each URL has at most one
-port. The path is the string that follows the host name in the URL,
-and which (for a simple static server) corresponds to the file path of
-the resource; we're assuming that it's always present, but can be an
-empty path.
+URL과 달리 경로는 구조가 없는 것으로 취급된다는 점에 주목하세요—이것은 단순화입니다. 키워드 `lone`("1 이하"로 읽을 수 있음)은 각 URL이 최대 하나의 포트를 가진다는 것을 의미합니다. 경로는 URL에서 호스트 이름 뒤에 오는 문자열로, (간단한 정적 서버의 경우) 리소스의 파일 경로에 해당합니다. 우리는 경로가 항상 존재한다고 가정하지만, 빈 경로일 수도 있습니다.
 
-Let us introduce clients and servers, each of which contains a mapping
-from paths to resources:
+경로에서 리소스로의 매핑을 포함하는 클라이언트와 서버를 도입해보겠습니다:
 
 ```alloy
 abstract sig Endpoint {}
@@ -185,21 +85,9 @@ abstract sig Server extends Endpoint {
 }
 ```
 
-The `extends` keyword introduces a subset, so the set `Client` of all
-clients, for example, is a subset of the set `Endpoint` of all
-endpoints. Extensions are disjoint, so no endpoint is both a client
-and a server. The `abstract` keyword says that all extensions of a
-signature exhaust it, so its occurrence in the declaration of
-`Endpoint`, for example, says that every endpoint must belong to one
-of the subsets (at this point, `Client` and `Server`). For a server
-`s`, the expression `s.resources` will denote a map from paths to
-resources (hence the arrow in the declaration). Recall that each field
-is actually a relation that includes the owning signature as a first
-column, so this field represents a three-column relation on `Server`,
-`Path` and `Resource`.
+`extends` 키워드는 부분집합을 도입하므로, 예를 들어 모든 클라이언트의 집합인 `Client`는 모든 엔드포인트의 집합인 `Endpoint`의 부분집합입니다. 확장은 서로소이므로, 어떤 엔드포인트도 클라이언트이면서 동시에 서버일 수는 없습니다. `abstract` 키워드는 시그니처의 모든 확장이 그것을 완전히 포함한다는 것을 의미하므로, 예를 들어 `Endpoint` 선언에서의 이 키워드는 모든 엔드포인트가 부분집합 중 하나(이 시점에서는 `Client`와 `Server`)에 속해야 한다는 것을 의미합니다. 서버 `s`에 대해 표현식 `s.resources`는 경로에서 리소스로의 맵을 나타낼 것입니다(따라서 선언에서 화살표가 있습니다). 각 필드는 실제로 소유하는 시그니처를 첫 번째 열로 포함하는 관계라는 것을 기억하세요. 따라서 이 필드는 `Server`, `Path`, `Resource`에 대한 세 열 관계를 나타냅니다.
 
-To map a URL to a server, we introduce a set `Dns` of domain name
-servers, each with a mapping from domains to servers:
+URL을 서버에 매핑하기 위해, 도메인에서 서버로의 매핑을 가진 도메인 네임 서버들의 집합 `Dns`를 도입합니다:
 
 ```alloy
 one sig Dns {
@@ -207,15 +95,9 @@ one sig Dns {
 }
 ```
 
-The keyword `one` in the signature declaration means that (for
-simplicity) we're going to assume exactly one domain name server, and
-there will be a single DNS mapping, given by the expression `Dns.map`.
-Again, as with the serving resources, this could be dynamic (and in
-fact there are known security attacks that rely on changing DNS
-bindings during an interaction) but we're simplifying.
+시그니처 선언에서 키워드 `one`은 (단순함을 위해) 정확히 하나의 도메인 네임 서버가 있다고 가정한다는 것을 의미하며, `Dns.map` 표현식으로 주어지는 단일 DNS 매핑이 있을 것입니다. 서빙 리소스와 마찬가지로, 이것도 동적일 수 있지만(실제로 상호작용 중에 DNS 바인딩 변경에 의존하는 알려진 보안 공격이 있습니다) 우리는 단순화하고 있습니다.
 
-In order to model HTTP requests, we also need the concept of
-_cookies_, so let's declare them:
+HTTP 요청을 모델링하기 위해서는 _쿠키_ 개념도 필요하므로, 이를 선언해보겠습니다:
 
 ```alloy
 sig Cookie {
@@ -223,11 +105,9 @@ sig Cookie {
 }
 ```
 
-Each cookie is scoped with a set of domains; this captures the fact
-that a cookie can apply to `*.mit.edu`, which would include all
-domains with the suffix `mit.edu`.
+각 쿠키는 도메인 집합으로 범위가 지정됩니다. 이는 쿠키가 `*.mit.edu`에 적용될 수 있다는 사실을 포착하는 것으로, `mit.edu` 접미사를 가진 모든 도메인을 포함할 것입니다.
 
-Finally, we can put this all together to construct a model of HTTP
+마지막으로, 이 모든 것을 종합하여 HTTP의 모델을 구축할 수 있습니다
 requests:
 
 ```alloy
