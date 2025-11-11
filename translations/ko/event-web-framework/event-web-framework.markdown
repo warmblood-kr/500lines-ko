@@ -1,92 +1,90 @@
-title: An Event-Driven Web Framework
+title: 이벤트 기반 웹 프레임워크
 author: Leo Zovic
 <markdown>
-_Leo (better known online as inaimathi) is a recovering Graphic Designer who has professionally written Scheme, Common Lisp, Erlang, Javascript, Haskell, Clojure, Go, Python, PHP and C. He currently blogs about programming, plays board games and works at a Ruby-based startup in Toronto, Ontario._
+_Leo(온라인에서는 inaimathi로 더 잘 알려진)는 그래픽 디자이너 출신으로, Scheme, Common Lisp, Erlang, Javascript, Haskell, Clojure, Go, Python, PHP, C를 전문적으로 다뤄왔습니다. 현재 프로그래밍에 관해 블로그를 쓰고, 보드게임을 즐기며, 토론토 온타리오의 Ruby 기반 스타트업에서 일하고 있습니다._
 </markdown>
 
-In 2013, I decided to write a [web-based game prototyping tool](https://github.com/Inaimathi/deal) for card and board games called _House_. In these types of games, it is common for one player to wait for another player to make a move; however, when the other player finally does take action, we would like for the waiting player to be notified of the move quickly thereafter.
+2013년에 저는 카드 게임과 보드게임을 위한 [웹 기반 게임 프로토타이핑 도구](https://github.com/Inaimathi/deal)인 _House_를 작성하기로 결정했습니다. 이런 유형의 게임에서는 한 플레이어가 다른 플레이어의 움직임을 기다리는 것이 일반적입니다. 하지만 상대방이 마침내 행동을 취했을 때, 기다리고 있던 플레이어가 그 움직임을 빠르게 통보받기를 원합니다.
 
-This is a problem that turns out to be more complicated than it first seems. In this chapter, we'll explore the issues with using HTTP to build this sort of interaction, and then we'll build a _web framework_ in Common Lisp that allows us to solve similar problems in the future.
+이것은 처음 보기보다 훨씬 복잡한 문제로 밝혀졌습니다. 이 장에서는 HTTP를 사용하여 이러한 종류의 상호작용을 구축할 때의 문제점들을 살펴보고, 미래에 유사한 문제들을 해결할 수 있도록 해주는 _웹 프레임워크_를 Common Lisp로 구축해보겠습니다.
 
-## The Basics of HTTP Servers
+## HTTP 서버의 기초
 
-At the simplest level, an HTTP exchange is a single request followed by a single response. A _client_ sends a request, which includes a resource identifier, an HTTP version tag, some headers and some parameters. The _server_ parses that request, figures out what to do about it, and sends a response which includes the same HTTP version tag, a response code, some headers and a response body.
+가장 단순한 수준에서, HTTP 교환은 하나의 요청과 그에 따른 하나의 응답으로 이루어집니다. _클라이언트_는 리소스 식별자, HTTP 버전 태그, 일부 헤더와 매개변수들을 포함한 요청을 보냅니다. _서버_는 그 요청을 파싱하고, 어떻게 처리할지 결정한 후, 동일한 HTTP 버전 태그, 응답 코드, 일부 헤더와 응답 본문을 포함한 응답을 보냅니다.
 
-Notice that, in this description, the server responds to a request from a specific client. In our case, we want each player to be updated about _any_ moves as soon as they happen, rather than only getting notifications when their own move is made. This means we need the server to _push_ messages to clients without first receiving a request for the information.[^polling]
+이 설명에서 주목할 점은, 서버가 특정 클라이언트로부터의 요청에 응답한다는 것입니다. 우리의 경우, 각 플레이어는 자신의 움직임이 만들어졌을 때만 알림을 받는 것이 아니라, _어떤_ 움직임이라도 일어나는 즉시 업데이트를 받기를 원합니다. 이는 서버가 정보에 대한 요청을 먼저 받지 않고도 클라이언트에게 메시지를 _푸시_해야 함을 의미합니다.[^polling]
 
-[^polling]: One solution to this problem is to force the clients to _poll_ the server. That is, each client would periodically send the server a request asking if anything has changed. This can work for simple applications, but in this chapter we're going to focus on the solutions available to you when this model stops working.
+[^polling]: 이 문제에 대한 한 가지 해결책은 클라이언트가 서버를 _폴링_하도록 강제하는 것입니다. 즉, 각 클라이언트가 주기적으로 서버에 변경사항이 있는지 묻는 요청을 보내는 것입니다. 이는 간단한 애플리케이션에서는 작동할 수 있지만, 이 장에서는 이 모델이 작동하지 않을 때 사용할 수 있는 해결책에 초점을 맞추겠습니다.
 
-There are several standard approaches to enabling server push over HTTP.
+HTTP를 통한 서버 푸시를 가능하게 하는 몇 가지 표준 접근법이 있습니다.
 
 ### Comet/Long Poll
 
-The "long poll" technique has the client send the server a new request as soon as it receives a response. Instead of fulfilling that request right away, the server waits on a subsequent event to respond. This is a bit of a semantic distinction, since the client is still taking action on every update.
+"long poll" 기법은 클라이언트가 응답을 받는 즉시 서버에 새로운 요청을 보내도록 합니다. 그 요청을 즉시 처리하는 대신, 서버는 후속 이벤트가 발생할 때까지 기다렸다가 응답합니다. 클라이언트가 여전히 모든 업데이트에 대해 행동을 취하므로, 이는 다소 의미론적인 구분입니다.
 
 ### Server-Sent Events (SSE)
 
-Server-sent events require that the client initiates a connection and then keeps it open. The server periodically writes new data to the connection without closing it, and the client interprets incoming new messages as they arrive rather than waiting for the response connection to terminate. This is a bit more efficient than the Comet/long poll approach because each message doesn't have to incur the overhead of new HTTP headers.
+서버 전송 이벤트는 클라이언트가 연결을 시작한 후 그 연결을 열어둘 것을 요구합니다. 서버는 연결을 닫지 않고 주기적으로 새로운 데이터를 연결에 씁니다. 클라이언트는 응답 연결이 종료되기를 기다리지 않고 도착하는 새로운 메시지들을 해석합니다. 각 메시지가 새로운 HTTP 헤더의 오버헤드를 감수할 필요가 없기 때문에 이는 Comet/long poll 접근법보다 약간 더 효율적입니다.
 
 ### WebSockets
 
-WebSockets are a communication protocol built on top of HTTP. The server and client open up an HTTP conversation, then perform a handshake and protocol escalation. The end result is that they're still communicating over TCP/IP, but they're not using HTTP to do it at all. The advantage this has over SSEs is that you can customize the protocol for efficiency.
+WebSocket은 HTTP 위에 구축된 통신 프로토콜입니다. 서버와 클라이언트는 HTTP 대화를 시작한 후 핸드셰이크와 프로토콜 에스컬레이션을 수행합니다. 최종 결과는 여전히 TCP/IP를 통해 통신하지만, HTTP를 전혀 사용하지 않는다는 것입니다. 이것이 SSE에 비해 갖는 장점은 효율성을 위해 프로토콜을 사용자 정의할 수 있다는 것입니다.
 
-### Long-Lived Connections
+### 장기간 지속되는 연결
 
-These three approaches are quite different from one another, but they all share an important characteristic: they all depend on long-lived connections. Long polling depends on the server keeping requests around until new data is available, SSEs keep an open stream between client and server to which data is periodically written, and WebSockets change the protocol a particular connection is using, but leave it open.
+이 세 가지 접근법은 서로 상당히 다르지만, 모두 중요한 특성을 공유합니다: 모두 장기간 지속되는 연결에 의존한다는 것입니다. Long polling은 새로운 데이터가 사용 가능해질 때까지 서버가 요청을 보관하는 것에 의존하고, SSE는 클라이언트와 서버 간에 데이터가 주기적으로 쓰여지는 열린 스트림을 유지하며, WebSocket은 특정 연결이 사용하는 프로토콜을 변경하지만 연결은 열어둡니다.
 
-To see why this might cause problems for your average HTTP server, let's consider how the underlying implementation might work.
+이것이 일반적인 HTTP 서버에 문제를 일으킬 수 있는 이유를 알아보기 위해, 기본적인 구현이 어떻게 작동하는지 살펴봅시다.
 
-### Traditional HTTP Server Architecture
+### 전통적인 HTTP 서버 아키텍처
 \label{sec.eventsweb.serverarch}
 
-A single HTTP server processes many requests concurrently. Historically, many HTTP servers have used a _thread-per-request_ architecture. That is, for each incoming request, the server creates a thread to do the work necessary to respond.
+하나의 HTTP 서버는 많은 요청을 동시에 처리합니다. 역사적으로, 많은 HTTP 서버는 _요청별 스레드_ 아키텍처를 사용해왔습니다. 즉, 들어오는 각 요청에 대해, 서버는 응답하는 데 필요한 작업을 수행하기 위한 스레드를 생성합니다.
 
-Since each of these connections is intended to be short-lived, we don't need many threads executing in parallel to handle them all. This model also simplifies the _implementation_ of the server by enabling the server programmer to write code as if there were only one connection being handled at any given time. It also gives us the freedom to clean up failed or "zombie" connections and their associated resources by killing the corresponding thread and letting the garbage collector do its job.
+이러한 연결들은 각각 단기간 지속되도록 의도되었으므로, 모든 연결을 처리하기 위해 병렬로 실행되는 많은 스레드가 필요하지 않습니다. 이 모델은 또한 서버 프로그래머가 주어진 시점에 하나의 연결만 처리되는 것처럼 코드를 작성할 수 있도록 함으로써 서버의 _구현_을 단순화합니다. 또한 해당 스레드를 종료하고 가비지 컬렉터가 그 역할을 하도록 함으로써 실패한 연결이나 "좀비" 연결과 관련된 리소스를 정리할 자유를 제공합니다.
 
-The key observation is that an HTTP server hosting a "traditional" web application that has $N$ concurrent users might only need to handle a very small fraction of $N$ requests _in parallel_ to succeed. For the type of interactive application that we are trying to build, $N$ users will almost certainly require the application to maintain at least $N$ connections in parallel, at once.
+핵심 관찰은 $N$명의 동시 사용자를 갖는 "전통적인" 웹 애플리케이션을 호스팅하는 HTTP 서버는 성공하기 위해 $N$ 요청의 아주 작은 부분만을 _병렬로_ 처리하면 될 수도 있다는 것입니다. 우리가 구축하려는 상호작용 애플리케이션의 경우, $N$명의 사용자는 거의 확실히 애플리케이션이 최소 $N$개의 연결을 동시에 병렬로 유지하도록 요구할 것입니다.
 
-The consequence of keeping long-lived connections around is that we'll need either:
+장기간 지속되는 연결을 유지하는 결과로, 우리는 다음 중 하나가 필요할 것입니다:
 
-- A platform where threads are "cheap" enough that we can use large numbers of them at once.
-- A server architecture that can handle many connections with a single thread.
+- 한 번에 많은 수를 사용할 수 있을 정도로 스레드가 "저렴한" 플랫폼
+- 단일 스레드로 많은 연결을 처리할 수 있는 서버 아키텍처
 
-There are programming environments such as [Racket](http://racket-lang.org/), [Erlang](http://www.erlang.org/), and [Haskell](http://hackage.haskell.org/package/base-4.7.0.1/docs/Control-Concurrent.html) that provide thread-like constructs that are "lightweight" enough to consider the first option. This approach requires the programmer to explicitly deal with synchronization issues, which are going to be much more prevalent in a system where connections are open for a long time and likely all competing for similar resources. Specifically, if we have some sort of central data shared by several users simultaneously, we will need to coordinate reads and writes of that data in some way.
+첫 번째 옵션을 고려할 만큼 "경량"인 스레드 유사 구조를 제공하는 [Racket](http://racket-lang.org/), [Erlang](http://www.erlang.org/), [Haskell](http://hackage.haskell.org/package/base-4.7.0.1/docs/Control-Concurrent.html) 같은 프로그래밍 환경들이 있습니다. 이 접근법은 프로그래머가 동기화 문제를 명시적으로 처리하도록 요구하는데, 이는 연결이 오랜 시간 동안 열려 있고 아마도 모두 유사한 리소스를 놓고 경쟁하는 시스템에서 훨씬 더 널리 퍼져 있을 것입니다. 특히, 여러 사용자가 동시에 공유하는 어떤 종류의 중앙 데이터가 있다면, 그 데이터의 읽기와 쓰기를 어떤 방식으로든 조정해야 할 것입니다.
 
-If we don't have cheap threads at our disposal or we are unwilling to work with explicit synchronization, we must consider having a single thread handle many connections.[^mn] In this model, our single thread is going to be handling tiny "slices" of many requests all at once, switching between them as efficiently as it possibly can. This system architecture pattern is most commonly referred to as _event-driven_ or _event-based_.[^eventbased]
+저렴한 스레드를 사용할 수 없거나 명시적인 동기화를 다루고 싶지 않다면, 단일 스레드가 많은 연결을 처리하도록 하는 것을 고려해야 합니다.[^mn] 이 모델에서, 우리의 단일 스레드는 많은 요청의 작은 "조각들"을 한 번에 처리하면서, 가능한 한 효율적으로 그들 사이를 전환할 것입니다. 이러한 시스템 아키텍처 패턴은 가장 일반적으로 _이벤트 기반_ 또는 _이벤트 주도_라고 불립니다.[^eventbased]
 
-[^mn]: We could consider a more general system that handles $N$ concurrent users with $M$ threads for some configurable value of $M$; in this model, the $N$ connections are said to be _multiplexed_ across the $M$ threads. In this chapter, we are going to focus on writing a program where $M$ is fixed at 1; however, the lessons learned here should be partially applicable to the more general model.
+[^mn]: 구성 가능한 $M$ 값에 대해 $M$개의 스레드로 $N$명의 동시 사용자를 처리하는 더 일반적인 시스템을 고려할 수 있습니다. 이 모델에서 $N$개의 연결은 $M$개의 스레드에 걸쳐 _멀티플렉싱_된다고 합니다. 이 장에서는 $M$이 1로 고정된 프로그램 작성에 초점을 맞출 것입니다. 그러나 여기서 배운 교훈은 더 일반적인 모델에 부분적으로 적용될 수 있을 것입니다.
 
-[^eventbased]: This nomenclature is a bit confusing, and has its origin in early operating-systems research. It refers to how communication is done between multiple concurrent processes. In a thread-based system, communication is done through a synchronized resource such as shared memory. In an event-based system, processes generally communicate through a queue where they post items that describe what they have done or what they want done, which is maintained by our single thread of execution. Since these items generally describe desired or past actions, they are referred to as 'events'.
+[^eventbased]: 이 명명법은 다소 혼란스럽며, 초기 운영체제 연구에서 기원을 가지고 있습니다. 이는 여러 동시 프로세스 간의 통신이 어떻게 이루어지는지를 의미합니다. 스레드 기반 시스템에서는 공유 메모리와 같은 동기화된 리소스를 통해 통신이 이루어집니다. 이벤트 기반 시스템에서는 프로세스들이 일반적으로 실행 단일 스레드에 의해 유지되는 큐를 통해 통신하며, 여기에 그들이 수행한 것 또는 수행하기를 원하는 것을 설명하는 항목들을 게시합니다. 이러한 항목들은 일반적으로 원하는 또는 과거의 행동을 설명하므로 '이벤트'라고 불립니다.
 
-Since we are only managing a single thread, we don't have to worry as much about protecting shared resources from simultaneous access. However, we do have a unique problem of our own in this model. Since our single thread is working on all in-flight requests at once, we must make sure that it __never blocks__. Blocking on any connection blocks the entire server from making progress on any other request. We have to be able to move on to another client if the current one can't be serviced further, and we need to be able to do so in a manner that doesn't throw out the work done so far.[^crawler]
+단일 스레드만을 관리하므로, 동시 접근으로부터 공유 리소스를 보호하는 것에 대해 그렇게 많이 걱정할 필요가 없습니다. 그러나 이 모델에서는 고유한 문제가 있습니다. 단일 스레드가 모든 진행 중인 요청을 한 번에 처리하고 있으므로, 그것이 __절대 블록되지 않도록__ 해야 합니다. 어떤 연결에서 블록되면 전체 서버가 다른 요청에서 진행하는 것을 막습니다. 현재 클라이언트를 더 이상 서비스할 수 없다면 다른 클라이언트로 넘어갈 수 있어야 하며, 지금까지 수행한 작업을 버리지 않는 방식으로 그렇게 할 수 있어야 합니다.[^crawler]
 
-[^crawler]: See \aosachapref{s:crawler} for another take on this problem. 
+[^crawler]: 이 문제에 대한 다른 접근법은 \aosachapref{s:crawler}를 참조하세요.
 
-While it is uncommon for a programmer to explicitly tell a thread to stop working, many common operations carry a risk of blocking. Because threads are so prevalent, and reasoning about asynchronicity is a heavy burden on the programmer, many languages and their frameworks assume that blocking on I/O is a desirable property. This makes it very easy to block somewhere _by accident_. Luckily, Common Lisp does provide us with a minimal set of asynchronous I/O primitives which we can build on top of.
+프로그래머가 명시적으로 스레드에게 작업을 중단하라고 말하는 것은 드물지만, 많은 일반적인 작업들이 블로킹의 위험을 수반합니다. 스레드가 매우 널리 퍼져 있고, 비동기성에 대한 추론이 프로그래머에게 큰 부담이기 때문에, 많은 언어와 그들의 프레임워크는 I/O에서 블로킹하는 것이 바람직한 속성이라고 가정합니다. 이는 _우연히_ 어딘가에서 블록하기를 매우 쉽게 만듭니다. 다행히도, Common Lisp는 우리가 그 위에 구축할 수 있는 최소한의 비동기 I/O 프리미티브 세트를 제공합니다.
 
-### Architectural Decisions
+### 아키텍처 결정
 
-Now that we've studied the background of this problem, we've arrived at the point where we need to make informed decisions about _what_ we are building.
+이 문제의 배경을 연구한 후, 우리는 _무엇을_ 구축할지에 대해 정보에 기반한 결정을 내려야 하는 지점에 도달했습니다.
 
-At the time I started thinking about this project, Common Lisp didn't have a complete green-thread implementation, and the [standard portable threading library](http://common-lisp.net/project/bordeaux-threads/) doesn't qualify as "really REALLY cheap". The options amounted to either picking a different language, or building an event-driven web server for my purpose. I chose the latter.
+이 프로젝트에 대해 생각하기 시작했을 때, Common Lisp는 완전한 그린 스레드 구현을 갖지 않았고, [표준 포터블 스레딩 라이브러리](http://common-lisp.net/project/bordeaux-threads/)는 "정말 정말 저렴하다"고 인정할 수 없었습니다. 선택지는 다른 언어를 선택하거나, 내 목적을 위해 이벤트 기반 웹 서버를 구축하는 것으로 귀결되었습니다. 저는 후자를 선택했습니다.
 
-In addition to the server architecture, we also need to choose which of the three server-push approaches to use. The use-case we are considering (an interactive multiplayer board game) requires frequent updates to each client, but relatively sparse requests _from_ each client, which fits the SSE approach to pushing updates, so we'll go with this.
+서버 아키텍처에 더해서, 세 가지 서버 푸시 접근법 중 어느 것을 사용할지도 선택해야 합니다. 우리가 고려하고 있는 사용 사례(상호작용적인 멀티플레이어 보드 게임)는 각 클라이언트에 대한 빈번한 업데이트를 요구하지만, 각 클라이언트_로부터의_ 요청은 상대적으로 드문데, 이는 업데이트를 푸시하는 SSE 접근법에 적합하므로 이것을 사용하겠습니다.
 
-Now that we've motivated our architectural decision and decided on a mechanism for simulating bidirectional communication between clients and server, let's get started on building our web framework. We'll start by building a relatively "dumb" server first, and then we'll extend it into a web-application framework that lets us focus on _what_ our heavily-interactive program needs to do, and not _how_ it is doing it.
+이제 우리의 아키텍처 결정을 동기부여했고 클라이언트와 서버 간의 양방향 통신을 시뮬레이션하는 메커니즘을 결정했으므로, 웹 프레임워크 구축을 시작해봅시다. 먼저 상대적으로 "단순한" 서버를 구축한 후, 이를 우리의 상호작용이 많은 프로그램이 _어떻게_ 하는지가 아닌 _무엇을_ 해야 하는지에 초점을 맞출 수 있도록 하는 웹 애플리케이션 프레임워크로 확장할 것입니다.
 
-## Building an Event-Driven Web Server
+## 이벤트 기반 웹 서버 구축
 
-Most programs that use a single process to manage concurrent streams of work
-use a pattern called an _event loop_. Let's look at what an event loop for our
-web server might look like.
+동시 작업 스트림을 관리하기 위해 단일 프로세스를 사용하는 대부분의 프로그램은 _이벤트 루프_라고 불리는 패턴을 사용합니다. 우리 웹 서버의 이벤트 루프가 어떤 모습일지 살펴봅시다.
 
-### The Event Loop
+### 이벤트 루프
 
-Our event loop needs to:
+우리의 이벤트 루프는 다음이 필요합니다:
 
-- listen for incoming connections;
-- handle all new handshakes or incoming data on existing connections;
-- clean up dangling sockets that are unexpectedly killed (e.g. by an interrupt)
+- 들어오는 연결을 수신
+- 모든 새로운 핸드셰이크 또는 기존 연결의 들어오는 데이터를 처리
+- 예기치 않게 종료된(예: 인터럽트에 의해) 댕글링 소켓을 정리
 
 ```lisp
 (defmethod start ((port integer))
@@ -106,35 +104,35 @@ Our event loop needs to:
       (loop while (socket-close server)))))
 ```
 
-If you haven't written a Common Lisp program before, this code block requires some explanation. What we have written here is a _method definition_. While Lisp is popularly known as a functional language, it also has its own system for object-oriented programming called "The Common Lisp Object System", which is usually abbreviated as "CLOS".[^CLOSpronounce]
+이전에 Common Lisp 프로그램을 작성해본 적이 없다면, 이 코드 블록은 약간의 설명이 필요합니다. 여기서 작성한 것은 _메서드 정의_입니다. Lisp가 함수형 언어로 널리 알려져 있지만, "The Common Lisp Object System"이라고 불리는 자체적인 객체 지향 프로그래밍 시스템도 가지고 있으며, 이는 보통 "CLOS"로 축약됩니다.[^CLOSpronounce]
 
-[^CLOSpronounce]: Pronounced "kloss", "see-loss" or "see-lows", depending on who you talk to.
+[^CLOSpronounce]: 누구와 대화하느냐에 따라 "kloss", "see-loss" 또는 "see-lows"로 발음됩니다.
 
-### CLOS and Generic Functions
+### CLOS와 제네릭 함수
 
-In CLOS, instead of focusing on classes and methods, we write [_generic functions_](http://www.gigamonkeys.com/book/object-reorientation-generic-functions.html) that are implemented as collections of _methods_. In this model, methods don't _belong to_ classes, they _specialize on_ types.[^juliachap] The `start` method we just wrote is a unary method where the argument `port` is _specialized on_ the type `integer`. This means that we could have several implementations of `start` where `port` varies in type, and the runtime will select which implementation to use depending on the type of `port` when `start` is called.
+CLOS에서는 클래스와 메서드에 초점을 맞추는 대신, _메서드_들의 집합으로 구현되는 [_제네릭 함수_](http://www.gigamonkeys.com/book/object-reorientation-generic-functions.html)를 작성합니다. 이 모델에서 메서드는 클래스에 _속하지_ 않고, 타입에 _특화됩니다_.[^juliachap] 방금 작성한 `start` 메서드는 인수 `port`가 `integer` 타입에 _특화된_ 단항 메서드입니다. 이는 `port`가 타입별로 다른 여러 `start` 구현을 가질 수 있고, 런타임이 `start`가 호출될 때 `port`의 타입에 따라 어떤 구현을 사용할지 선택한다는 것을 의미합니다.
 
-[^juliachap]: The Julia programming language takes a similar approach to object-oriented programming; you can learn more about it in \aosachapref{s:static-analysis}.
+[^juliachap]: Julia 프로그래밍 언어는 객체 지향 프로그래밍에 유사한 접근법을 취합니다. \aosachapref{s:static-analysis}에서 더 자세히 알아볼 수 있습니다.
 
-More generally, methods can specialize on more than one argument. When a `method` is called, the runtime:
+더 일반적으로, 메서드는 하나 이상의 인수에 특화될 수 있습니다. `method`가 호출될 때, 런타임은:
 
-- dispatches on the type of its arguments to figure out which method body should be run, and
-- runs the appropriate function.
+- 인수의 타입에 디스패치하여 어떤 메서드 본문이 실행되어야 하는지 파악하고,
+- 적절한 함수를 실행합니다.
 
-### Processing Sockets
+### 소켓 처리
 
-We'll see another generic function at work in `process-ready`, which was called earlier from our event loop. It processes a ready socket with one of two methods, depending on the type of socket we are handling.
+이벤트 루프에서 이전에 호출된 `process-ready`에서 작동하는 또 다른 제네릭 함수를 볼 수 있습니다. 이것은 우리가 처리하는 소켓의 타입에 따라 두 가지 메서드 중 하나로 준비된 소켓을 처리합니다.
 
-The two types we're concerned with are the `stream-usocket`, which represents a client socket that will make a request and expect to be sent some data back, and the `stream-server-usocket`, which represents our local TCP listener that will have new client connections for us to deal with.
+우리가 관심을 갖는 두 가지 타입은 요청을 하고 데이터를 다시 받기를 기대하는 클라이언트 소켓을 나타내는 `stream-usocket`과, 우리가 처리할 새로운 클라이언트 연결을 가질 로컬 TCP 리스너를 나타내는 `stream-server-usocket`입니다.
 
-If a `stream-server-socket` is `ready`, that means there's a new client socket waiting to start a conversation. We call `socket-accept` to accept the connection, and then put the result in our connection table so that our event loop can begin processing it with the others.
+`stream-server-socket`이 `ready`라면, 그것은 대화를 시작하기 위해 기다리고 있는 새로운 클라이언트 소켓이 있다는 것을 의미합니다. 우리는 `socket-accept`를 호출하여 연결을 수락하고, 그 다음 이벤트 루프가 다른 것들과 함께 처리를 시작할 수 있도록 그 결과를 연결 테이블에 넣습니다.
 
 ```lisp
 (defmethod process-ready ((ready stream-server-usocket) (conns hash-table))
   (setf (gethash (socket-accept ready :element-type 'octet) conns) nil))
 ```
 
-When a `stream-usocket` is `ready`, that means that it has some bytes ready for us to read. (It's also possible that the other party has terminated the connection.)
+`stream-usocket`이 `ready`일 때는, 읽을 수 있는 바이트가 준비되어 있다는 것을 의미합니다. (상대방이 연결을 종료했을 가능성도 있습니다.)
 
 ```lisp
 (defmethod process-ready ((ready stream-usocket) (conns hash-table))
@@ -175,18 +173,18 @@ When a `stream-usocket` is `ready`, that means that it has some bytes ready for 
 		 (setf (contents buf) nil)))))))
 ```
 
-This is more involved than the first case. We:
+이것은 첫 번째 경우보다 더 복잡합니다. 우리는:
 
-1. Get the buffer associated with this socket, or create it if it doesn't exist yet;
-2. Read output into that buffer, which happens in the call to `buffer!`;
-3. If that read got us an `:eof`, the other side hung up, so we discard the socket _and_ its buffer;
-4. Otherwise, we check if the buffer is one of `complete?`, `too-big?`, `too-old?` or `too-needy?`. If so, we remove it from the connections table and return the appropriate HTTP response.
+1. 이 소켓과 연관된 버퍼를 가져오거나, 아직 존재하지 않으면 생성합니다;
+2. 그 버퍼로 출력을 읽어들이는데, 이는 `buffer!` 호출에서 발생합니다;
+3. 그 읽기가 `:eof`를 가져왔다면, 상대측이 연결을 끊었으므로 소켓 _과_ 그 버퍼를 폐기합니다;
+4. 그렇지 않으면, 버퍼가 `complete?`, `too-big?`, `too-old?` 또는 `too-needy?` 중 하나인지 확인합니다. 그렇다면, 연결 테이블에서 제거하고 적절한 HTTP 응답을 반환합니다.
 
-This is the first time we're seeing I/O in our event loop. In our discussion in \aosasecref{sec.eventsweb.serverarch}, we mentioned that we have to be very careful about I/O in an event-driven system, because we could accidentally block our single thread. So, what do we do here to ensure that this doesn't happen? We have to explore our implementation of `buffer!` to find out exactly how this works.
+이는 이벤트 루프에서 I/O를 보는 첫 번째 시간입니다. \aosasecref{sec.eventsweb.serverarch}의 논의에서, 우리가 실수로 단일 스레드를 블록할 수 있기 때문에 이벤트 기반 시스템에서 I/O에 대해 매우 조심해야 한다고 언급했습니다. 그렇다면 이것이 발생하지 않도록 보장하기 위해 여기서 무엇을 할까요? 이것이 정확히 어떻게 작동하는지 알아내기 위해 `buffer!`의 구현을 탐색해야 합니다.
 
-### Processing Connections Without Blocking
+### 블로킹 없이 연결 처리하기
 
-The basis of our approach to processing connections without blocking is the library function [`read-char-no-hang`](http://clhs.lisp.se/Body/f_rd_c_1.htm), which immediately returns `nil` when called on a stream that has no available data. Where there is data to be read, we use a buffer to store intermediate input for this connection.
+블로킹 없이 연결을 처리하는 우리 접근법의 기초는 사용 가능한 데이터가 없는 스트림에서 호출될 때 즉시 `nil`을 반환하는 라이브러리 함수 [`read-char-no-hang`](http://clhs.lisp.se/Body/f_rd_c_1.htm)입니다. 읽을 데이터가 있는 곳에서는, 이 연결에 대한 중간 입력을 저장하기 위해 버퍼를 사용합니다.
 
 ```lisp
 (defmethod buffer! ((buffer buffer))
@@ -207,17 +205,17 @@ The basis of our approach to processing connections without blocking is the libr
     (error () :eof)))
 ```
 
-When `buffer!` is called on a `buffer`, it:
+`buffer`에서 `buffer!`가 호출될 때, 이것은:
 
-- increments the `tries` count, so that we can evict "needy" buffers in `process-ready`;
-- loops to read characters from the input stream, and
-- returns the last character it read if it has read all of the available input.
+- `tries` 카운트를 증가시켜 `process-ready`에서 "needy" 버퍼를 제거할 수 있도록 합니다;
+- 입력 스트림에서 문자를 읽기 위해 루프를 돌고,
+- 사용 가능한 모든 입력을 읽었다면 마지막으로 읽은 문자를 반환합니다.
 
-It also tracks any `\r\n\r\n` sequences so that we can later detect complete requests. Finally, if any error results, it returns an `:eof` to signal that `process-ready` should discard this connection.
+또한 나중에 완전한 요청을 감지할 수 있도록 `\r\n\r\n` 시퀀스를 추적합니다. 마지막으로, 어떤 오류가 발생하면 `process-ready`가 이 연결을 폐기해야 한다는 신호로 `:eof`를 반환합니다.
 
-The `buffer` type is a CLOS [_class_](http://www.gigamonkeys.com/book/object-reorientation-classes.html). Classes in CLOS let us define a type with fields called `slots`. We don't see the behaviours associated with `buffer` on the class definition, because (as we've already learned), we do that using generic functions like `buffer!`.
+`buffer` 타입은 CLOS [_클래스_](http://www.gigamonkeys.com/book/object-reorientation-classes.html)입니다. CLOS의 클래스는 `slots`라고 불리는 필드를 가진 타입을 정의할 수 있게 해줍니다. 클래스 정의에서 `buffer`와 연관된 행동들을 보지 못하는 이유는, (이미 배웠듯이) `buffer!`와 같은 제네릭 함수를 사용해서 그것을 하기 때문입니다.
 
-`defclass` does allow us to specify getters/setters (`reader`s/`accessor`s), and slot initializers; `:initform` specifies a default value, while `:initarg` identifies a hook that the caller of \newline `make-instance` can use to provide a default value.
+`defclass`는 getters/setters(`reader`들/`accessor`들)와 슬롯 이니셜라이저를 지정할 수 있게 해줍니다; `:initform`은 기본값을 지정하고, `:initarg`는 \newline `make-instance`의 호출자가 기본값을 제공하기 위해 사용할 수 있는 훅을 식별합니다.
 
 ```lisp
 (defclass buffer ()
@@ -230,19 +228,19 @@ The `buffer` type is a CLOS [_class_](http://www.gigamonkeys.com/book/object-reo
    (expecting :accessor expecting :initform 0)))
 ```
 
-Our `buffer` class has seven slots:
+우리의 `buffer` 클래스는 일곱 개의 슬롯을 가집니다:
 
-- `tries`, which keeps count of how many times we've tried reading into this buffer
-- `contents`, which contains what we've read so far
-- `bi-stream`, which a hack around some of those Common Lisp-specific, non-blocking-I/O annoyances I mentioned earlier
-- `total-buffered`, which is a count of chars we've read so far
-- `started`, which is a timestamp that tells us when we created this buffer
-- `request`, which will eventually contain the request we construct from buffered data
-- `expecting`, which will signal how many more chars we're expecting (if any) after we buffer the request headers
+- `tries`: 이 버퍼로 읽기를 시도한 횟수를 세는 것
+- `contents`: 지금까지 읽은 내용을 담고 있는 것
+- `bi-stream`: 앞서 언급한 Common Lisp 특유의 비블로킹 I/O 문제들을 해결하기 위한 해킹
+- `total-buffered`: 지금까지 읽은 문자의 개수
+- `started`: 이 버퍼를 언제 생성했는지 알려주는 타임스탬프
+- `request`: 결국 버퍼된 데이터로부터 구성한 요청을 포함하게 될 것
+- `expecting`: 요청 헤더를 버퍼링한 후 (만약 있다면) 얼마나 더 많은 문자를 기대하고 있는지 신호를 보내는 것
 
-### Interpreting Requests
+### 요청 해석하기
 \label{sec.eventsweb.handlerfunc}
-Now that we've seen how we incrementally assemble full requests from bits of data that are pooled into our buffers, what happens when we have a full request ready for handling? This happens in the method `handle-request`.
+우리의 버퍼에 모인 데이터 조각들로부터 완전한 요청을 점진적으로 조립하는 방법을 보았으니, 처리할 준비가 된 완전한 요청이 있을 때 무슨 일이 일어날까요? 이는 `handle-request` 메서드에서 발생합니다.
 
 ```lisp
 (defmethod handle-request ((socket usocket) (req request))
@@ -251,11 +249,11 @@ Now that we've seen how we incrementally assemble full requests from bits of dat
        (error! +404+ socket)))
 ```
 
-This method adds another layer of error handling so that if the request is old, big, or needy, we can send a `400` response to indicate that the client provided us with some bad or slow data. However, if any _other_ error happens here, it's because the programer made a mistake defining a _handler_, which should be treated as a `500` error. This will inform the client that something went wrong on the server as a result of their legitimate request.
+이 메서드는 요청이 오래되었거나, 크거나, 요구가 많을 때 클라이언트가 나쁘거나 느린 데이터를 제공했다는 것을 나타내는 `400` 응답을 보낼 수 있도록 또 다른 오류 처리 계층을 추가합니다. 그러나 여기서 _다른_ 오류가 발생한다면, 그것은 프로그래머가 _핸들러_를 정의하는 데 실수를 했기 때문이므로 `500` 오류로 처리되어야 합니다. 이는 클라이언트의 정당한 요청의 결과로 서버에서 뭔가 잘못되었다는 것을 클라이언트에게 알려줍니다.
 
-If the request is well-formed, we do the tiny and obvious job of looking up the requested resource in the `*handlers*` table. If we find one, we `funcall` `it`, passing along the client `socket` as well as the parsed request parameters. If there's no matching handler in the `*handlers*` table, we instead send along a `404` error. The handler system will be part of our full-fledged _web framework_, which we'll discuss in a later section.
+요청이 잘 형성되었다면, 우리는 `*handlers*` 테이블에서 요청된 리소스를 찾는 작고 명백한 작업을 수행합니다. 하나를 찾으면, 클라이언트 `socket`과 파싱된 요청 매개변수들을 함께 전달하여 `it`을 `funcall`합니다. `*handlers*` 테이블에 일치하는 핸들러가 없다면, 대신 `404` 오류를 보냅니다. 핸들러 시스템은 나중 섹션에서 논의할 본격적인 _웹 프레임워크_의 일부가 될 것입니다.
 
-We still haven't seen how requests are parsed and interpreted from one of our buffers, though. Let's look at that next:
+그러나 우리는 아직 요청이 우리 버퍼 중 하나에서 어떻게 파싱되고 해석되는지 보지 못했습니다. 다음에 그것을 살펴봅시다:
 
 ```lisp
 (defmethod parse ((buf buffer))
@@ -265,7 +263,7 @@ We still haven't seen how requests are parsed and interpreted from one of our bu
 	    (parse str))))
 ```
 
-This high-level method delegates to a specialization of `parse` that works with plain strings, or to `parse-params` that interprets the buffer contents as HTTP parameters. These are called depending on how much of the request we've already processed; the final `parse` happens when we already have a partial `request` saved in the `buffer`, at which point we're only looking to parse the request body.
+이 고수준 메서드는 일반 문자열과 작동하는 `parse`의 특화나, 버퍼 내용을 HTTP 매개변수로 해석하는 `parse-params`에 위임합니다. 이들은 우리가 이미 얼마나 많은 요청을 처리했는지에 따라 호출됩니다; 마지막 `parse`는 `buffer`에 이미 부분적인 `request`가 저장되어 있을 때 발생하며, 이 시점에서 우리는 요청 본문만을 파싱하려고 합니다.
 
 
 ```lisp
@@ -294,19 +292,19 @@ This high-level method delegates to a specialization of `parse` that works with 
      collect (cons (->keyword name) (or val ""))))
 ```
 
-In the `parse` method specializing on `string`, we transform the content into usable pieces. We do so on strings instead of working directly with buffers because this makes it easier to test the actual parsing code in an environment like an interpreter or REPL.
+`string`에 특화된 `parse` 메서드에서는 내용을 사용 가능한 조각들로 변환합니다. 버퍼와 직접 작업하는 대신 문자열에서 이렇게 하는 이유는 인터프리터나 REPL과 같은 환경에서 실제 파싱 코드를 테스트하기 더 쉽게 만들기 때문입니다.
 
-The parsing process is:
+파싱 과정은 다음과 같습니다:
 
-1. Split on `"\\r?\\n"`.
-2. Split the first line of that on `" "` to get the request type (`POST`, `GET`, etc)/URI path/http-version.
-3. Assert that we're dealing with an `HTTP/1.1` request.
-4. Split the URI path on `"?"`, which gives us plain resource separate from any `GET` parameters.
-5. Make a new `request` instance with the resource in place.
-6. Populate that `request` instance with each split header line.
-7. Set that `request`s parameters to the result of parsing our `GET` parameters.
+1. `"\\r?\\n"`으로 분할합니다.
+2. 그 첫 번째 줄을 `" "`으로 분할하여 요청 타입(`POST`, `GET` 등)/URI 경로/HTTP 버전을 가져옵니다.
+3. `HTTP/1.1` 요청을 다루고 있는지 어설트합니다.
+4. URI 경로를 `"?"`으로 분할하여 `GET` 매개변수들과 분리된 순수 리소스를 얻습니다.
+5. 리소스가 제자리에 있는 새로운 `request` 인스턴스를 만듭니다.
+6. 분할된 각 헤더 줄로 그 `request` 인스턴스를 채웁니다.
+7. 그 `request`의 매개변수들을 우리의 `GET` 매개변수들을 파싱한 결과로 설정합니다.
 
-As you might expect by now, `request` is an instance of a CLOS class:
+이제 예상하겠지만, `request`는 CLOS 클래스의 인스턴스입니다:
 
 ```lisp
 	(defclass request ()
@@ -315,11 +313,11 @@ As you might expect by now, `request` is an instance of a CLOS class:
 	   (parameters :accessor parameters :initarg :parameters :initform nil)))
 ```
 
-We've now seen how our clients can send requests and have them interpreted and handled by our server. The last thing we have to implement as part of our core server interface is the capability to write responses back to the client.
+이제 클라이언트들이 요청을 보내고 서버가 이를 해석하고 처리하는 방법을 보았습니다. 핵심 서버 인터페이스의 일부로 구현해야 할 마지막 것은 클라이언트에게 응답을 다시 쓸 수 있는 능력입니다.
 
-### Rendering Responses
+### 응답 렌더링하기
 
-Before we discuss rendering responses, we have to consider that there are two kinds of responses that we may be returning to our clients. The first is a "normal" HTTP response, complete with HTTP headers and body. We represent these kinds of responses with instances of the `response` class:
+응답 렌더링을 논의하기 전에, 클라이언트들에게 반환할 수 있는 두 가지 종류의 응답이 있다는 것을 고려해야 합니다. 첫 번째는 HTTP 헤더와 본문을 모두 갖춘 "일반적인" HTTP 응답입니다. 우리는 이런 종류의 응답들을 `response` 클래스의 인스턴스로 나타냅니다:
 
 ```lisp
 (defclass response ()
@@ -335,7 +333,7 @@ Before we discuss rendering responses, we have to consider that there are two ki
     :accessor body :initform nil :initarg :body)))
 ```
 
-The second is an [SSE message](http://www.w3.org/TR/eventsource/), which we will use to send an incremental update to our clients.
+두 번째는 클라이언트들에게 점진적 업데이트를 보내는 데 사용할 [SSE 메시지](http://www.w3.org/TR/eventsource/)입니다.
 
 ```lisp
 (defclass sse ()
@@ -345,9 +343,9 @@ The second is an [SSE message](http://www.w3.org/TR/eventsource/), which we will
    (data :reader data :initarg :data)))
 ```
 
-We'll send an HTTP response whenever we receive a full HTTP request; however, how do we know when and where to send SSE messages without an originating client request?
+완전한 HTTP 요청을 받을 때마다 HTTP 응답을 보낼 것입니다; 그러나 원래 클라이언트 요청 없이 언제 어디에 SSE 메시지를 보낼지 어떻게 알 수 있을까요?
 
-A simple solution is to register _channels_[^defparameter], to which we'll subscribe `socket`s as necessary.
+간단한 해결책은 필요에 따라 `socket`들을 구독할 _채널_들[^defparameter]을 등록하는 것입니다.
 
 ```lisp
 (defparameter *channels* (make-hash-table))
@@ -357,9 +355,9 @@ A simple solution is to register _channels_[^defparameter], to which we'll subsc
   nil)
 ```
 
-[^defparameter]: We're incidentally introducing some new syntax here. This is our way of declaring a mutable variable. It has the form `(defparameter <name> <value> <optional docstring>)`.
+[^defparameter]: 여기서 우연히 새로운 문법을 소개합니다. 이것은 변경 가능한 변수를 선언하는 우리의 방법입니다. `(defparameter <name> <value> <optional docstring>)` 형태를 가집니다.
 
-We can then `publish!` notifications to said channels as soon as they become available.
+그러면 사용 가능해지는 즉시 해당 채널들에 알림을 `publish!`할 수 있습니다.
 
 ```lisp
 (defmethod publish! ((channel symbol) (message string))
@@ -374,7 +372,7 @@ We can then `publish!` notifications to said channels as soon as they become ava
 		  collect it))))
 ```
 
-In `publish!`, we call `write!` to actually write an `sse` to a socket. We'll also need a specialization of `write!` on `response`s to write full HTTP responses as well. Let's handle the HTTP case first.
+`publish!`에서는 실제로 `sse`를 소켓에 쓰기 위해 `write!`를 호출합니다. 완전한 HTTP 응답도 쓸 수 있도록 `response`들에 대한 `write!`의 특화도 필요할 것입니다. HTTP 경우를 먼저 처리해봅시다.
 
 ```lisp
 (defmethod write! ((res response) (socket usocket))
@@ -400,13 +398,13 @@ In `publish!`, we call `write!` to actually write an `sse` to a socket. We'll al
       (values))))
 ```
 
-This version of `write!` takes a `response` and a `usocket` named `sock`, and writes content to a stream provided by `sock`. We locally define the function `write-ln` which takes some number of sequences, and writes them out to the stream followed by a `crlf`. This is for readability; we could instead have called `write-sequence`/`crlf` directly. 
+이 버전의 `write!`는 `response`와 `sock`이라는 `usocket`을 받아서 `sock`이 제공하는 스트림에 내용을 씁니다. 우리는 몇 개의 시퀀스를 받아서 그것들을 스트림에 쓰고 `crlf`를 따라 붙이는 `write-ln` 함수를 로컬로 정의합니다. 이는 가독성을 위한 것이며, 대신 `write-sequence`/`crlf`를 직접 호출할 수도 있습니다.
 
-Note that we're doing the "Must not block" thing again. While writes are likely to be buffered and are at lower risk of blocking than reads, we still don't want our server to grind to a halt if something goes wrong here. If the write takes more than 0.2 seconds[^timeout], we just move on (throwing out the current socket) rather than waiting any longer.
+"블록하면 안 된다"는 것을 다시 하고 있다는 점에 주목하세요. 쓰기는 버퍼링될 가능성이 있고 읽기보다 블로킹 위험이 낮지만, 여기서 뭔가 잘못되면 서버가 멈추는 것을 원하지 않습니다. 쓰기가 0.2초[^timeout]보다 오래 걸리면, 더 이상 기다리지 않고 그냥 (현재 소켓을 버리고) 넘어갑니다.
 
-[^timeout]: `with-timeout` has different implementations on different Lisps. In some environments, it may create another thread or process to monitor the one that invoked it. While we'd only be creating at most one of these at a time, it is a relatively heavyweight operation to be performing per-write. We might want to consider an alternative approach in those environments.
+[^timeout]: `with-timeout`은 다른 Lisp에서 다른 구현을 가집니다. 일부 환경에서는 호출한 것을 모니터하기 위해 다른 스레드나 프로세스를 만들 수 있습니다. 한 번에 최대 하나만 생성하지만, 쓰기마다 수행하기에는 상대적으로 무거운 작업입니다. 그런 환경에서는 대안적인 접근을 고려하고 싶을 것입니다.
 
-Writing an `SSE` out is conceptually similar to writing out a `response`:
+`SSE`를 쓰는 것은 개념적으로 `response`를 쓰는 것과 유사합니다:
 
 ```lisp
 (defmethod write! ((res sse) (socket usocket))
@@ -420,11 +418,11 @@ Writing an `SSE` out is conceptually similar to writing out a `response`:
         (values)))))
 ```
 
-This is simpler than working with full HTTP responses since the SSE message standard doesn't specify `CRLF` line-endings, so we can get away with a single `format` call. The `~@[`...`~]` blocks are _conditional directives_, which allow us to gracefully handle `nil` slots. For example, if `(id res)` is non-nil, we'll output `id: <the id here> `, otherwise we will ignore the directive entirely. The payload of our incremental update `data` is the only required slot of `sse`, so we can include it without worrying about it being `nil`. And again, we're not waiting around for _too_ long. After 0.2 seconds, we'll time out and move on to the next thing if the write hasn't completed by then.
+SSE 메시지 표준이 `CRLF` 줄 끝을 지정하지 않으므로 완전한 HTTP 응답을 다루는 것보다 단순하며, 단일 `format` 호출로 해결할 수 있습니다. `~@[`...`~]` 블록은 _조건부 지시어_로, `nil` 슬롯을 우아하게 처리할 수 있게 해줍니다. 예를 들어, `(id res)`가 nil이 아니라면 `id: <여기에 id> `를 출력하고, 그렇지 않으면 지시어를 완전히 무시합니다. 점진적 업데이트의 페이로드인 `data`는 `sse`의 유일한 필수 슬롯이므로, `nil`인지 걱정하지 않고 포함시킬 수 있습니다. 그리고 다시, 우리는 _너무_ 오래 기다리지 않습니다. 0.2초 후, 그때까지 쓰기가 완료되지 않았다면 타임아웃하고 다음 것으로 넘어갑니다.
 
-### Error Responses
+### 오류 응답
 
-Our treatment of the request/response cycle so far hasn't covered what happens when something goes wrong. Specifically, we used the `error!` function in `handle-request` and `process-ready` without describing what it does.
+지금까지의 요청/응답 사이클에 대한 우리의 처리는 뭔가 잘못되었을 때 무슨 일이 일어나는지 다루지 않았습니다. 구체적으로, 우리는 `handle-request`와 `process-ready`에서 `error!` 함수를 사용했지만 그것이 무엇을 하는지 설명하지 않았습니다.
 
 ```lisp
 (define-condition http-assertion-error (error)
@@ -434,9 +432,9 @@ Our treatment of the request/response cycle so far hasn't covered what happens w
 		     (assertion condition)))))
 ```
 
-`define-condition` creates new error classes in Common Lisp. In this case, we are defining an HTTP assertion error, and stating that it will specifically need to know the actual assertion it's acting on, and a way to output itself to a stream. In other languages, you'd call this a method. Here, it's a function that happens to be the slot value of a class.
+`define-condition`은 Common Lisp에서 새로운 오류 클래스를 생성합니다. 이 경우, 우리는 HTTP 어설션 오류를 정의하고 있으며, 그것이 작용하고 있는 실제 어설션을 구체적으로 알고, 스트림에 자신을 출력할 방법이 필요하다고 명시하고 있습니다. 다른 언어에서는 이를 메서드라고 부를 것입니다. 여기서는 클래스의 슬롯 값인 함수입니다.
 
-How do we represent errors to the client? Let's define the `4xx` and `5xx`-class HTTP errors that we'll be using often:
+클라이언트에게 오류를 어떻게 나타낼까요? 자주 사용할 `4xx`와 `5xx` 클래스 HTTP 오류들을 정의해봅시다:
 
 ```lisp
 (defparameter +404+
@@ -474,16 +472,16 @@ Now we can see what `error!` does:
     (socket-close sock)))
 ```
 
-It takes an error response and a socket, writes the response to the socket and closes it (ignoring errors, in case the other end has already disconnected). The `instance` argument here is for logging/debugging purposes.
+오류 응답과 소켓을 받아서, 응답을 소켓에 쓰고 닫습니다 (상대편이 이미 연결을 끊었을 경우를 대비해 오류를 무시합니다). 여기서 `instance` 인수는 로깅/디버깅 목적을 위한 것입니다.
 
-And with that, we have an event-driven web server that can respond to HTTP requests or send SSE messages, complete with error handling!
+이것으로, HTTP 요청에 응답하거나 SSE 메시지를 보낼 수 있는 완전한 오류 처리를 갖춘 이벤트 기반 웹 서버를 갖게 되었습니다!
 
 
-## Extending the Server Into a Web Framework
+## 서버를 웹 프레임워크로 확장하기
 
-We have now built a reasonably functional web server that will move requests, responses, and messages to and from clients. The actual work of any web application hosted by this server is done by delegating to handler functions, which were introduced in \aosasecref{sec.eventsweb.handlerfunc} but left underspecified.
+이제 클라이언트와 요청, 응답, 메시지를 주고받을 수 있는 합리적으로 기능적인 웹 서버를 구축했습니다. 이 서버에서 호스팅되는 웹 애플리케이션의 실제 작업은 \aosasecref{sec.eventsweb.handlerfunc}에서 소개되었지만 명세가 부족했던 핸들러 함수들에 위임함으로써 수행됩니다.
 
-The interface between our server and the hosted application is an important one, because it dictates how easily application programmers can work with our infrastructure. Ideally, our handler interface would map parameters from a request to a function that does the real work:
+우리 서버와 호스팅되는 애플리케이션 간의 인터페이스는 중요한데, 이는 애플리케이션 프로그래머들이 우리 인프라와 얼마나 쉽게 작업할 수 있는지를 좌우하기 때문입니다. 이상적으로, 우리의 핸들러 인터페이스는 요청의 매개변수들을 실제 작업을 수행하는 함수에 매핑할 것입니다:
 
 ```lisp
 (define-handler (source :is-stream? nil) (room)
@@ -505,7 +503,7 @@ The interface between our server and the hosted application is an important one,
 	    (:button :id "send" "Send")))))
 ```
 
-One of the concerns I had in mind when writing House was that, like any application open to the greater internet, it would be processing requests from untrusted clients. It would be nice to be able to say specifically what _type_ of data each request should contain by providing a small _schema_ that describes the data. Our previous list of handlers would then look like this:
+House를 작성할 때 염두에 두었던 우려 중 하나는, 더 넓은 인터넷에 열린 어떤 애플리케이션과 마찬가지로 신뢰할 수 없는 클라이언트들로부터의 요청을 처리하게 될 것이라는 점이었습니다. 데이터를 설명하는 작은 _스키마_를 제공함으로써 각 요청이 구체적으로 어떤 _타입_의 데이터를 포함해야 하는지 말할 수 있다면 좋을 것입니다. 그러면 이전의 핸들러 목록은 다음과 같이 보일 것입니다:
 
 ```lisp
 (defun len-between (min thing max)
@@ -534,11 +532,11 @@ One of the concerns I had in mind when writing House was that, like any applicat
 	    (:button :id "send" "Send")))))
 ```
 
-While we are still working with Lisp code, this interface is starting to look almost like a _declarative language_, in which we state _what_ we want our handlers to validate without thinking too much about _how_ they are going to do it. What we are doing is building a _domain-specific language_ (DSL) for handler functions; that is, we are creating a specific convention and syntax that allows us to concisely express exactly what we want our handlers to validate. This approach of building a small language to solve the problem at hand is frequently used by Lisp programmers, and it is a useful technique that can be applied in other programming languages.
+여전히 Lisp 코드로 작업하고 있지만, 이 인터페이스는 핸들러가 검증하기를 원하는 _것_을 그것들이 _어떻게_ 할지에 대해 너무 생각하지 않고 명시하는 _선언적 언어_처럼 보이기 시작합니다. 우리가 하고 있는 것은 핸들러 함수들을 위한 _도메인 특화 언어_(DSL)를 구축하는 것입니다; 즉, 우리의 핸들러가 검증하기를 원하는 것을 정확히 간결하게 표현할 수 있도록 하는 특정한 관례와 문법을 만들고 있습니다. 당면한 문제를 해결하기 위해 작은 언어를 구축하는 이 접근법은 Lisp 프로그래머들에 의해 자주 사용되며, 다른 프로그래밍 언어들에서도 적용될 수 있는 유용한 기법입니다.
 
-### A DSL for Handlers
+### 핸들러를 위한 DSL
 
-Now that we have a loose specification for how we want our handler DSL to look, how do we implement it? That is, what specifically do we expect to happen when we call `define-handler`? Let's consider the definition for `send-message` from above:
+이제 핸들러 DSL이 어떻게 보이기를 원하는지에 대한 느슨한 명세를 갖게 되었는데, 이를 어떻게 구현할까요? 즉, `define-handler`를 호출할 때 구체적으로 무슨 일이 일어나기를 기대할까요? 위에서 나온 `send-message`의 정의를 고려해봅시다:
 
 ```lisp
 (define-handler (send-message)
@@ -550,22 +548,19 @@ Now that we have a loose specification for how we want our handler DSL to look, 
 	     `((:name . ,name) (:message . ,message)))))
 ```
 
-What we would like `define-handler` to do here is:
+여기서 `define-handler`가 하기를 원하는 것은:
 
-1. Bind the action `(publish! ...)` to the URI `/send-message` in the handlers table.
-2. When a request to this URI is made: 
-    - Ensure that the HTTP parameters `room`, `name` and `message` were
-      included.
-    - Validate that `room` is a string no longer than 16 characters, `name` is
-      a string of between 1 and 64 characters (inclusive) and that `message`
-      is a string of between 5 and 256 characters (also inclusive).
-3. After the response has been returned, close the channel.
+1. 핸들러 테이블에서 URI `/send-message`에 액션 `(publish! ...)`을 바인드합니다.
+2. 이 URI에 요청이 만들어질 때:
+    - HTTP 매개변수 `room`, `name`, `message`가 포함되었는지 확인합니다.
+    - `room`이 16자 이하의 문자열이고, `name`이 1자에서 64자 사이의 문자열이며 (포함), `message`가 5자에서 256자 사이의 문자열인지 (역시 포함) 검증합니다.
+3. 응답이 반환된 후, 채널을 닫습니다.
 
-While we could write Lisp functions to do all of these things, and then manually assemble the pieces ourselves, a more common approach is to use a Lisp facility called `macros` to _generate_ the Lisp code for us. This allows us to concisely express what we want our DSL to do, without having to maintain a lot of code to do it. You can think of a macro as an "executable template" that will be expanded into Lisp code at runtime.
+이 모든 일을 하는 Lisp 함수들을 작성하고 수동으로 조각들을 조립할 수도 있지만, 더 일반적인 접근법은 `매크로`라고 불리는 Lisp 기능을 사용하여 우리를 위해 Lisp 코드를 _생성_하는 것입니다. 이는 DSL이 무엇을 하기를 원하는지를 간결하게 표현할 수 있게 해주며, 그것을 하기 위한 많은 코드를 유지할 필요가 없습니다. 매크로를 런타임에 Lisp 코드로 확장될 "실행 가능한 템플릿"으로 생각할 수 있습니다.
 
-Here's our `define-handler` macro[^indentation]:
+다음은 우리의 `define-handler` 매크로입니다[^indentation]:
 
-[^indentation]: I should note, the below code-block is VERY unconventional indentation for Common Lisp. Arglists are typically not broken up over multiple lines, and are usually kept on the same line as the macro/function name. I had to do it to stick to the line-width guidelines for this book, but would otherwise prefer to have longer lines that break naturally at places dictated by the content of the code.
+[^indentation]: 아래 코드 블록은 Common Lisp에서 매우 비관례적인 들여쓰기라는 점을 주목해야 합니다. 인수 목록들은 일반적으로 여러 줄로 나뉘지 않으며, 보통 매크로/함수 이름과 같은 줄에 유지됩니다. 이 책의 줄 너비 지침을 준수하기 위해 그렇게 해야 했지만, 그렇지 않았다면 코드 내용에 의해 결정되는 자연스러운 곳에서 줄바꿈하는 더 긴 줄을 선호했을 것입니다.
 
 ```lisp
 (defmacro define-handler
@@ -580,13 +575,13 @@ Here's our `define-handler` macro[^indentation]:
 	,name (make-stream-handler ,args ,@body))))
 ```
 
-It delegates to three other macros (`bind-handler`, `make-closing-handler`, \newline `make-stream-handler`) that we will define later. `make-closing-handler` will create a handler for a full HTTP request/response cycle; `make-stream-handler` will instead handle an SSE message. The predicate `is-stream?` distinguishes between these cases for us. The backtick and comma are macro-specific operators that we can use to "cut holes" in our code that will be filled out by values specified in our Lisp code when we actually use `define-handler`.
+이는 나중에 정의할 세 개의 다른 매크로(`bind-handler`, `make-closing-handler`, `make-stream-handler`)에 위임합니다. `make-closing-handler`는 완전한 HTTP 요청/응답 사이클을 위한 핸들러를 생성하고, `make-stream-handler`는 대신 SSE 메시지를 처리합니다. 조건절 `is-stream?`이 이러한 경우들을 구분해줍니다. 백틱과 쉼표는 매크로 전용 연산자로, 실제로 `define-handler`를 사용할 때 Lisp 코드에서 지정한 값들로 채워질 코드의 "구멍을 뚫는" 데 사용할 수 있습니다.
 
-Notice how closely our macro conforms to our specification of what we wanted `define-handler` to do: If we were to write a series of Lisp functions to do all of these things, the intent of the code would be much more difficult to discern by inspection.
+우리 매크로가 `define-handler`가 하기를 원했던 것에 대한 명세와 얼마나 밀접하게 일치하는지 주목해보세요: 이 모든 것들을 수행하는 일련의 Lisp 함수들을 작성한다면, 코드의 의도를 검사를 통해 파악하기가 훨씬 어려웠을 것입니다.
 
-### Expanding a Handler
+### 핸들러 확장하기
 
-Let's step through the expansion for the `send-message` handler so that we better understand what is actually going on when Lisp "expands" our macro for us. We'll use the macro expansion feature from the [SLIME](https://common-lisp.net/project/slime/) Emacs mode to do this. Calling `macro-expander` on `define-handler` will expand our macro by one "level", leaving our helper macros in their still-condensed form:
+`send-message` 핸들러의 확장을 단계별로 살펴보면서 Lisp가 우리를 위해 매크로를 "확장"할 때 실제로 어떤 일이 일어나는지 더 잘 이해해봅시다. 이를 위해 [SLIME](https://common-lisp.net/project/slime/) Emacs 모드의 매크로 확장 기능을 사용할 것입니다. `define-handler`에서 `macro-expander`를 호출하면 매크로를 한 "수준"씩 확장하여 도우미 매크로들을 여전히 압축된 형태로 남겨둡니다:
 
 ```lisp
 (BIND-HANDLER
@@ -601,7 +596,7 @@ Let's step through the expansion for the `send-message` handler so that we bette
 	     `((:NAME ,@NAME) (:MESSAGE ,@MESSAGE))))))
 ```
 
-Our macro has already saved us a bit of typing by substituting our `send-message` specific code into our handler template. `bind-handler` is another macro which maps a URI to a handler function on our handlers table; since it's now at the root of our expansion, let's see how it is defined before expanding this further.
+우리 매크로는 이미 `send-message` 전용 코드를 핸들러 템플릿에 대입함으로써 약간의 타이핑을 절약해주었습니다. `bind-handler`는 핸들러 테이블에서 URI를 핸들러 함수에 매핑하는 또 다른 매크로입니다. 이제 이것이 확장의 루트에 있으므로, 더 확장하기 전에 어떻게 정의되어 있는지 살펴봅시다.
 
 ```lisp
 (defmacro bind-handler (name handler)
@@ -613,9 +608,9 @@ Our macro has already saved us a bit of typing by substituting our `send-message
        (setf (gethash ,uri *handlers*) ,handler))))
 ```
 
-The binding happens in the last line: `(setf (gethash ,uri *handlers*) ,handler)`, which is what hash-table assignments look like in Common Lisp (modulo the commas, which are part of our macro). Note that the `assert` is outside of the quoted area, which means that it'll be run as soon as the macro is _called_ rather than when its result is evaluated.
+바인딩은 마지막 줄에서 일어납니다: `(setf (gethash ,uri *handlers*) ,handler)`. 이는 Common Lisp에서 해시 테이블 할당이 어떻게 생겼는지를 보여줍니다(쉼표는 우리 매크로의 일부임을 고려해서). `assert`가 인용된 영역 밖에 있다는 점에 주목하세요. 이는 그 결과가 평가될 때가 아니라 매크로가 _호출되는_ 즉시 실행될 것임을 의미합니다.
 
-When we further expand our expansion of the `send-message` `define-handler` above, we get:
+위의 `send-message` `define-handler`의 확장을 더 확장하면, 다음을 얻습니다:
 
 ```lisp
 (PROGN
@@ -632,9 +627,9 @@ When we further expand our expansion of the `send-message` `define-handler` abov
 		    `((:NAME ,@NAME) (:MESSAGE ,@MESSAGE)))))))
 ```
 
-This is starting to look more like a custom implementation of what we would have written to marshal a request from a URI to a handler function, had we written it all ourselves. But we didn't have to!
+이는 우리가 URI에서 핸들러 함수로 요청을 마샬링하기 위해 직접 작성했다면 쓸 수 있는 것의 사용자 정의 구현과 더 비슷해 보이기 시작합니다. 하지만 우리는 그렇게 할 필요가 없었습니다!
 
-We still have `make-closing-handler` left to go in our expansion. Here is its definition:
+우리 확장에서 아직 `make-closing-handler`가 남아있습니다. 다음은 그 정의입니다:
 
 ```lisp
 (defmacro make-closing-handler
@@ -651,7 +646,7 @@ We still have `make-closing-handler` left to go in our expansion. Here is its de
 	  (socket-close sock)))))
 ```
 
-So making a closing-handler involves making a `lambda`, which is just what you call anonymous functions in Common Lisp. We also set up an interior scope that makes a `response` out of the `body` argument we're passing in, performs a `write!` to the requesting socket, then closes it. The remaining question is, what is `arguments`?
+따라서 closing-handler를 만든다는 것은 `lambda`를 만든다는 것이며, 이는 Common Lisp에서 익명 함수라고 부르는 것입니다. 또한 우리가 전달하는 `body` 인수로부터 `response`를 만들고, 요청하는 소켓에 `write!`를 수행한 후, 소켓을 닫는 내부 범위를 설정합니다. 남은 질문은, `arguments`가 무엇인가 하는 것입니다.
 
 ```lisp
 (defun arguments (args body)
@@ -673,7 +668,7 @@ So making a closing-handler involves making a `lambda`, which is just what you c
      finally (return res)))
 ```
 
-Welcome to the hard part. `arguments` turns the validators we registered with our handler into a tree of parse attempts and assertions. `type-expression`, `arg-exp`, and `type-assertion` are used to implement and enforce a "type system" for the kinds of data we're expecting in our responses; we'll discuss them in \aosasecref{sec.eventsweb.types}. Using this together with `make-closing-handler` would implement the validation rules we wrote here:
+어려운 부분에 오신 것을 환영합니다. `arguments`는 우리가 핸들러에 등록한 검증자들을 파싱 시도와 어설션의 트리로 변환합니다. `type-expression`, `arg-exp`, `type-assertion`은 응답에서 기대하는 데이터 종류에 대한 "타입 시스템"을 구현하고 강제하는 데 사용됩니다. 이들에 대해서는 \aosasecref{sec.eventsweb.types}에서 논의할 것입니다. 이를 `make-closing-handler`와 함께 사용하면 우리가 여기에 작성한 검증 규칙들을 구현할 것입니다:
 
 ```lisp
 (define-handler (send-message)
@@ -722,7 +717,7 @@ Welcome to the hard part. `arguments` turns the validators we registered with ou
 	  (SOCKET-CLOSE SOCK))))))
 ```
 
-This gets us the validation we need for full HTTP request/response cycles. What about our SSEs? `make-stream-handler` does the same basic thing as `make-closing-handler`, except that it writes an `SSE` rather than a `RESPONSE`, and it calls `force-output` instead of `socket-close` because we want to flush data over the connection without closing it:
+이는 완전한 HTTP 요청/응답 사이클에 필요한 검증을 제공합니다. 우리의 SSE는 어떨까요? `make-stream-handler`는 `make-closing-handler`와 동일한 기본 작업을 수행하지만, `RESPONSE` 대신 `SSE`를 쓰고, 연결을 닫지 않고 데이터를 플러시하고 싶으므로 `socket-close` 대신 `force-output`을 호출한다는 점이 다릅니다:
 
 ```lisp
 (defmacro make-stream-handler ((&rest args) &body body)
@@ -749,7 +744,7 @@ This gets us the validation we need for full HTTP request/response cycles. What 
 	     :assertion ',assertion))))
 ```
 
-`assert-http` is a macro that creates the boilerplate code we need in error cases. It expands into a check of the given assertion, throws an `http-assertion-error` if it fails, and packs the original assertion along in that event.
+`assert-http`는 오류 경우에 필요한 상용구 코드를 생성하는 매크로입니다. 주어진 어설션의 검사로 확장되며, 실패할 경우 `http-assertion-error`를 던지고, 그 경우에 원래 어설션을 함께 패킹합니다.
 
 ```lisp
 (defmacro assert-http (assertion)
@@ -762,11 +757,11 @@ This gets us the validation we need for full HTTP request/response cycles. What 
 ### HTTP "Types"
 \label{sec.eventsweb.types}
 
-In the previous section, we briefly touched on three expressions that we're using to implement our HTTP type validation system: `arg-exp`, `type-expression` and `type-assertion`. Once you understand those, there will be no magic left in our framework. We'll start with the easy one first.
+이전 섹션에서 HTTP 타입 검증 시스템을 구현하는 데 사용하고 있는 세 가지 표현식(`arg-exp`, `type-expression`, `type-assertion`)에 대해 간략히 언급했습니다. 이들을 이해하고 나면 우리 프레임워크에는 더 이상 마법이 남아있지 않을 것입니다. 쉬운 것부터 시작해봅시다.
 
 #### arg-exp
 
-`arg-exp` takes a symbol and creates an `aif` expression that checks for the presence of a parameter.
+`arg-exp`는 심볼을 받아서 매개변수의 존재를 확인하는 `aif` 표현식을 생성합니다.
 
 ```lisp
 (defun arg-exp (arg-sym)
@@ -789,15 +784,15 @@ HOUSE> (arg-exp 'room)
 HOUSE>
 ```
 
-We've been using forms like `aif` and `awhen` without understanding how they work, so let's take some time to explore them now.
+우리는 `aif`와 `awhen` 같은 형태들을 어떻게 작동하는지 이해하지 않고 사용해왔으므로, 이제 시간을 내어 탐구해봅시다.
 
-Recall that Lisp code is itself represented as a tree. That's what the parentheses are for; they show us how leaves and branches fit together. If we step back to what we were doing in the previous section, `make-closing-handler` calls a function called `arguments` to generate part of the Lisp tree it's constructing, which in turn calls some tree-manipulating helper functions, including `arg-exp`, to generate its return value.
+Lisp 코드 자체가 트리로 표현된다는 것을 상기해보세요. 괄호가 바로 그 목적을 위한 것입니다. 괄호는 잎과 가지들이 어떻게 맞춰지는지 보여줍니다. 이전 섹션에서 우리가 했던 일을 되돌아보면, `make-closing-handler`는 구축 중인 Lisp 트리의 일부를 생성하기 위해 `arguments`라는 함수를 호출하며, 이는 다시 `arg-exp`를 포함한 일부 트리 조작 도우미 함수들을 호출하여 반환 값을 생성합니다.
 
-That is, we've built a small system that takes a Lisp expression as input, and produces a different Lisp expression as output. Possibly the simplest way of conceptualizing this is as a simple Common–Lisp-to-Common–Lisp compiler that is specialized to the problem at hand.
+즉, 우리는 Lisp 표현식을 입력으로 받아서 다른 Lisp 표현식을 출력으로 생성하는 작은 시스템을 구축했습니다. 이를 개념화하는 가장 간단한 방법은 아마도 당면한 문제에 특화된 간단한 Common-Lisp-to-Common-Lisp 컴파일러로 보는 것일 것입니다.
 
-A widely used classification of such compilers is as _anaphoric macros_. This term comes from the linguistic concept of an _anaphor_, which is the use of one word as a substitute for a group of words that preceded it. `aif` and `awhen` are anaphoric macros, and they're the only ones that I tend to often use. There are many more availabile in the [`anaphora` package](http://www.cliki.net/Anaphora).
+이런 컴파일러들의 널리 사용되는 분류는 _아나포릭 매크로_입니다. 이 용어는 언어학적 개념인 _아나포라_에서 나온 것으로, 앞서 나온 단어 그룹을 대체하는 하나의 단어를 사용하는 것을 의미합니다. `aif`와 `awhen`은 아나포릭 매크로이며, 제가 자주 사용하는 유일한 것들입니다. [`anaphora` 패키지](http://www.cliki.net/Anaphora)에는 더 많은 것들이 사용 가능합니다.
 
-As far as I know, anaphoric macros were first defined by Paul Graham in an [OnLisp chapter](http://dunsmor.com/lisp/onlisp/onlisp_18.html). The use case he gives is a situation where you want to do some sort of expensive or semi-expensive check, then do something conditionally on the result. In the above context, we're using `aif` to do a check the result of an `alist` traversal.
+제가 아는 한, 아나포릭 매크로는 Paul Graham이 [OnLisp 챕터](http://dunsmor.com/lisp/onlisp/onlisp_18.html)에서 처음 정의했습니다. 그가 제시한 사용 사례는 어떤 종류의 비용이 많이 들거나 중간 정도 비용이 드는 검사를 수행한 후, 그 결과에 조건부로 무언가를 하고 싶은 상황입니다. 위 문맥에서 우리는 `alist` 순회 결과를 확인하기 위해 `aif`를 사용하고 있습니다.
 
 ```lisp
 (aif (cdr (assoc :room parameters))
@@ -807,9 +802,9 @@ As far as I know, anaphoric macros were first defined by Paul Graham in an [OnLi
 	     :assertion 'room)))
 ```
 
-This takes the `cdr` of looking up the symbol `:room` in the association list `parameters`. If that returns a non-nil value, `uri-decode` it, otherwise throw an error of the type `http-assertion-error`.
+이는 연관 리스트 `parameters`에서 심볼 `:room`을 찾는 것의 `cdr`을 가져옵니다. 그것이 nil이 아닌 값을 반환하면 `uri-decode`하고, 그렇지 않으면 `http-assertion-error` 타입의 오류를 던집니다.
 
-In other words, the above is equivalent to:
+다시 말해, 위는 다음과 동등합니다:
 
 ```lisp
 (let ((it (cdr (assoc :room parameters))))
@@ -820,9 +815,9 @@ In other words, the above is equivalent to:
 	      :assertion 'room))))
 ```
 
-Strongly-typed functional languages like Haskell often use a `Maybe` type in this situation. In Common Lisp, we capture the symbol `it` in the expansion as the name for the result of the check.
+Haskell과 같은 강타입 함수형 언어들은 이런 상황에서 종종 `Maybe` 타입을 사용합니다. Common Lisp에서는 확장에서 심볼 `it`을 검사 결과의 이름으로 캡처합니다.
 
-Understanding this, we should be able to see that `arg-exp` is generating a specific, repetitive, piece of the code tree that we eventually want to evaluate. In this case, the piece that checks for the presence of the given parameter among the handlers' `parameters`. Now, let's move onto...
+이를 이해하면, `arg-exp`가 결국 평가하고자 하는 코드 트리의 구체적이고 반복적인 조각을 생성한다는 것을 알 수 있어야 합니다. 이 경우, 핸들러의 `parameters` 중에서 주어진 매개변수의 존재를 확인하는 조각입니다. 이제 다음으로 넘어갑시다...
 
 #### type-expression
 
@@ -836,7 +831,7 @@ a particular, necessary type."))
 (defmethod type-expression (parameter type) nil)
 ```
 
-This is a generic function that generates new tree structures (coincidentally Lisp code), rather than just a function. The only thing the above tells you is that by default, a `type-expression` is `NIL`. Which is to say, we don't have one. If we encounter a `NIL`, we use the raw output of `arg-exp`, but that doesn't tell us much about the most common case. To see that, let's take a look at a built-in (to `:house`) `define-http-type` expression.
+이는 단순한 함수가 아닌 새로운 트리 구조들(우연히 Lisp 코드)을 생성하는 제네릭 함수입니다. 위가 알려주는 유일한 것은 기본적으로 `type-expression`이 `NIL`이라는 것입니다. 즉, 우리에게는 그런 것이 없다는 것입니다. `NIL`을 만나면 `arg-exp`의 원시 출력을 사용하지만, 이는 가장 일반적인 경우에 대해서는 많은 것을 알려주지 않습니다. 그것을 보기 위해, (`:house`에) 내장된 `define-http-type` 표현식을 살펴봅시다.
 
 ```lisp
 (define-http-type (:integer)
@@ -852,7 +847,7 @@ HOUSE> (type-expression 'blah :integer)
 HOUSE>
 ```
 
-`define-http-handler`[^readable] is one of the exported symbols for our framework. This lets our application programmers define their own types to simplify parsing above the handful of "builtins" that we give them (`:string`, `:integer`, `:keyword`, `:json`, `:list-of-keyword` and `:list-of-integer`).
+`define-http-handler`[^readable]는 우리 프레임워크의 내보낸 심볼 중 하나입니다. 이는 애플리케이션 프로그래머들이 우리가 제공하는 소수의 "내장" 타입들(`:string`, `:integer`, `:keyword`, `:json`, `:list-of-keyword`, `:list-of-integer`) 위에 파싱을 단순화하기 위해 자신만의 타입을 정의할 수 있게 해줍니다.
 
 ```lisp
 (defmacro define-http-type ((type) &key type-expression type-assertion)
@@ -868,9 +863,9 @@ HOUSE>
 
 [^readable]: This macro is difficult to read because it tries hard to make its output human-readable, by expanding `NIL`s away using `,@` where possible.
 
-It works by creating `type-expression` and `type-assertion` method definitions for the type being defined. We could let users of our framework do this manually without much trouble; however, adding this extra level of indirection gives us, the framework programmers, the freedom to change _how_ types are implemented without forcing our users to re-write their specifications. This isn't just an academic consideration; I've personally made radical changes to this part of the system when first building it, and was pleased to find that I had to make very few edits to the applications that depended on it.
+이는 정의되는 타입에 대한 `type-expression`과 `type-assertion` 메서드 정의들을 생성함으로써 작동합니다. 우리 프레임워크 사용자들이 이를 수동으로 수행하도록 할 수도 있지만, 이 추가적인 간접 수준을 추가함으로써 우리 프레임워크 프로그래머들은 사용자들이 명세를 다시 작성하도록 강요하지 않고도 타입이 _어떻게_ 구현되는지를 변경할 자유를 얻습니다. 이는 단순한 학문적 고려사항이 아닙니다. 저는 개인적으로 이 시스템을 처음 구축할 때 이 부분을 급진적으로 변경했으며, 그것에 의존하는 애플리케이션들을 매우 적게 편집하면 된다는 것을 발견하고 기뻤습니다.
 
-Let's take a look at the expansion of that integer definition to see how it works in detail:
+그 정수 정의의 확장을 살펴보면서 어떻게 작동하는지 자세히 보겠습니다:
 
 ```lisp
 (LET ((#:TP1288 :INTEGER))
@@ -880,11 +875,11 @@ Let's take a look at the expansion of that integer definition to see how it work
     `(NUMBERP ,PARAMETER)))
 ```
 
-As we said, it doesn't reduce code size by much, but it does prevent us from needing to care what the specific parameters of those methods are, or even that they're methods at all.
+앞서 말했듯이, 이는 코드 크기를 많이 줄이지는 않지만, 그 메서드들의 구체적인 매개변수가 무엇인지, 심지어 그것들이 메서드인지조차 신경 쓸 필요가 없게 해줍니다.
 
 #### type-assertion
 
-Now that we can define types, let's look at how we use `type-assertion` to validate that a parse satisfies our requirements. It, too, takes the form of a complementary `defgeneric`/`defmethod` pair just like `type-expression`:
+이제 타입을 정의할 수 있으므로, 파싱이 우리 요구사항을 만족하는지 검증하기 위해 `type-assertion`을 어떻게 사용하는지 살펴봅시다. 이 역시 `type-expression`과 마찬가지로 보완적인 `defgeneric`/`defmethod` 쌍의 형태를 취합니다:
 
 ```lisp
 (defgeneric type-assertion (parameter type)
@@ -912,15 +907,15 @@ NIL
 HOUSE>
 ```
 
-### All Together Now
+### 이제 모든 것을 함께
 
-We did it! We built a web framework on top of an event-driven webserver implementation. Our framework (and handler DSL) defines new applications by:
+해냈습니다! 이벤트 주도 웹서버 구현 위에 웹 프레임워크를 구축했습니다. 우리 프레임워크(및 핸들러 DSL)는 다음과 같은 방법으로 새로운 애플리케이션을 정의합니다:
 
-- Mapping URLs to handlers;
-- Defining handlers to enforce the type safety and validation rules on requests;
-- Optionally specifying new types for handlers as required.
+- URL을 핸들러에 매핑하기
+- 요청에 대한 타입 안전성과 검증 규칙을 강제하는 핸들러 정의하기
+- 필요에 따라 핸들러를 위한 새로운 타입을 선택적으로 지정하기
 
-Now we can describe our application like this:
+이제 우리는 다음과 같이 애플리케이션을 기술할 수 있습니다:
 
 ```lisp
 (defun len-between (min thing max)
@@ -951,4 +946,4 @@ Now we can describe our application like this:
 (start 4242)
 ```
 
-Once we write `interface.js` to provide the client-side interactivity, this will start an HTTP chat server on port `4242` and listen for incoming connections.
+클라이언트 측 상호작용을 제공하기 위해 `interface.js`를 작성하면, 이는 포트 `4242`에서 HTTP 채팅 서버를 시작하고 들어오는 연결을 대기할 것입니다.
