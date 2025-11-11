@@ -400,7 +400,7 @@ Dagoba.addPipetype('vertex', function(graph, args, gremlin, state) {
 
 여기서 state 인수를 직접 변경하고 있으며, 되돌려 전달하지 않는다는 점에 주목하라. 대안은 그렘린이나 신호 대신 객체를 반환하고, 그런 식으로 상태를 되돌려 전달하는 것이다. 그것은 우리의 반환값을 복잡하게 만들고, 추가적인 가비지를 생성한다[^garbage]. JS가 다중 반환값을 허용한다면 이 옵션을 더 우아하게 만들 것이다.
 
-[^garbage]: Very short lived garbage though, which is the second best kind.
+[^garbage]: 하지만 아주 짧게 살아있는 가비지인데, 이는 두 번째로 좋은 종류다.
 
 하지만 여전히 변경들을 처리하는 방법을 찾아야 하는데, 호출 지점이 원래 변수에 대한 참조를 유지하고 있기 때문이다. 만약 특정 참조가 "고유한" 것인지&mdash;즉, 그 객체에 대한 유일한 참조인지&mdash;를 결정할 수 있는 방법이 있다면 어떨까?
 
@@ -410,9 +410,9 @@ Dagoba.addPipetype('vertex', function(graph, args, gremlin, state) {
 
 이를 결정하는 몇 가지 일반적인 방법이 있다: 정적 타입 시스템에서는 고유성 타입[^uniquenesstypes]을 사용하여 각 객체가 컴파일 타임에 하나의 참조만 가진다는 것을 보장할 수 있다. 참조 카운터[^referencecounter]가 있다면&mdash;심지어 간단한 2비트 스티키 카운터라도&mdash;런타임에 객체가 하나의 참조만 가진다는 것을 알 수 있고 그 지식을 우리에게 유리하게 사용할 수 있다.
 
-[^uniquenesstypes]: Uniqueness types were dusted off in the Clean language, and have a non-linear relationship with linear types, which are themselves a subtype of substructural types.
+[^uniquenesstypes]: 고유성 타입은 Clean 언어에서 재조명되었으며, 선형 타입과 비선형적 관계를 가진다. 선형 타입 자체는 부구조적 타입의 하위 타입이다.
 
-[^referencecounter]: Most modern JS runtimes employ generational garbage collectors, and the language is intentionally kept at arm's length from the engine's memory management to curtail a source of programmatic non-determinism.
+[^referencecounter]: 대부분의 현대적 JS 런타임은 세대별 가비지 컬렉터를 사용하며, 프로그래밍적 비결정성의 원인을 억제하기 위해 언어가 의도적으로 엔진의 메모리 관리와 거리를 두고 있다.
 
 JavaScript는 이러한 기능들 중 어느 것도 갖지 않지만, 우리가 정말, 정말 규율을 지킨다면 거의 같은 효과를 얻을 수 있다. 그리고 우리는 그렇게 할 것이다. 지금은. 
 
@@ -617,7 +617,7 @@ Dagoba.addPipetype('take', function(graph, args, gremlin, state) {
 
 이미 존재하지 않으면 `state.taken`을 0으로 초기화한다. JavaScript에는 암시적 강제 변환이 있지만, `undefined`를 `NaN`으로 강제 변환하므로, 여기서는 명시적이어야 한다[^explicit].
 
-[^explicit]: Some would argue it's best to be explicit all the time. Others would argue that a good system for implicits makes for more concise, readable code, with less boilerplate and a smaller surface area for bugs. One thing we can all agree on is that making effective use of JavaScript's implicit coercion requires memorizing a lot of non-intuitive special cases, making it a minefield for the uninitiated.
+[^explicit]: 어떤 사람들은 항상 명시적인 것이 최선이라고 주장할 것이다. 다른 사람들은 암시적 처리를 위한 좋은 시스템이 보일러플레이트가 적고 버그 표면적이 더 작은, 더 간결하고 읽기 쉬운 코드를 만든다고 주장할 것이다. 우리 모두가 동의할 수 있는 한 가지는 JavaScript의 암시적 강제 변환을 효과적으로 사용하려면 직관적이지 않은 많은 특수 사례들을 암기해야 하므로, 초보자에게는 지뢰밭이 된다는 것이다.
 
 그러면 `state.taken`이 `args[0]`에 도달하면 'done'을 반환하여, 우리 이전의 파이프들을 차단한다. 또한 `state.taken` 카운터를 재설정하여, 나중에 질의를 반복할 수 있게 한다.
 
@@ -1153,13 +1153,13 @@ g.v('Forseti').parents().as('parents').parents().children()
                         .except('parents').children().unique()
 ```
 
-we can just say `g.v('Forseti').cousins()`.
+우리는 간단히 `g.v('Forseti').cousins()`라고 말할 수 있다.
 
 하지만 우리는 약간의 곤란한 상황을 만들어냈다: `addAlias` 함수가 별칭을 해결하는 동안 다른 별칭들도 해결해야 한다. `parents`가 다른 별칭을 호출하고, `cousins`를 해결하는 동안 `parents`를 해결하기 위해 멈춘 다음 그것의 별칭들을 해결해야 한다면 어떨까? `parents` 별칭 중 하나가 결국 `cousins`를 호출한다면?
 
 이는 우리를 현대 패키지 매니저의 핵심 구성 요소인 의존성 해결[^dependencyresolution]의 영역으로 이끈다. 이상적인 버전 선택, 트리 셰이킹, 일반적인 최적화 등을 위한 많은 멋진 기법들이 있지만, 기본 아이디어는 꽤 간단하다. 모든 의존성과 그 관계의 그래프를 만들고, 모든 화살표가 왼쪽에서 오른쪽으로 향하도록 정점들을 정렬하는 방법을 찾으려고 할 것이다. 그렇게 할 수 있다면, 이 특별한 정점들의 정렬을 '위상 순서'라고 부르며, 우리의 의존성 그래프에 순환이 없음을 증명한 것이다: 즉, 방향성 비순환 그래프(DAG)다. 그렇게 하지 못한다면 우리 그래프에는 적어도 하나의 순환이 있다.
 
-[^dependencyresolution]: You can learn more about dependency resolution in the Contingent chapter of this book.
+[^dependencyresolution]: 이 책의 Contingent 챕터에서 의존성 해결에 대해 더 자세히 배울 수 있다.
 
 반면에, 우리의 질의는 일반적으로 꽤 짧을 것이고(100단계면 매우 긴 질의다) 변환기의 수도 합리적으로 적을 것이라고 예상한다. DAG와 의존성 관리를 가지고 씨름하는 대신, 무엇이든 변경되면 변환 함수에서 'true'를 반환하고, 생산적이지 않을 때까지 실행할 수 있다. 이는 각 변환기가 멱등성을 갖도록 요구하지만, 그것은 변환기가 가져야 할 유용한 속성이다. 이 두 경로의 장단점은 무엇인가?
 
@@ -1176,7 +1176,7 @@ we can just say `g.v('Forseti').cousins()`.
 
 그래프 데이터베이스는 정점과 간선 사이에 직접 연결을 만들어서 이 문제를 우회하므로, 그래프 순회는 그냥 포인터 점프다; 모든 항목을 스캔할 필요도, 인덱스도, 추가 작업도 전혀 없다. 이제 친구 찾기는 그래프의 총 사람 수와 관계없이 같은 비용이며, 추가 공간 비용이나 쓰기 시간 비용도 없다. 이 접근법의 한 가지 단점은 전체 그래프가 같은 머신의 메모리에 있을 때 포인터가 최고로 작동한다는 것이다. 여러 머신에 걸쳐 그래프 데이터베이스를 효과적으로 샤딩하는 것은 여전히 활발한 연구 영역이다[^graphdbsharding].
 
-[^graphdbsharding]: Sharding a graph database requires partitioning the graph. [Optimal graph partitioning is NP-hard](http://dl.acm.org/citation.cfm?doid=1007912.1007931), even for simple graphs like trees and grids, and good approximations also have exponential [asymptotic complexity](http://arxiv.org/pdf/1311.3144v2.pdf).
+[^graphdbsharding]: 그래프 데이터베이스를 샤딩하려면 그래프를 분할해야 한다. [최적 그래프 분할은 NP-완전](http://dl.acm.org/citation.cfm?doid=1007912.1007931)이며, 트리나 격자와 같은 단순한 그래프에서도 마찬가지다. 좋은 근사 해법들도 지수적인 [점근적 복잡도](http://arxiv.org/pdf/1311.3144v2.pdf)를 갖는다.
 
 간선을 찾는 함수들을 교체해보면 Dagoba의 소우주에서 이것이 작동하는 것을 볼 수 있다. 다음은 모든 간선을 선형 시간으로 검색하는 순진한 버전이다. 우리의 최초 구현과 비슷하지만, 그 이후 구축한 모든 구조들을 사용한다.
 
@@ -1205,7 +1205,7 @@ Dagoba.G.findOutEdges = function(vertex) { return vertex._out }
 
 그래프 데이터베이스의 차이를 경험하려면 직접 실행해보라[^jslistfilter].
 
-[^jslistfilter]: In modern JavaScript engines filtering a list is quite fast&mdash;for small graphs the naive version can actually be faster than the index-free version due to the underlying data structures and the way the code is JIT compiled. Try it with different sizes of graphs to see how the two approaches scale.
+[^jslistfilter]: 현대적인 JavaScript 엔진에서 목록 필터링은 꽤 빠르다&mdash;작은 그래프의 경우 기본 데이터 구조와 코드가 JIT 컴파일되는 방식 때문에 순진한 버전이 실제로 인덱스-프리 버전보다 더 빠를 수 있다. 두 접근법이 어떻게 확장되는지 보기 위해 다양한 크기의 그래프로 시도해보라.
 
 
 ## 직렬화
@@ -1216,7 +1216,7 @@ Dagoba.G.findOutEdges = function(vertex) { return vertex._out }
 
 `JSON.stringify` 함수는 문자열화할 값을 받지만, 두 개의 추가 매개변수도 받는다: replacer 함수와 공백 숫자[^protip]. replacer는 문자열화가 진행되는 방식을 커스터마이징할 수 있게 해준다.
 
-[^protip]: Pro tip: Given a deep tree `deep_tree`, running `JSON.stringify(deep_tree, 0, 2)` in the JS console is a quick way to make it human readable.
+[^protip]: 전문가 팁: 깊은 트리 `deep_tree`가 주어졌을 때, JS 콘솔에서 `JSON.stringify(deep_tree, 0, 2)`를 실행하는 것은 사람이 읽을 수 있게 만드는 빠른 방법이다.
 
 정점과 간선을 조금 다르게 처리해야 하므로, 두 쪽을 단일 JSON 문자열로 수동으로 병합할 것이다.
 
@@ -1364,7 +1364,7 @@ g.v('Ymir').in().filter({survives: true}).every()
 
 마지막 요점은 과장될 수 없다: 단순하게 유지하라. 단순함을 위해 최적화를 피하라. 올바른 모델을 찾아서 단순함을 달성하기 위해 열심히 노력하라. 많은 가능성을 탐색하라. 이 책의 챕터들은 고도로 자명하지 않은 애플리케이션들이 작고 긴밀한 커널을 가질 수 있다는 충분한 증거를 제공한다. 구축하고 있는 애플리케이션을 위한 그 커널을 찾으면, 복잡성이 그것을 오염시키지 못하도록 싸우라. 추가 기능을 부착하기 위한 후크들을 구축하고, 어떤 대가를 치르더라도 추상화 장벽을 유지하라. 이런 기법들을 잘 사용하는 것은 쉽지 않지만, 그렇지 않으면 다루기 어려운 문제들에 대해 레버리지를 줄 수 있다.
 
-[^sortainterconnected]: Not *too* interconnected, though&mdash;you'd like the number of edges to grow in direct proportion to the number of vertices. In other words, the average number of edges connected to a vertex shouldn't vary with the size of the graph. Most systems we'd consider putting in a graph database already have this property: if Loki had 100,000 additional grandchildren the degree of the Thor vertex wouldn't increase.
+[^sortainterconnected]: 하지만 *너무* 상호 연결되지는 않는다&mdash;간선의 수가 정점의 수에 직접 비례하여 증가하기를 원할 것이다. 다시 말해, 정점에 연결된 간선의 평균 개수는 그래프의 크기에 따라 달라지지 않아야 한다. 그래프 데이터베이스에 넣을 것을 고려하는 대부분의 시스템은 이미 이 속성을 가지고 있다: 로키가 100,000명의 추가 손자를 가진다고 해도 토르 정점의 차수는 증가하지 않을 것이다.
 
 
 ### 감사의 말
