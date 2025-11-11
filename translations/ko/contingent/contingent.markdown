@@ -92,12 +92,12 @@ will usually include a table of contents:
       api.rst
 ```
 
-This list of chapter filenames
-tells Sphinx to include a link to each of the three named chapters
-when it builds the `index.html` output file.
-It will also include links to any sections within each chapter.
-Stripped of its markup,
-the text that results from the above title
+이 장 파일명 목록은
+Sphinx가 `index.html` 출력 파일을 빌드할 때
+언급된 세 개의 장 각각에 대한 링크를 포함하도록 지시합니다.
+또한 각 장 내의 섹션들에 대한 링크도 포함할 것입니다.
+마크업을 제거하면,
+위의 제목으로부터 생성되는 텍스트는
 and `toctree` command might be:
 
 ```
@@ -114,17 +114,17 @@ and `toctree` command might be:
       • Obscure Classes
 ```
 
-This table of contents, as you can see, is a mash-up
-of information from four different files.
-While its basic order and structure come from `index.rst`,
-the actual titles of each chapter and section
-are pulled from the three chapter source files themselves.
+이 목차는, 보시다시피, 네 개의 다른 파일로부터
+가져온 정보들이 혼합된 것입니다.
+기본적인 순서와 구조는 `index.rst`에서 나오지만,
+각 장과 섹션의 실제 제목들은
+세 개의 장 소스 파일 자체에서 가져옵니다.
 
-If you later reconsider the tutorial’s chapter title —
-after all, the word “newcomer” sounds so quaint,
-as if your users are settlers who have just arrived in pioneer Wyoming —
-then you would edit the first line of `tutorial.rst`
-and write something better:
+나중에 튜토리얼의 장 제목을 다시 생각해 보면 —
+결국 "newcomer"라는 단어는 너무 구식으로 들리며,
+마치 사용자들이 개척 시대 와이오밍에 방금 도착한 정착민인 것 같습니다 —
+그러면 `tutorial.rst`의 첫 번째 줄을 편집하여
+더 나은 것을 작성할 것입니다:
 
 ```
   -Newcomers Tutorial
@@ -135,14 +135,13 @@ and write something better:
    This text will take you through the basics of...
 ```
 
-When you are ready to rebuild,
-Sphinx will do exactly the right thing!
-It will rebuild both the tutorial chapter itself,
-and the index.
-(Piping the output into `cat` makes Sphinx
-announce each rebuilt file on a separate line,
-instead of using bare carriage returns
-to repeatedly overwrite a single line with these progress updates.)
+재빌드할 준비가 되었을 때,
+Sphinx는 정확히 올바른 일을 수행할 것입니다!
+튜토리얼 장 자체와 인덱스 모두를
+재빌드할 것입니다.
+(출력을 `cat`으로 파이프하면 Sphinx가
+이러한 진행 상황 업데이트로 단일 줄을 반복적으로 덮어쓰는 대신
+각 재빌드된 파일을 별도의 줄에 발표하게 됩니다.)
 
 ```
    $ make html | cat
@@ -150,13 +149,13 @@ to repeatedly overwrite a single line with these progress updates.)
    writing output... [100%] tutorial
 ```
 
-Because Sphinx chose to rebuild both documents,
-not only will `tutorial.html` now feature its new title up at the top,
-but the output `index.html` will display the updated chapter title
-in the table of contents.
-Sphinx has rebuilt everything so that the output is consistent.
+Sphinx가 두 문서 모두를 재빌드하도록 선택했기 때문에,
+`tutorial.html`은 이제 상단에 새로운 제목을 표시할 뿐만 아니라,
+출력 `index.html`도 목차에서 업데이트된 장 제목을
+표시할 것입니다.
+Sphinx는 출력이 일관되도록 모든 것을 재빌드했습니다.
 
-What if your edit to `tutorial.rst` is more minor?
+`tutorial.rst`에 대한 편집이 더 사소하다면 어떨까요?
 
 ```
    Beginners Tutorial
@@ -167,44 +166,43 @@ What if your edit to `tutorial.rst` is more minor?
    This text will take you through the basics of...
 ```
 
-In this case there is no need to rebuild `index.html`
-because this minor edit to the interior of a paragraph
-does not change any of the information in the table of contents.
-But it turns out that Sphinx is not quite as clever
-as it might have at first appeared!
-It will go ahead and perform the redundant work of rebuilding
-`index.html` even though the resulting contents
-will be exactly the same.
+이 경우 `index.html`을 재빌드할 필요가 없습니다.
+왜냐하면 문단 내부의 이런 사소한 편집은
+목차의 어떤 정보도 변경하지 않기 때문입니다.
+하지만 Sphinx는 처음에 나타났을지도 모르는 만큼
+그렇게 영리하지 않은 것으로 밝혀졌습니다!
+결과 내용이 정확히 동일할 것임에도 불구하고
+`index.html`을 재빌드하는 중복적인 작업을
+계속 진행할 것입니다.
 
 ```
    writing output... [ 50%] index
    writing output... [100%] tutorial
 ```
 
-You can run `diff`
-on the “before” and “after” versions of `index.html`
-to confirm that your small edit
-has had no effect on the front page —
-yet Sphinx made you wait while it was rebuilt anyway.
+`index.html`의 "이전"과 "이후" 버전에 대해
+`diff`를 실행하여 작은 편집이
+첫 페이지에 영향을 미치지 않았음을 확인할 수 있습니다 —
+그럼에도 Sphinx는 어쨌든 재빌드하는 동안 기다리게 만들었습니다.
 
-You might not even notice the extra rebuild effort
-for small documents that are easy to compile.
-But the delay to your workflow can become significant
-when you are making frequent tweaks and edits
-to documents that are long, complex, or that involve the generation
-of multimedia like plots or animations.
-While Sphinx is at least making an effort
-not to rebuild every chapter when you make a single change —
-it has not, for example, rebuilt `install.html` or `api.html`
-in response to your `tutorial.rst` edit —
-it is doing more than is necessary.
+컴파일하기 쉬운 작은 문서에 대해서는
+추가 재빌드 노력을 눈치채지 못할 수도 있습니다.
+하지만 길고 복잡하거나 플롯이나 애니메이션과 같은
+멀티미디어 생성을 포함하는 문서에 대해
+빈번한 조정과 편집을 수행할 때는
+워크플로우의 지연이 상당해질 수 있습니다.
+Sphinx는 적어도 단일 변경을 수행할 때
+모든 장을 재빌드하지 않으려고 노력하고 있습니다 —
+예를 들어, `tutorial.rst` 편집에 대응하여
+`install.html`이나 `api.html`을 재빌드하지 않았습니다 —
+하지만 필요한 것보다 더 많은 일을 수행하고 있습니다.
 
-But it turns out that Sphinx does something even worse:
-it sometimes does too little,
-leaving you with inconsistent output that could be noticed by users.
+하지만 Sphinx가 더욱 나쁜 일을 하는 것으로 밝혀졌습니다:
+때때로 너무 적게 작업하여,
+사용자들이 알아차릴 수 있는 일관성 없는 출력을 남겨둡니다.
 
-To see one of its simplest failures,
-first add a cross reference to the top of your API documentation:
+가장 간단한 실패 중 하나를 보려면,
+먼저 API 문서의 상단에 상호 참조를 추가하세요:
 
 ```
    API Reference
@@ -216,18 +214,18 @@ first add a cross reference to the top of your API documentation:
    and every single class and method offered...
 ```
 
-With its usual caution as regards the table of contents,
-Sphinx will dutifully rebuild both this API reference document
-as well as the `index.html` home page of your project:
+목차와 관련해서 항상 그렇듯이 신중하게,
+Sphinx는 이 API 레퍼런스 문서와
+프로젝트의 `index.html` 홈페이지 모두를 성실히 재빌드할 것입니다:
 
 ```
    writing output... [ 50%] api
    writing output... [100%] index
 ```
 
-In the `api.html` output file you can confirm
-that Sphinx has included the attractive human-readable title
-of the tutorial chapter into the cross reference’s anchor tag:
+`api.html` 출력 파일에서 Sphinx가
+튜토리얼 장의 매력적이고 사람이 읽을 수 있는 제목을
+상호 참조의 앵커 태그에 포함시켰음을 확인할 수 있습니다:
 
 ```html
    <p>Before reading this, try reading our
@@ -236,9 +234,9 @@ of the tutorial chapter into the cross reference’s anchor tag:
    </a>!</p>
 ```
 
-What if you now make another edit
-to the title at the top of the `tutorial.rst` file?
-You will have invalidated *three* output files:
+이제 `tutorial.rst` 파일 상단의 제목을
+다시 편집한다면 어떨까요?
+*세 개의* 출력 파일을 무효화시킨 것입니다:
 
 1. The title at the top of `tutorial.html` is now out of date,
    so the file needs to be rebuilt.
