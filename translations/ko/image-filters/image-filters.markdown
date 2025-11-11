@@ -170,30 +170,30 @@ height & 픽셀 단위 이미지 높이 \\
 <table>
   <tr>
     <td>`loadPixels`</td>
-    <td>Loads the pixel data for the image into its `pixels[]` array</td>
+    <td>이미지의 픽셀 데이터를 `pixels[]` 배열로 로드</td>
   </tr>
   <tr>
     <td>`updatePixels`</td>
-    <td>Updates the image with the data in its `pixels[]` array</td>
+    <td>`pixels[]` 배열의 데이터로 이미지 업데이트</td>
   </tr>
   <tr>
     <td>`resize`</td>
-    <td>Changes the size of an image to a new width and height</td>
+    <td>이미지의 크기를 새로운 너비와 높이로 변경</td>
   </tr>
   <tr>
     <td>`get`</td>
-    <td>Reads the color of any pixel or grabs a rectangle of pixels</td>
+    <td>픽셀의 색상을 읽거나 픽셀 사각형 영역을 추출</td>
   </tr>
   <tr>
     <td>`set`</td>
-    <td>Writes a color to any pixel or writes an image into another</td>
+    <td>픽셀에 색상을 쓰거나 다른 이미지에 이미지 삽입</td>
   </tr>
   <tr>
     <td>`save`</td>
-    <td>Saves the image to a TIFF, TARGA, PNG, or JPEG file</td>
+    <td>이미지를 TIFF, TARGA, PNG, 또는 JPEG 파일로 저장</td>
   </tr>
 </table>
-: \label{500l.imagefilters.pimagemethods} PImage methods
+: \label{500l.imagefilters.pimagemethods} PImage 메서드
 </markdown>
 <latex>
 \begin{table}
@@ -202,38 +202,26 @@ height & 픽셀 단위 이미지 높이 \\
 \rowcolors{2}{TableOdd}{TableEven}
 \begin{tabular}{ll}
 \hline
-loadPixels & Loads the pixel data for the image into its `pixels[]` array \\
-updatePixels & Updates the image with the data in its `pixels[]` array \\
-resize & Changes the size of an image to a new width and height \\
-get & Reads the color of any pixel or grabs a rectangle of pixels \\
-set & Writes a color to any pixel or writes an image into another \\
-save & Saves the image to a TIFF, TARGA, PNG, or JPEG file \\
+loadPixels & 이미지의 픽셀 데이터를 `pixels[]` 배열로 로드 \\
+updatePixels & `pixels[]` 배열의 데이터로 이미지 업데이트 \\
+resize & 이미지의 크기를 새로운 너비와 높이로 변경 \\
+get & 픽셀의 색상을 읽거나 픽셀 사각형 영역을 추출 \\
+set & 픽셀에 색상을 쓰거나 다른 이미지에 이미지 삽입 \\
+save & 이미지를 TIFF, TARGA, PNG, 또는 JPEG 파일로 저장 \\
 \hline
 \end{tabular}
 }
-\caption{PImage methods}
+\caption{PImage 메서드}
 \label{500l.imagefilters.pimagemethods}
 \end{table}
 </latex>
 
-### File Chooser
-Processing handles most of the file choosing process; we just need to call
-[`selectInput()`](http://www.processing.org/reference/selectInput_.html), and
-implement a callback (which must be public). 
+### 파일 선택기
+Processing이 파일 선택 과정의 대부분을 처리해주므로, 우리는 [`selectInput()`](http://www.processing.org/reference/selectInput_.html)을 호출하고 콜백 함수를 구현하기만 하면 됩니다(반드시 public이어야 함).
 
-To people familiar with Java this might seem odd; a listener or a lambda
-expression might make more sense. However, as Processing was developed as a tool
-for artists, for the most part these things have been
-abstracted away by the language to keep it unintimidating. This is a choice the
-designers made: to prioritize simplicity and approachability over power
-and flexibility. If you use the stripped-down Processing editor, rather than
-Processing as a library in Eclipse, you don’t even need to define class names. 
+Java에 익숙한 사람들에게는 이것이 이상하게 보일 수 있습니다. 리스너나 람다 표현식이 더 합리적일 것 같기 때문입니다. 하지만 Processing은 예술가들을 위한 도구로 개발되었기 때문에, 대부분의 이런 것들이 언어에 의해 추상화되어 부담스럽지 않도록 만들어졌습니다. 이것은 설계자들이 내린 선택입니다: 강력함과 유연성보다는 단순함과 접근성을 우선시한 것입니다. Eclipse에서 Processing을 라이브러리로 사용하는 것이 아니라 간소화된 Processing 에디터를 사용한다면, 클래스명을 정의할 필요조차 없습니다.
 
-Other language designers with different target audiences make different
-choices, as they should. For example, in Haskell, a purely
-functional language, purity of functional language paradigms is
-prioritised over everything else. This makes it a better tool for mathematical
-problems than for anything requiring IO.
+다른 대상 사용자를 둔 다른 언어 설계자들은 서로 다른 선택을 하며, 그래야 합니다. 예를 들어, 순수 함수형 언어인 Haskell에서는 함수형 언어 패러다임의 순수성이 다른 모든 것보다 우선시됩니다. 이것은 Haskell을 IO가 필요한 작업보다는 수학적 문제에 더 적합한 도구로 만듭니다.
 
 ```java
 // Called on key press.
@@ -252,124 +240,61 @@ public void fileSelected(File file) {
 }
 ```
 
-### Responding to Key Presses
+### 키 입력 처리
 
-Normally in Java, responding to key presses requires adding listeners and implementing
-anonymous functions. However, as with the file chooser, Processing handles a lot of
-this for us. We just need to implement
-[`keyPressed()`](https://www.processing.org/reference/keyPressed_.html).
+일반적으로 Java에서 키 입력에 응답하려면 리스너를 추가하고 익명 함수를 구현해야 합니다. 하지만 파일 선택기와 마찬가지로, Processing이 이런 것들을 많이 처리해줍니다. 우리는 [`keyPressed()`](https://www.processing.org/reference/keyPressed_.html)만 구현하면 됩니다.
 
 ```java
 public void keyPressed() {
-  print(“key pressed: ” + key);
+  print("key pressed: " + key);
 }
 ```
 
-If you run the app again, every time you press a key it will output it to the
-console. Later, you’ll want to do different things depending on what key was
-pressed, and to do this you just switch on the key value. (This exists in the
-`PApplet` superclass, and contains the last key pressed.) 
+앱을 다시 실행하면, 키를 누를 때마다 콘솔에 출력됩니다. 나중에는 어떤 키가 눌렸는지에 따라 다른 작업을 하고 싶을 것이고, 이를 위해서는 키 값에 대한 switch문을 사용하면 됩니다. (이는 `PApplet` 슈퍼클래스에 있으며, 마지막에 눌린 키를 포함합니다.) 
 
 
-## Writing Tests 
+## 테스트 작성
 
-This app doesn’t do a lot yet, but we can already see number of places where
-things can go wrong; for example, triggering the wrong action with key presses.
-As we add complexity, we add more potential problems, such as updating the
-image state incorrectly, or miscalculating pixel colors after applying
-a filter. I also just enjoy (some think weirdly) writing unit tests. Whilst
-some people seem to think of testing as a thing that delays checking code in, I
-see tests as my #1 debugging tool, and as an opportunity to deeply understand what
-is going on in my code.
+이 앱은 아직 많은 기능을 하지 않지만, 이미 문제가 발생할 수 있는 여러 부분을 볼 수 있습니다. 예를 들어 키 입력으로 잘못된 동작을 트리거하는 경우입니다. 복잡성을 추가할수록 이미지 상태를 잘못 업데이트하거나 필터 적용 후 픽셀 색상을 잘못 계산하는 등 더 많은 잠재적 문제를 추가하게 됩니다. 저는 또한 (어떤 사람들은 이상하다고 생각하지만) 단위 테스트를 작성하는 것을 즐깁니다. 어떤 사람들은 테스팅을 코드 체크인을 지연시키는 것으로 생각하는 것 같지만, 저는 테스트를 제 1의 디버깅 도구로, 그리고 코드에서 무슨 일이 일어나고 있는지 깊이 이해할 기회로 봅니다.
 
-I adore Processing, but it’s designed to
-create visual applications, and in this area maybe unit testing isn’t a huge
-concern. It’s clear it isn’t written for testability; in fact it’s written in
-such a way that makes it untestable, as is. Part of this is because it hides
-complexity, and some of that hidden complexity is really useful in writing unit
-tests. The use of static and final methods make it much harder to use mocks
-(objects that record interaction and allow you to fake part of your system to
-verify another part is behaving correctly), which rely on the ability to
-subclass. 
+저는 Processing을 좋아하지만, 이는 시각적 애플리케이션을 만들기 위해 설계되었고, 이 영역에서는 단위 테스팅이 큰 관심사가 아닐 수도 있습니다. 테스트 가능성을 위해 작성되지 않았다는 것이 명백합니다. 실제로 그대로는 테스트할 수 없도록 작성되었습니다. 이것의 일부는 복잡성을 숨기기 때문이며, 그 숨겨진 복잡성 중 일부는 단위 테스트 작성에 정말 유용합니다. static 및 final 메서드의 사용은 서브클래싱 능력에 의존하는 목(mock)(시스템의 일부를 가짜로 만들어 다른 부분이 올바르게 작동하는지 확인할 수 있도록 상호작용을 기록하는 객체)을 사용하기 훨씬 어렵게 만듭니다. 
 
-We might start a greenfield project with great intentions to do Test Driven
-Development (TDD) and achieve perfect test coverage, but in reality we are
-usually looking at a mass of code written by various and assorted people and
-trying to figure out what it is supposed to be doing, and how and why it is
-going wrong. Then maybe we don’t write perfect tests, but writing tests at all
-will help us navigate the situation, document what is happening and move
-forward.
+우리는 테스트 주도 개발(TDD)을 하고 완벽한 테스트 커버리지를 달성하겠다는 훌륭한 의도로 새로운 프로젝트를 시작할 수도 있지만, 실제로는 다양한 사람들이 작성한 코드 덩어리를 보면서 그것이 무엇을 하도록 되어 있는지, 어떻게 그리고 왜 잘못되고 있는지 알아내려고 하는 경우가 대부분입니다. 그러면 완벽한 테스트를 작성하지는 못하더라도, 테스트를 전혀 작성하지 않는 것보다는 상황을 탐색하고, 무슨 일이 일어나고 있는지 문서화하고, 앞으로 나아가는 데 도움이 될 것입니다.
 
-We create "seams" that allow us to break something up from its
-amorphous mass of tangled pieces and verify it in parts. To do this, we will sometimes
-create wrapper classes that can be mocked. These classes do nothing more than hold a
-collection of similar methods, or forward calls on to another object that 
-cannot be mocked (due to final or static methods), and as such they are 
-very dull
-to write, but key to creating seams and making the code testable.
+우리는 얽힌 조각들의 무정형 덩어리에서 무언가를 분해하고 부분적으로 검증할 수 있게 해주는 "솔기(seam)"를 만듭니다. 이를 위해 때로는 모킹될 수 있는 래퍼 클래스들을 만듭니다. 이런 클래스들은 유사한 메서드들의 집합을 보유하거나, (final 또는 static 메서드로 인해) 모킹될 수 없는 다른 객체로 호출을 전달하는 것 이상은 하지 않으며, 그런 점에서 작성하기 매우 지루하지만 솔기를 만들고 코드를 테스트 가능하게 만드는 데 핵심적입니다.
 
-I used JUnit for tests, as I was working in Java with Processing as a library.
-For mocking I used Mockito. You can download
-[Mockito](https://code.google.com/p/mockito/downloads/list) and add the JAR to
-your buildpath in the same way you added `core.jar`. I created two helper
-classes that make it possible to mock and test the app (otherwise we can’t test
-behavior involving `PImage` or `PApplet` methods).
+저는 Processing을 라이브러리로 사용하여 Java로 작업했기 때문에 테스트를 위해 JUnit을 사용했습니다. 모킹을 위해서는 Mockito를 사용했습니다. [Mockito](https://code.google.com/p/mockito/downloads/list)를 다운로드하고 `core.jar`를 추가한 것과 같은 방식으로 JAR을 빌드 경로에 추가할 수 있습니다. 앱을 모킹하고 테스트할 수 있게 해주는 두 개의 헬퍼 클래스를 만들었습니다(그렇지 않으면 `PImage`나 `PApplet` 메서드와 관련된 동작을 테스트할 수 없습니다).
 
-`IFAImage` is a thin wrapper around PImage. `PixelColorHelper` is a wrapper
-around applet pixel color methods. These wrappers call the final, and static
-methods, but the caller methods are neither final nor static themselves — this
-allows them to be mocked. These are deliberately lightweight, and we could have
-gone further, but this was sufficient to address the major problem of
-testability when using Processing — static, and final methods. The goal 
-was to make an app, after all — not a unit testing framework for Processing!
+`IFAImage`는 PImage 주변의 얇은 래퍼입니다. `PixelColorHelper`는 애플릿 픽셀 색상 메서드들을 감싸는 래퍼입니다. 이런 래퍼들은 final 및 static 메서드들을 호출하지만, 호출자 메서드들 자체는 final도 static도 아닙니다 — 이것이 그것들을 모킹 가능하게 만듭니다. 이것들은 의도적으로 가볍게 만들어졌고, 더 나아갈 수도 있었지만, Processing을 사용할 때의 테스트 가능성의 주요 문제 — static 및 final 메서드들 — 를 해결하는 데 충분했습니다. 결국 목표는 앱을 만드는 것이었습니다 — Processing을 위한 단위 테스트 프레임워크를 만드는 것이 아니라!
 
-A class called `ImageState` forms the "model" of this application, removing as
-much logic from the class extending `PApplet` as possible, for better
-testability. It also makes for a cleaner design and separation of concerns:
-the `App` controls the interactions and the UI, not the image
-manipulation.
+`ImageState`라는 클래스가 이 애플리케이션의 "모델"을 형성하며, 더 나은 테스트 가능성을 위해 `PApplet`을 확장하는 클래스에서 가능한 한 많은 로직을 제거합니다. 또한 이것은 더 깔끔한 설계와 관심사 분리를 만듭니다: `App`은 상호작용과 UI를 제어하지, 이미지 조작을 제어하지 않습니다.
 
-## Do-It-Yourself Filters
+## 직접 만드는 필터
 
-### RGB Filters
-Before we start writing more complicated pixel processing, we can start with a
-short exercise that will get us comfortable doing pixel manipulation. We’ll
-create standard (red, green, blue) color filters that will allow us to create
-the same effect as placing a colored plate over the lens of a camera, only letting
-through light with enough red (or green, or blue).
+### RGB 필터
+더 복잡한 픽셀 처리 작성을 시작하기 전에, 픽셀 조작에 익숙해질 수 있는 짧은 연습부터 시작할 수 있습니다. 카메라 렌즈 위에 유색 판을 올려놓는 것과 같은 효과를 만들어내는 표준 (빨강, 초록, 파랑) 색상 필터를 만들어보겠습니다. 충분한 빨강(또는 초록, 또는 파랑)이 있는 빛만 통과시키는 것입니다.
 
 <markdown>
-By applying different filters to this image
-\aosafigref{500l.imagefilters.frankfurt} (taken on a spring trip to Frankfurt)
-it’s almost like the seasons are different. (Remember the four-seasons
-paintings we imagined earlier?)  See how much more green the tree becomes when
-the red filter is applied.
+이 이미지 \aosafigref{500l.imagefilters.frankfurt} (프랑크푸르트 봄 여행에서 촬영)에 다양한 필터를 적용하면 마치 계절이 다른 것 같습니다. (앞서 상상했던 사계절 그림들을 기억하시나요?) 빨강 필터가 적용되었을 때 나무가 얼마나 더 초록색이 되는지 보세요.
 
-\aosafigure[240pt]{image-filters-images/frankfurt.jpg}{Four (Simulated) Seasons in Frankfurt}{500l.imagefilters.frankfurt}
+\aosafigure[240pt]{image-filters-images/frankfurt.jpg}{프랑크푸르트의 네 계절 (시뮬레이션)}{500l.imagefilters.frankfurt}
 </markdown>
 <latex>
-By applying different RGB filters to an image we can make it almost seem like
-the seasons are different depending which colors are filtered out 
-and which are emphasized. (Remember the four-seasons paintings
-we imagined earlier?) 
+이미지에 다양한 RGB 필터를 적용하면 어떤 색상이 필터링되고 어떤 색상이 강조되는지에 따라 마치 계절이 다른 것처럼 보이게 할 수 있습니다. (앞서 상상했던 사계절 그림들을 기억하시나요?)
 </latex>
 
-How do we do it? 
+어떻게 할까요?
 
-- Set the filter. (You can combine red, green and blue filters as in the image
-  earlier; I haven’t in these examples so that the effect is clearer.)
+- 필터를 설정합니다. (앞의 이미지처럼 빨강, 초록, 파랑 필터를 결합할 수 있습니다. 이 예제들에서는 효과가 더 명확하도록 그렇게 하지 않았습니다.)
 
-- For each pixel in the image, check its RGB value.
+- 이미지의 각 픽셀에 대해 RGB 값을 확인합니다.
 
-- If the red is less than the red filter, set the red to zero.
-- If the green is less than the green filter, set the green to zero.
-- If the blue is less than the blue filter, set the blue to zero.
-- Any pixel with insufficient of all of these colors will be black.
+- 빨강이 빨강 필터보다 작으면, 빨강을 0으로 설정합니다.
+- 초록이 초록 필터보다 작으면, 초록을 0으로 설정합니다.
+- 파랑이 파랑 필터보다 작으면, 파랑을 0으로 설정합니다.
+- 이 모든 색상이 충분하지 않은 픽셀은 검은색이 됩니다.
 
-Although our image is 2-dimensional, the pixels live in a 1-dimensional array
-starting top-left and moving [left to right, top to
-bottom](https://processing.org/tutorials/pixels/). The array indices for a 4x4
-image are shown here:
+이미지는 2차원이지만, 픽셀들은 1차원 배열에 저장되며 왼쪽 위에서 시작하여 [왼쪽에서 오른쪽으로, 위에서 아래로](https://processing.org/tutorials/pixels/) 이동합니다. 4x4 이미지의 배열 인덱스는 여기에 표시되어 있습니다:
 
 <markdown>
 <table>
@@ -398,7 +323,7 @@ image are shown here:
     <td>15</td>
   </tr>
 </table>
-: \label{500l.imagefilters.pixelindices} Pixel indices for a 4x4 image
+: \label{500l.imagefilters.pixelindices} 4x4 이미지의 픽셀 인덱스
 </markdown>
 <latex>
 \begin{table}
@@ -414,7 +339,7 @@ image are shown here:
 \hline
 \end{tabular}
 }
-\caption{Pixel indices for a 4x4 image}
+\caption{4x4 이미지의 픽셀 인덱스}
 \label{500l.imagefilters.pixelindices}
 \end{table}
 </latex>
@@ -440,75 +365,29 @@ public void applyColorFilter(PApplet applet, IFAImage img, int minRed,
 }
 ```
 
-### Color
-As our first example of an image filter showed, the concept and representation
-of colors in a program is very important to understanding how our filters work.
-To prepare ourselves for working on our next filter, let's explore the concept
-of color a bit more.
+### 색상
+이미지 필터의 첫 번째 예제에서 보았듯이, 프로그램에서 색상의 개념과 표현은 우리 필터가 어떻게 작동하는지 이해하는 데 매우 중요합니다. 다음 필터 작업을 준비하기 위해 색상 개념을 좀 더 살펴보겠습니다.
 
-We were using a concept
-in the previous section called "color space", which is way of representing
-color digitally. Kids mixing paints learn that colors can be made from
-other colors; things work slightly differently in digital (less risk of
-being covered in paint!) but similar. Processing makes it really easy to work
-with whatever color space you want, but you need to know which one to pick, so
-it’s important to understand how they work.
+이전 섹션에서 "색 공간(color space)"이라는 개념을 사용했는데, 이는 색상을 디지털로 표현하는 방법입니다. 물감을 섞는 아이들은 색상이 다른 색상으로부터 만들어질 수 있다는 것을 배웁니다. 디지털에서는 조금 다르게 작동하지만(물감으로 덮여질 위험이 적습니다!) 비슷합니다. Processing은 원하는 어떤 색 공간이든 사용하기 매우 쉽게 만들어주지만, 어떤 것을 선택할지 알아야 하므로 그것들이 어떻게 작동하는지 이해하는 것이 중요합니다.
 
-#### RGB colors
-The color space that most programmers are familiar with is RGBA: red, green,
-blue and alpha; it's what we were using above. In hexadecimal (base 16), the first two digits are the amount of
-red, the second two blue, the third two green, and the final two (if they are
-there) are the alpha value. The values range from 00 in base 16 (0 in base
-10) through to FF (255 in base 10). The alpha represents 
-opacity, where 0 is transparent and 100% is opaque.
+#### RGB 색상
+대부분의 프로그래머들이 익숙한 색 공간은 RGBA입니다: 빨강, 초록, 파랑 그리고 알파. 이것이 위에서 사용한 것입니다. 16진수(16진법)에서 처음 두 자리는 빨강의 양, 두 번째 두 자리는 파랑, 세 번째 두 자리는 초록, 그리고 마지막 두 자리(있는 경우)는 알파 값입니다. 값의 범위는 16진법 00(10진법 0)부터 FF(10진법 255)까지입니다. 알파는 불투명도를 나타내며, 0은 투명하고 100%는 불투명합니다.
 
-#### HSB or HSV colors
-This color space is not quite as well known as RGB. The first number represents
-the hue, the second number the saturation (how intense the color is), and the third
-number the brightness. The HSB color space can be represented by a cone: The hue
-is the position around the cone, saturation the distance from the centre, and
-brightness the height (0 brightness is black).
+#### HSB 또는 HSV 색상
+이 색 공간은 RGB만큼 잘 알려져 있지 않습니다. 첫 번째 숫자는 색조(hue)를, 두 번째 숫자는 채도(saturation, 색상이 얼마나 강렬한지)를, 세 번째 숫자는 밝기(brightness)를 나타냅니다. HSB 색 공간은 원뿔로 표현할 수 있습니다: 색조는 원뿔 주위의 위치이고, 채도는 중심으로부터의 거리이며, 밝기는 높이입니다(밝기 0은 검은색).
 
-### Extracting the Dominant Hue from an Image
-Now that we’re comfortable with pixel manipulation, let’s do something that we could
-only do digitally. Digitally, we can manipulate the image in a way that isn’t so
-uniform.
+### 이미지에서 주요 색조 추출하기
+이제 픽셀 조작에 익숙해졌으니, 디지털로만 할 수 있는 작업을 해보겠습니다. 디지털에서는 그렇게 균일하지 않은 방식으로 이미지를 조작할 수 있습니다.
 
-When I look through my stream of pictures I can see themes
-emerging. The nighttime series I took at sunset from a boat on Hong Kong
-harbour, the grey of North Korea, the lush greens of Bali, the icy whites and
-pale blues of an Icelandic winter. Can we take a picture and pull out that main
-color that dominates the scene?
+제 사진 스트림을 보면 테마들이 나타나는 것을 볼 수 있습니다. 홍콩 항구에서 배를 타고 석양에 찍은 야간 시리즈, 북한의 회색, 발리의 무성한 녹색, 아이슬란드 겨울의 얼음 같은 흰색과 옅은 파랑색. 사진을 가져와서 장면을 지배하는 그 주요 색상을 끌어낼 수 있을까요?
 
-It makes sense to use the HSB color space for this — we are interested in the
-hue when figuring out what the main color
-is. It’s possible to do this using RGB values, but more difficult (we would
-have to compare all three values) and it would be more sensitive to darkness.
-We can change to the HSB color space using
-[colorMode](http://processing.org/reference/colorMode_.html). 
+이를 위해 HSB 색 공간을 사용하는 것이 합리적입니다 — 주요 색상이 무엇인지 알아낼 때 우리는 색조에 관심이 있습니다. RGB 값을 사용해서도 가능하지만 더 어렵고(세 값을 모두 비교해야 함) 어둠에 더 민감합니다. [colorMode](http://processing.org/reference/colorMode_.html)를 사용하여 HSB 색 공간으로 변경할 수 있습니다. 
 
-Having settled on this color space, it’s simpler than it would have been using
-RGB. We need to find the hue of each pixel, and figure out which is most
-"popular". We probably don’t want to be exact — we want to group very similar
-hues together, and we can handle this using two strategies.
+이 색 공간에 정착한 후에는 RGB를 사용하는 것보다 더 간단합니다. 각 픽셀의 색조를 찾고, 어느 것이 가장 "인기가 있는지" 알아내야 합니다. 정확할 필요는 없을 것입니다 — 매우 유사한 색조들을 함께 그룹화하고 싶고, 이를 두 가지 전략으로 처리할 수 있습니다.
 
-Firstly we will round the decimals that come back to whole numbers, as this
-makes it simple to determine which "bucket" we put each pixel in. Secondly we
-can change the range of the hues. If we think back to the cone representation above, we
-might think of hues as having 360 degrees (like a circle). Processing uses 255
-by default, which is the same as is typical for RGB (255 is FF in hexadecimal).
-The higher the range we use, the more distinct the hues in the picture will be.
-Using a smaller range will allow us to group together similar hues. Using a 360
-degree range, it’s unlikely that we will be able to tell the difference between
-a hue of 224 and a hue of 225, as the difference is very small. If we make the
-range one-third of that, 120, both these hues become 75 after rounding.
+첫째로 돌아오는 소수를 정수로 반올림할 것입니다. 이는 각 픽셀을 어떤 "버킷"에 넣을지 결정하기 간단하게 만들어줍니다. 둘째로 색조의 범위를 변경할 수 있습니다. 위의 원뿔 표현을 다시 생각해보면, 색조를 360도(원처럼)로 생각할 수 있습니다. Processing은 기본적으로 255를 사용하는데, 이는 RGB에서 일반적인 것과 같습니다(255는 16진법으로 FF). 사용하는 범위가 높을수록 그림의 색조들이 더 구별됩니다. 더 작은 범위를 사용하면 유사한 색조들을 함께 그룹화할 수 있습니다. 360도 범위를 사용하면, 224의 색조와 225의 색조를 구별할 수 있을 가능성은 낮습니다. 차이가 매우 작기 때문입니다. 범위를 그 3분의 1인 120으로 만들면, 이 두 색조는 모두 반올림 후 75가 됩니다.
 
-We can change the range of hues using `colorMode`. If we call `colorMode(HSB, 120)`
-we have just made our hue detection a bit less than half as exact as if we used
-the 255 range. We also know that our hues will fall into 120 "buckets", so we
-can simply go through our image, get the hue for a pixel, and add one to the
-corresponding count in an array. This will be $O(n)$, where $n$ is the
-number of pixels, as it requires action on each one.
+`colorMode`를 사용하여 색조의 범위를 변경할 수 있습니다. `colorMode(HSB, 120)`을 호출하면 255 범위를 사용할 때보다 색조 감지가 절반 정도 덜 정확해집니다. 또한 색조들이 120개의 "버킷"에 들어간다는 것을 알고 있으므로, 이미지를 간단히 훑어가며 픽셀의 색조를 가져와서 배열의 해당 카운트에 1을 추가할 수 있습니다. 이는 $O(n)$이 될 것인데, 여기서 $n$은 픽셀의 수이며 각각에 대해 작업이 필요하기 때문입니다.
 
 ```java
 for(int px in pixels) {
@@ -518,49 +397,35 @@ for(int px in pixels) {
 ```
 
 <markdown>
-At the end we can print this hue to the screen, or display it next to the
-picture (\aosafigref{500l.imagefilters.hueranges}). 
+마지막에 이 색조를 화면에 출력하거나 그림 옆에 표시할 수 있습니다 (\aosafigref{500l.imagefilters.hueranges}).
 
-\aosafigure[240pt]{image-filters-images/hueranges.jpg}{Dominant hue versus size of range (number of buckets) used}{500l.imagefilters.hueranges}
+\aosafigure[240pt]{image-filters-images/hueranges.jpg}{사용된 범위 크기(버킷 수)에 대한 주요 색조}{500l.imagefilters.hueranges}
 
 </markdown>
 
 <latex>
-At the end we can print this hue to the screen, or display it next to the
-picture. 
+마지막에 이 색조를 화면에 출력하거나 그림 옆에 표시할 수 있습니다.
 </latex>
 
 <markdown>
-Once we’ve extracted the "dominant" hue, we can choose to either show or hide
-it in the image. We can show the dominant hue with varying tolerance (ranges
-around it that we will accept). Pixels that don’t fall into this range can be
-changed to grayscale by setting the value based on the brightness.
-\aosafigref{500l.imagefilters.showdominant} shows the dominant hue determined
-using a range of 240, and with varying tolerance. The tolerance is the
-amount either side of the most popular hue that gets grouped together. 
+"주요" 색조를 추출한 후에는 이미지에서 그것을 보이거나 숨기도록 선택할 수 있습니다. 다양한 허용범위(수락할 주변 범위)로 주요 색조를 표시할 수 있습니다. 이 범위에 들지 않는 픽셀들은 밝기를 기반으로 값을 설정하여 회색조로 변경할 수 있습니다.
+\aosafigref{500l.imagefilters.showdominant}는 240의 범위를 사용하고 다양한 허용범위로 결정된 주요 색조를 보여줍니다. 허용범위는 가장 인기 있는 색조의 양쪽으로 함께 그룹화되는 양입니다.
 
-\aosafigure[240pt]{image-filters-images/showdominant.jpg}{Showing dominant hue}{500l.imagefilters.showdominant}
+\aosafigure[240pt]{image-filters-images/showdominant.jpg}{주요 색조 표시}{500l.imagefilters.showdominant}
 </markdown>
 
 <latex>
-Once we’ve extracted the "dominant" hue, we can choose to either show or hide
-it in the image. We can show the dominant hue with varying tolerance (ranges
-around it that we will accept). Pixels that don’t fall into this range can be
-changed to grayscale by setting the value based on the brightness.
-Alternatively, we can hide the dominant hue by setting the color for pixels with that hue to greyscale, and leaving other pixels as they are. 
+"주요" 색조를 추출한 후에는 이미지에서 그것을 보이거나 숨기도록 선택할 수 있습니다. 다양한 허용범위(수락할 주변 범위)로 주요 색조를 표시할 수 있습니다. 이 범위에 들지 않는 픽셀들은 밝기를 기반으로 값을 설정하여 회색조로 변경할 수 있습니다.
+또는 그 색조를 가진 픽셀의 색상을 회색조로 설정하고 다른 픽셀들은 그대로 두어 주요 색조를 숨길 수 있습니다.
 </latex>
 
 <markdown>
-Alternatively, we can hide the dominant hue. In
-\aosafigref{500l.imagefilters.hidedominant}, the images are transposed side by
-side: the original in the middle, on the left the dominant hue (the brownish color of the path) is shown, and on
-the right the dominant hue is hidden (range 320, tolerance 20).
+또는 주요 색조를 숨길 수 있습니다. \aosafigref{500l.imagefilters.hidedominant}에서는 이미지들이 나란히 배치되어 있습니다: 가운데가 원본, 왼쪽에는 주요 색조(길의 갈색)가 표시되고, 오른쪽에는 주요 색조가 숨겨져 있습니다(범위 320, 허용범위 20).
 
-\aosafigure[240pt]{image-filters-images/hidedominant.jpg}{Hiding dominant hue}{500l.imagefilters.hidedominant}
+\aosafigure[240pt]{image-filters-images/hidedominant.jpg}{주요 색조 숨기기}{500l.imagefilters.hidedominant}
 </markdown>
 
-Each image requires a double pass (looking at each pixel twice), so on images
-with a large number of pixels it can take a noticeable amount of time.
+각 이미지는 이중 패스(각 픽셀을 두 번 보기)가 필요하므로, 많은 픽셀을 가진 이미지에서는 상당한 시간이 걸릴 수 있습니다.
 
 ```java
 public HSBColor getDominantHue(PApplet applet, IFAImage image, int hueRange) {
@@ -580,7 +445,7 @@ public HSBColor getDominantHue(PApplet applet, IFAImage image, int hueRange) {
     brightnesses[hue] += brightness;
   }
 
-  // Find the most common hue.
+  // 가장 일반적인 색조를 찾습니다.
   int hueCount = hues[0];
   int hue = 0;
   for (int i = 1; i < hues.length; i++) {
@@ -590,7 +455,7 @@ public HSBColor getDominantHue(PApplet applet, IFAImage image, int hueRange) {
     }
   }
 
-  // Return the color to display.
+  // 표시할 색상을 반환합니다.
   float s = saturations[hue] / hueCount;
   float b = brightnesses[hue] / hueCount;
   return new HSBColor(hue, s, b);
@@ -603,7 +468,7 @@ public void processImageForHue(PApplet applet, IFAImage image, int hueRange,
   image.loadPixels();
   int numberOfPixels = image.getPixels().length;
   HSBColor dominantHue = getDominantHue(applet, image, hueRange);
-  // Manipulate photo, grayscale any pixel that isn't close to that hue.
+  // 사진을 조작하여 해당 색조에 가깝지 않은 픽셀은 회색조로 만듭니다.
   float lower = dominantHue.h - hueTolerance;
   float upper = dominantHue.h + hueTolerance;
   for (int i = 0; i < numberOfPixels; i++) {
@@ -618,50 +483,28 @@ public void processImageForHue(PApplet applet, IFAImage image, int hueRange,
 }
 ```
 
-### Combining Filters
+### 필터 결합
 
-With the UI as it is, the user can combine the red, green, and blue filters
-together. If they combine the dominant hue filters with the red, green, and
-blue filters the results can sometimes be a little unexpected, because of
-changing the color spaces.
+현재의 UI에서는 사용자가 빨강, 초록, 파랑 필터를 함께 결합할 수 있습니다. 주요 색조 필터를 빨강, 초록, 파랑 필터와 결합하면 색 공간이 변경되기 때문에 결과가 때로는 예상과 다를 수 있습니다.
 
-Processing has some [built-in
-methods](https://www.processing.org/reference/filter_.html) that support the
-manipulation of images; for example, `invert` and `blur`.
+Processing에는 이미지 조작을 지원하는 몇 가지 [내장 메서드](https://www.processing.org/reference/filter_.html)가 있습니다. 예를 들어 `invert`와 `blur`입니다.
 
-To achieve effects like sharpening, blurring, or sepia we apply
-matrices. For every pixel of the image, take the sum of products where each
-product is the color value of the current pixel or a neighbor of it, with the
-corresponding value of the [filter
-matrix](http://lodev.org/cgtutor/filtering.html). There are some special
-matrices of specific values that sharpen images.
+선명화, 블러링, 세피아 같은 효과를 달성하기 위해서는 매트릭스를 적용합니다. 이미지의 모든 픽셀에 대해, 각 곱이 현재 픽셀 또는 그 이웃의 색상 값과 [필터 매트릭스](http://lodev.org/cgtutor/filtering.html)의 해당 값인 곱들의 합을 취합니다. 이미지를 선명하게 하는 특정 값들의 특별한 매트릭스들이 있습니다.
 
-## Architecture
+## 아키텍처
 
-There are three main components to the app (\aosafigref{500l.imagefilters.architecture}).
+앱에는 세 가지 주요 구성요소가 있습니다 (\aosafigref{500l.imagefilters.architecture}).
 
-### The App
-The app consists of one file: `ImageFilterApp.java`. This 
-extends `PApplet` (the
-Processing app superclass) and handles layout, user interaction, etc. This class
-is the hardest to test, so we want to keep it as small as possible.
+### 앱
+앱은 하나의 파일로 구성됩니다: `ImageFilterApp.java`. 이는 `PApplet`(Processing 앱 슈퍼클래스)을 확장하며 레이아웃, 사용자 상호작용 등을 처리합니다. 이 클래스는 테스트하기 가장 어렵기 때문에 가능한 한 작게 유지하려고 합니다.
 
-### Model
-Model consists of three files: `HSBColor.java` is a simple container for HSB
-colors (consisting of hue, saturation, and brightness). `IFAImage` is a
-wrapper around `PImage` for testability. (`PImage` contains a number of final
-methods which cannot be mocked.) Finally, `ImageState.java` is the object
-which describes the state of the image — what level of filters should be applied,
-and which filters — and handles loading the image. (Note: The image needs to be reloaded
-whenever color filters are adjusted down, and whenever the dominant hue is
-recalculated. For clarity, we just reload each time the image is processed.)
+### 모델
+모델은 세 개의 파일로 구성됩니다: `HSBColor.java`는 HSB 색상(색조, 채도, 밝기로 구성)에 대한 간단한 컨테이너입니다. `IFAImage`는 테스트 가능성을 위한 `PImage` 주변의 래퍼입니다. (`PImage`는 모킹할 수 없는 여러 final 메서드를 포함합니다.) 마지막으로 `ImageState.java`는 이미지의 상태 — 어떤 수준의 필터를 적용할지, 어떤 필터를 적용할지 — 를 설명하고 이미지 로딩을 처리하는 객체입니다. (주의: 색상 필터가 조정되거나 주요 색조가 재계산될 때마다 이미지를 다시 로드해야 합니다. 명확성을 위해 이미지가 처리될 때마다 다시 로드합니다.)
 
-### Color
-Color consists of two files: `ColorHelper.java` is where all the image
-processing and filtering takes place, and `PixelColorHelper.java` 
-abstracts out final `PApplet` methods for pixel colors for testability.
+### 색상
+색상은 두 개의 파일로 구성됩니다: `ColorHelper.java`는 모든 이미지 처리와 필터링이 일어나는 곳이고, `PixelColorHelper.java`는 테스트 가능성을 위해 픽셀 색상에 대한 final `PApplet` 메서드들을 추상화합니다.
 
-\aosafigure[240pt]{image-filters-images/architecture.jpg}{Architecture diagram}{500l.imagefilters.architecture}
+\aosafigure[240pt]{image-filters-images/architecture.jpg}{아키텍처 다이어그램}{500l.imagefilters.architecture}
 
 ### Wrapper Classes and Tests
 Briefly mentioned above, there are two wrapper classes (`IFAImage` and
