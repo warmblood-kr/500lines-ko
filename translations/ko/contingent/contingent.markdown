@@ -1272,48 +1272,47 @@ the <a href="tutorial.txt">Beginners Tutorial</a> first.
 ==============================
 ```
 
-It worked!
-From the output, we can see that
-our transform substituted the document titles
-for the directives in our source documents,
-indicating that Contingent was able to
-discover the connections between the various tasks
-needed to build our documents.
+성공했습니다!
+출력에서 볼 수 있듯이
+우리의 변환이 소스 문서의 지시문을
+문서 제목으로 대체했으며,
+이는 Contingent가 문서를 빌드하는 데 필요한
+다양한 작업들 간의 연결을
+발견할 수 있었음을 나타냅니다.
 
 \aosafigure[240pt]{contingent-images/figure4.png}{The complete set of relationships between our input files and our HTML outputs.}{500l.contingent.graph4}
 
-By watching one task invoke another
-through the `task` wrapper machinery,
-`Project` has automatically learned
-the graph of inputs and consequences.
-Since it has a complete consequences graph
-at its disposal,
-Contingent knows all the things to rebuild
-if the inputs to any tasks change.
+`task` 래퍼 메커니즘을 통해
+한 작업이 다른 작업을 호출하는 것을 관찰함으로써,
+`Project`는 입력과 결과의 그래프를
+자동으로 학습했습니다.
+완전한 결과 그래프를 마음대로 사용할 수 있으므로,
+Contingent는 어떤 작업의 입력이 변경되면
+재빌드해야 할 모든 것들을 알고 있습니다.
 
 ## 결과 추적
 
-Once the initial build has run to completion,
+초기 빌드가 완료되면,
 Contingent는 입력 파일의 변경사항을 모니터링해야 합니다.
 사용자가 새로운 편집을 마치고 "저장"을 실행하면,
 `read()` 메서드와 그 결과들이 모두 호출되어야 합니다.
 
-This will require us to walk the graph in the opposite order
-from the one in which it was created.
-It was built, you will recall, by calling
-`render()` for the API Reference and having that call `parse()`
-which finally invoked the `read()` task.
-Now we go in the other direction:
-we know that `read()` will now return new content,
-and we need to figure out what consequences lie downstream.
+이는 그래프가 생성된 순서와는
+반대 순서로 그래프를 탐색해야 합니다.
+기억하시겠지만, 이 그래프는 API 레퍼런스에 대해
+`render()`를 호출하고 그것이 `parse()`를 호출한 후
+마지막에 `read()` 작업을 호출함으로써 구축되었습니다.
+이제 우리는 반대 방향으로 진행합니다:
+`read()`가 이제 새로운 콘텐츠를 반환할 것임을 알고 있으므로,
+다운스트림에 어떤 결과들이 놓여 있는지 파악해야 합니다.
 
-The process of compiling consequences is a recursive one,
-as each consequence can itself have further tasks that depended on it.
-We could perform this recursion manually
-through repeated calls to the graph.
-(Note that we are here taking advantage
-of the fact that the Python prompt saves the last value displayed
-under the name `_` for use in the subsequent expression.)
+결과를 컴파일하는 프로세스는 재귀적입니다.
+각 결과 자체가 그것에 의존하는 추가 작업들을 가질 수 있기 때문입니다.
+그래프에 대한 반복 호출을 통해
+이 재귀를 수동으로 수행할 수 있습니다.
+(여기서 우리는 Python 프롬프트가 마지막에 표시된 값을
+후속 표현식에서 사용하기 위해
+`_`라는 이름으로 저장한다는 사실을 활용하고 있습니다.)
 
 ```python
 >>> task = Task(read, ('api.txt',))
@@ -1332,10 +1331,10 @@ under the name `_` for use in the subsequent expression.)
 []
 ```
 
-This recursive task of looking repeatedly for immediate consequences
-and only stopping when we arrive at tasks with no further consequences
-is a basic enough graph operation that it is supported directly
-by a method on the `Graph` class:
+즉시 결과를 반복적으로 찾고
+더 이상 결과가 없는 작업에 도달했을 때만 중단하는
+이 재귀적 작업은 `Graph` 클래스의 메서드에 의해
+직접 지원될 만큼 기본적인 그래프 연산입니다:
 
 ```python
 >>> # Secretly adjust pprint to a narrower-than-usual width:
@@ -1360,11 +1359,11 @@ by a method on the `Graph` class:
 Python에서 작성하기 상당히 쉬운 알고리즘입니다.
 자세한 내용은 `graphlib.py` 소스 코드를 확인해보세요.
 
-If, upon detecting a change,
-we are careful to re-run every task in the recursive consequences,
-then Contingent will be able to avoid rebuilding too little.
-Our second challenge, however,
-was to avoid rebuilding too much.
+변경을 감지했을 때
+재귀적 결과의 모든 작업을 주의깊게 다시 실행하면,
+Contingent는 너무 적게 재빌드하는 것을 피할 수 있을 것입니다.
+하지만 두 번째 과제는
+너무 많이 재빌드하는 것을 피하는 것이었습니다.
 \aosafigref{500l.contingent.graph4}를 다시 참조해보세요.
 `tutorial.txt`가 변경될 때마다 세 개의 문서를
 모두 재빌드하는 것을 피하고 싶습니다.
@@ -1373,8 +1372,8 @@ was to avoid rebuilding too much.
 어떻게 이를 달성할 수 있을까요?
 
 해결책은 그래프 재계산을 캐싱에 의존하게 만드는 것입니다.
-When stepping forward through the recursive consequences of a change,
-we will only invoke tasks whose inputs are different than last time.
+변경의 재귀적 결과를 통해 앞으로 진행할 때,
+마지막보다 입력이 다른 작업들만 호출할 것입니다.
 
 이 최적화에는 마지막 데이터 구조가 포함될 것입니다.
 `Project`에 `_todo` 집합을 제공하여
@@ -1385,62 +1384,61 @@ we will only invoke tasks whose inputs are different than last time.
 빌드 프로세스는 그곳에 나타나지 않는 한
 모든 작업의 실행을 건너뛸 수 있습니다.
 
-Again, Python’s convenient and unified design
-makes these features very easy to code.
-Because task objects are hashable,
-`_todo` can simply be a set
-that remembers task items by identity —
-guaranteeing that a task never appears twice —
-and the `_cache` of return values from previous runs
-can be a dict with tasks as keys.
+다시 말하지만, Python의 편리하고 통합된 설계는
+이런 기능들을 매우 쉽게 코딩할 수 있게 합니다.
+작업 객체들이 해시 가능하므로,
+`_todo`는 단순히 작업 항목들을
+식별자로 기억하는 집합이 될 수 있으며 —
+작업이 두 번 나타나지 않는 것을 보장합니다 —
+그리고 이전 실행의 반환 값들의 `_cache`는
+작업을 키로 하는 딕셔너리가 될 수 있습니다.
 
-More precisely, the rebuild step must keep looping
-as long as `_todo` is non-empty.
-During each loop, it should:
+더 정확히 말하면, 재빌드 단계는
+`_todo`가 비어있지 않은 한 계속 반복해야 합니다.
+각 루프 동안 다음을 수행해야 합니다:
 
-* Call `recursive_consequences_of()`
-  and pass in every task listed in `_todo`.
-  The return value will be a list
-  of not only the `_todo` tasks themselves,
-  but also every task downstream of them —
-  every task, in other words, that could possibly need re-execution
-  if the outputs come out different this time.
+* `recursive_consequences_of()`를 호출하고
+  `_todo`에 나열된 모든 작업을 전달합니다.
+  반환 값은 `_todo` 작업들 자체뿐만 아니라
+  그들의 모든 다운스트림 작업들 —
+  즉, 이번에 출력이 다르게 나온다면
+  재실행이 필요할 수도 있는 모든 작업들의 목록이 됩니다.
 
-* For each task in the list,
-  check whether it is listed in `_todo`.
-  If not, then we can skip running it,
-  because none of the tasks that we have re-invoked upstream of it
-  has produced a new return value
-  that would require the task’s recomputation.
+* 목록의 각 작업에 대해
+  그것이 `_todo`에 나열되어 있는지 확인합니다.
+  그렇지 않다면 실행을 건너뛸 수 있습니다.
+  왜냐하면 그것의 업스트림에서 우리가 다시 호출한 작업들 중
+  어느 것도 그 작업의 재계산을 요구하는
+  새로운 반환 값을 생성하지 않았기 때문입니다.
 
-* But for any task that is indeed listed in `_todo`
-  by the time we reach it,
-  we need to ask it to re-run and re-compute its return value.
-  If the task wrapper function detects that this return value
-  does not match the old cached value,
-  then its downstream tasks will be automatically added to `_todo`
-  before we reach them in the list of recursive consequences.
+* 하지만 우리가 도달했을 때
+  실제로 `_todo`에 나열된 작업에 대해서는
+  재실행하고 반환 값을 다시 계산하도록 요청해야 합니다.
+  작업 래퍼 함수가 이 반환 값이
+  이전 캐시된 값과 일치하지 않음을 감지하면,
+  재귀적 결과 목록에서 도달하기 전에
+  그것의 다운스트림 작업들이 자동으로 `_todo`에 추가될 것입니다.
 
-By the time we reach the end of the list,
-every task that could possibly need to be re-run
-should in fact have been re-run.
-But just in case, we will check `_todo`
-and try again if it is not yet empty.
-Even for very rapidly changing dependency trees,
-this should quickly settle out.
-Only a cycle —
-where, for example, task *A* needs the output of task *B*
-which itself needs the output of task *A* —
-could keep the builder in an infinite loop,
-and only if their return values never stabilize.
+목록의 끝에 도달할 때까지
+재실행이 필요할 수도 있는 모든 작업은
+실제로 재실행되어야 합니다.
+하지만 혹시 모르니 `_todo`를 확인하고
+아직 비어있지 않다면 다시 시도할 것입니다.
+매우 빠르게 변화하는 의존성 트리의 경우에도
+이것은 빠르게 안정화되어야 합니다.
+순환만이 —
+예를 들어, 작업 *A*가 작업 *B*의 출력을 필요로 하는데
+그 작업 *B* 자체가 작업 *A*의 출력을 필요로 하는 경우 —
+빌더를 무한 루프에 빠뜨릴 수 있으며,
+그리고 그들의 반환 값이 안정화되지 않는 경우에만 그렇습니다.
 다행히도, 실제 세계의 빌드 작업은 일반적으로 순환이 없습니다.
 
 예제를 통해 이 시스템의 동작을 추적해 봅시다.
 
-Suppose you edit `tutorial.txt`
-and change both the title and the body content.
-We can simulate this by modifying the value
-in our `filesystem` dict:
+`tutorial.txt`를 편집하여
+제목과 본문 콘텐츠를 모두 변경한다고 가정해 봅시다.
+우리의 `filesystem` 딕셔너리에서 값을 수정하여
+이를 시뮬레이션할 수 있습니다:
 
 ```python
 >>> filesystem['tutorial.txt'] = """
@@ -1451,11 +1449,11 @@ in our `filesystem` dict:
 ... """
 ```
 
-Now that the contents have changed,
-we can ask the Project to re-run the `read()` task
-by using its `cache_off()` context manager
-that temporarily disables its willingness
-to return its old cached result for a given task and argument:
+이제 콘텐츠가 변경되었으므로,
+주어진 작업과 인수에 대해 이전 캐시된 결과를
+반환하려는 의지를 일시적으로 비활성화하는
+`cache_off()` 컨텍스트 매니저를 사용하여
+Project에게 `read()` 작업을 재실행하도록 요청할 수 있습니다:
 
 ```python
 >>> with project.cache_off():
@@ -1465,13 +1463,13 @@ to return its old cached result for a given task and argument:
 새로운 튜토리얼 텍스트가 이제 캐시에 읽혔습니다.
 얼마나 많은 다운스트림 작업이 재실행되어야 할까요?
 
-To help us answer this question,
-the `Project` class supports a simple tracing facility
-that will tell us which tasks are executed in the course
-of a rebuild.
-Since the above change to `tutorial.txt`
-affects both its body and its title,
-everything downstream will need to be re-computed:
+이 질문에 답하는 데 도움을 주기 위해,
+`Project` 클래스는 재빌드 과정에서
+어떤 작업들이 실행되는지 알려주는
+간단한 추적 기능을 지원합니다.
+위의 `tutorial.txt` 변경이
+본문과 제목 모두에 영향을 주므로,
+다운스트림의 모든 것들이 재계산되어야 할 것입니다:
 
 ```python
 >>> project.start_tracing()
@@ -1484,13 +1482,13 @@ calling render('api.txt')
 calling render('index.txt')
 ```
 
-Looking back at \aosafigref{500l.contingent.graph4},
-you can see that, as expected,
-this is every task that is an immediate or downstream consequence
-of `read('tutorial.txt')`.
+\aosafigref{500l.contingent.graph4}를 다시 살펴보면,
+예상대로 이것이 `read('tutorial.txt')`의
+즉시 또는 다운스트림 결과인
+모든 작업임을 알 수 있습니다.
 
-But what if we edit it again,
-but this time leave the title the same?
+하지만 다시 편집하되
+이번에는 제목을 그대로 둔다면 어떨까요?
 
 ```python
 >>> filesystem['tutorial.txt'] = """
@@ -1503,8 +1501,8 @@ but this time leave the title the same?
 ...     text = read('tutorial.txt')
 ```
 
-This small, limited change
-should have no effect on the other documents.
+이 작고 제한적인 변경은
+다른 문서들에 아무런 영향을 주지 않아야 합니다.
 
 ```python
 >>> project.start_tracing()
@@ -1524,17 +1522,19 @@ calling title_of('tutorial.txt')
 
 ## 결론
 
-There exist languages and programming methodologies
-under which Contingent would be a suffocating forest of tiny classes,
-with verbose names given to every concept in the problem domain.
+Contingent가 문제 도메인의 모든 개념에
+장황한 이름이 부여된 작은 클래스들의
+숨막히는 숲이 될 수 있는 언어와
+프로그래밍 방법론들이 존재합니다.
 
-When programming Contingent in Python, however,
-we skipped the creation of a dozen possible classes 
-like `TaskArgument` and `CachedResult` and `ConsequenceList`.
-We instead drew upon Python’s strong tradition
-of solving generic problems with generic data structures,
-resulting in code that repeatedly uses a small set of ideas
-from the core data structures tuple, list, set, and dict.
+하지만 Python으로 Contingent를 프로그래밍할 때는
+`TaskArgument`, `CachedResult`, `ConsequenceList`와 같은
+수십 개의 가능한 클래스들의 생성을 건너뛰었습니다.
+대신 범용 데이터 구조로 일반적인 문제를 해결하는
+Python의 강력한 전통을 활용하여,
+핵심 데이터 구조인 튜플, 리스트, 집합, 딕셔너리에서
+작은 아이디어 집합을 반복적으로 사용하는
+코드를 만들어냈습니다.
 
 하지만 이것이 문제를 일으키지는 않을까요?
 
@@ -1547,37 +1547,37 @@ from the core data structures tuple, list, set, and dict.
 구현 중 어디를 찾아야 할지 모르는
 위험에 처해 있을까요?
 
-In fact, we are not in danger!
+사실, 우리는 위험에 처해 있지 않습니다!
 
-Thanks to the careful discipline of encapsulation —
-of only allowing `Graph` code to touch the graph’s sets,
-and `Project` code to touch the project’s set —
-there will never be ambiguity if a set operation
-returns an error during a later phase of the project.
-The name of the innermost executing method at the moment of the error
-will necessarily direct us to exactly the class, and set,
-involved in the mistake.
-There is no need to create a subclass of `set`
-for every possible application of the data type,
-so long as we put that conventional underscore in front of data
-structure attributes and then are careful not to touch them
-from code outside of the class.
+캡슐화의 세심한 원칙 —
+그래프의 집합을 `Graph` 코드만 건드리도록 하고,
+프로젝트의 집합을 `Project` 코드만 건드리도록 하는 —
+덕분에 프로젝트의 나중 단계에서 집합 연산이
+오류를 반환하더라도 모호함은 결코 없을 것입니다.
+오류 발생 순간의 가장 안쪽 실행 메서드의 이름이
+반드시 실수와 관련된 정확한 클래스와 집합으로
+우리를 안내할 것입니다.
+데이터 구조 속성 앞에 관례적인 밑줄을 붙이고
+클래스 외부의 코드에서 그것들을 건드리지 않도록
+주의하는 한, 데이터 타입의 모든 가능한 응용에 대해
+`set`의 서브클래스를 만들 필요는 없습니다.
 
-Contingent demonstrates how crucial the Facade pattern,
-from the epochal *Design Patterns* book,
-is for a well-designed Python program.
-Not every data structure and fragment of data in a Python program
-gets to be its own class.
-Instead, classes are used sparingly,
-at conceptual pivots in the code where a big idea —
-like the idea of a dependency graph —
-can be wrapped up into a Facade
-that hides the details of the simple generic data structures
-that lie beneath it.
+Contingent는 시대를 획기한 *Design Patterns* 책에서 나온
+파사드 패턴이 잘 설계된 Python 프로그램에
+얼마나 중요한지를 보여줍니다.
+Python 프로그램의 모든 데이터 구조와 데이터 조각이
+자신만의 클래스를 갖게 되는 것은 아닙니다.
+대신, 클래스는 코드에서 개념적 중심점에서
+아껴서 사용됩니다. 여기서 의존성 그래프라는
+아이디어와 같은 큰 아이디어가
+그 밑에 놓인 단순한 범용 데이터 구조들의
+세부사항을 숨기는 파사드로
+포장될 수 있습니다.
 
-Code outside of the Facade
-names the big concepts that it needs
-and the operations that it wants to perform.
-Inside of the Facade,
-the programmer manipulates the small and convenient moving parts
-of the Python programming language to make the operations happen.
+파사드 외부의 코드는
+필요한 큰 개념들과
+수행하고자 하는 연산들을 명명합니다.
+파사드 내부에서는
+프로그래머가 Python 프로그래밍 언어의
+작고 편리한 구성 요소들을 조작하여
+연산이 일어나도록 만듭니다.
