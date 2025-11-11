@@ -1,35 +1,33 @@
-title: Contingent: A Fully Dynamic Build System
+title: Contingent: 완전히 동적인 빌드 시스템
 author: Brandon Rhodes and Daniel Rocco
 <markdown>
-_Brandon Rhodes started using Python in the late 1990s, and for 17 years has
-maintained the PyEphem library for amateur astronomers. He works at
-Dropbox, has taught Python programming courses for corporate clients,
-consulted on projects like the New England Wildflower Society's “Go
-Botany” Django site, and will be the chair of the PyCon conference in
-2016 and 2017. Brandon believes that well-written code is a form of
-literature, that beautifully formatted code is a work of graphic design,
-and that correct code is one of the most transparent forms of thought._
+_Brandon Rhodes는 1990년대 말부터 Python을 사용하기 시작했으며, 17년 동안
+아마추어 천문학자들을 위한 PyEphem 라이브러리를 유지보수해왔습니다. 그는
+Dropbox에서 일하며, 기업 고객들을 위한 Python 프로그래밍 과정을 가르치고,
+New England Wildflower Society의 "Go Botany" Django 사이트와 같은 프로젝트에
+컨설팅을 제공했습니다. 또한 2016년과 2017년 PyCon 컨퍼런스의 의장을
+맡았습니다. Brandon은 잘 작성된 코드는 문학의 한 형태이고, 아름답게 포맷된
+코드는 그래픽 디자인의 작품이며, 올바른 코드는 가장 투명한 형태의 사고라고
+믿습니다._
 
-_Daniel Rocco loves Python, coffee, craft, stout, object and system design,
-bourbon, teaching, trees, and Latin guitar. Thrilled that he gets to write
-Python for a living, he is always on the lookout for opportunities to learn
-from others in the community, and to contribute by sharing knowledge. He is
-a frequent speaker at PyAtl on introductory topics, testing, design, and shiny
-things; he loves seeing the spark of wonder and delight in people's eyes when
-someone shares a novel, surprising, or beautiful idea. Daniel lives in Atlanta
-with a microbiologist and four aspiring rocketeers._
+_Daniel Rocco는 Python, 커피, 크래프트 맥주, 스타우트, 객체 및 시스템 디자인,
+버번, 교육, 나무, 그리고 라틴 기타를 사랑합니다. 생계를 위해 Python을 쓸 수
+있다는 것에 감격하며, 항상 커뮤니티의 다른 사람들로부터 배울 기회를 찾고
+지식을 공유함으로써 기여하려 합니다. 그는 PyAtl에서 입문 주제, 테스팅, 디자인,
+그리고 새로운 기술들에 대해 자주 발표하며, 누군가가 참신하고 놀랍거나 아름다운
+아이디어를 공유할 때 사람들의 눈에서 보이는 경이로움과 기쁨의 반짝임을 보는
+것을 좋아합니다. Daniel은 미생물학자와 네 명의 미래의 로켓 과학자들과 함께
+애틀랜타에 살고 있습니다._
 </markdown>
-## Introduction
+## 소개
 
-Build systems have long been a standard tool
-within computer programming.
+빌드 시스템은 오랫동안 컴퓨터 프로그래밍의
+표준 도구였습니다.
 
-The standard `make` build system,
-for which its author won the ACM Software System Award,
+ACM 소프트웨어 시스템 상을 수상한
+표준 `make` 빌드 시스템은
 was first developed in 1976.
-It not only lets you declare
-that an output file depends upon one (or more) inputs,
-but lets you do this recursively.
+이를 재귀적으로 수행할 수 있게 해줍니다.
 A program, for example, might depend upon an object file
 which itself depends upon the corresponding source code:
 
