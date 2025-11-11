@@ -782,21 +782,22 @@ True
  ('tutorial.rst', 'tutorial.html')]
 ```
 
-Since we now have a real live Python object,
-and not just a figure,
-we can ask it interesting questions!
-For example, when Contingent is building a blog from source files,
-it will need to know things like “What depends on `api.rst`?” when
-the content of `api.rst` changes:
+이제 단순한 그림이 아니라
+실제 살아있는 Python 객체를 갖고 있으므로,
+흥미로운 질문들을 해볼 수 있습니다!
+예를 들어, Contingent가 소스 파일에서 블로그를 빌드할 때,
+`api.rst`의 내용이 변경될 때
+"`api.rst`에 의존하는 것들은 무엇인가?"와 같은 것들을
+알아야 할 것입니다:
 
 ```python
 >>> g.immediate_consequences_of('api.rst')
 ['api.html']
 ```
 
-This `Graph` is telling Contingent that,
-when `api.rst` changes,
-`api.html` is now stale and must be rebuilt.
+이 `Graph`는 Contingent에게
+`api.rst`가 변경될 때,
+`api.html`이 이제 낡았으므로 재빌드되어야 한다고 알려주고 있습니다.
 
 `index.html`은 어떨까요?
 
@@ -805,11 +806,11 @@ when `api.rst` changes,
 []
 ```
 
-An empty list has been returned,
-signalling that `index.html` is at the right edge of the graph
-and so nothing further needs to be rebuilt if it changes.
-This query can be expressed very simply
-thanks to the work that has already gone in to laying out our data:
+빈 리스트가 반환되었으며,
+이는 `index.html`이 그래프의 오른쪽 가장자리에 있어서
+그것이 변경되더라도 더 이상 재빌드할 것이 없음을 나타냅니다.
+이러한 쿼리는 우리 데이터를 배치하는 데 이미 들어간
+작업 덕분에 매우 간단하게 표현될 수 있습니다:
 
 ```python
     def immediate_consequences_of(self, task):
@@ -850,18 +851,18 @@ for the various artifacts in our project's documentation.
 
 ## 연결 학습
 
-We now have a way for Contingent
-to keep track of tasks and the relationships between them.
-If we look more closely at \aosafigref{500l.contingent.graph2}, however,
-we see that it is actually a little hand-wavy and vague:
-*how* is `api.html` produced from `api.rst`?
+이제 Contingent가 작업과 그것들 사이의 관계를
+추적하는 방법을 갖게 되었습니다.
+하지만 \aosafigref{500l.contingent.graph2}를 더 자세히 보면,
+실제로 약간 대충 넘어가고 모호하다는 것을 알 수 있습니다:
+`api.rst`로부터 `api.html`이 *어떻게* 생성되는가요?
 `index.html`이 튜토리얼의 제목이 필요하다는 것을 어떻게 알 수 있을까요?
 그리고 이 의존성은 어떻게 해결될까요?
 
-Our intuitive notion of these ideas
-served when we were constructing consequences graphs by hand,
-but unfortunately computers are not terribly intuitive,
-so we will need to be more precise about what we want.
+이러한 아이디어들에 대한 우리의 직관적인 개념은
+손으로 결과 그래프를 구성할 때는 도움이 되었지만,
+불행히도 컴퓨터는 그다지 직관적이지 않으므로,
+우리가 원하는 것에 대해 더 정확해야 할 것입니다.
 
 소스로부터 출력을 생성하는 데 필요한 단계는 무엇일까요?
 이러한 단계들은 어떻게 정의되고 실행될까요?
@@ -877,22 +878,21 @@ Contingent에서 빌드 작업은 함수와 인수로 모델링됩니다.
 이러한 함수들은 차례로 *다른* 작업 함수들을 호출하여,
 답이 필요한 모든 인수를 전달할 수 있습니다.
 
-To see how this works, we will actually now implement
-the documentation builder described at the beginning of the chapter.
-In order to prevent ourselves from wallowing around in a bog of details,
-for this illustration we will work with
-simplified input and output document formats.
-Our input documents will consist of a title on the first line,
-with the remainder of the text forming the body.
-Cross references will simply be source file names
-enclosed in backticks,
-which on output are replaced with the title
-from the corresponding document in the output.
+이것이 어떻게 작동하는지 보기 위해, 우리는 실제로 이제
+이 장의 시작 부분에서 설명한 문서 빌더를 구현할 것입니다.
+세부사항의 �늪에서 허우적거리는 것을 방지하기 위해,
+이 설명을 위해 단순화된 입력 및 출력 문서 형식으로
+작업할 것입니다.
+우리의 입력 문서는 첫 번째 줄에 제목으로 구성되고,
+나머지 텍스트가 본문을 형성합니다.
+상호 참조는 단순히 백틱으로 둘러싸인
+소스 파일 이름이 되며,
+출력에서는 해당 문서의 제목으로
+대체됩니다.
 
-Here is the content of our example
-`index.txt`, `api.txt`, and `tutorial.txt`,
-illustrating titles, document bodies, and cross-references
-from our little document format:
+다음은 우리의 작은 문서 형식에서
+제목, 문서 본문, 상호 참조를 설명하는
+예제 `index.txt`, `api.txt`, `tutorial.txt`의 내용입니다:
 
 ```python
 >>> index = """
@@ -917,27 +917,27 @@ from our little document format:
 ... """
 ```
 
-Now that we have some source material to work with,
-what functions would a Contingent-based blog builder
-need?
+이제 작업할 소스 자료가 있으므로,
+Contingent 기반 블로그 빌더에는
+어떤 함수들이 필요할까요?
 
-In the simple examples above,
-the HTML output files proceed directly from the source,
-but in a realistic system,
-turning source into markup involves several steps:
-reading the raw text from disk,
-parsing the text to a convenient internal representation,
-processing any directives the author may have specified,
-resolving cross-references or other external dependencies
-(such as include files),
-and applying one or more view transformations
-to convert the internal representation to its output form.
+위의 간단한 예제들에서는
+HTML 출력 파일이 소스에서 직접 진행되지만,
+현실적인 시스템에서는
+소스를 마크업으로 변환하는 것이 여러 단계를 포함합니다:
+디스크에서 원시 텍스트를 읽고,
+텍스트를 편리한 내부 표현으로 파싱하고,
+작성자가 지정했을 수 있는 지시문들을 처리하고,
+상호 참조나 다른 외부 의존성들
+(include 파일 같은)을 해결하고,
+내부 표현을 출력 형태로 변환하기 위해
+하나 이상의 뷰 변환을 적용하는 것입니다.
 
-Contingent manages tasks by grouping them into a `Project`,
-a sort of build system busybody
-that injects itself into the middle of the build process,
-noting every time one task talks to another
-to construct a graph of the relationships between all the tasks.
+Contingent는 작업들을 `Project`로 그룹화하여 관리하며,
+이는 빌드 프로세스 중간에 자기 자신을 주입하여
+모든 작업들 간의 관계 그래프를 구축하기 위해
+한 작업이 다른 작업과 대화할 때마다 주목하는
+일종의 빌드 시스템 참견쟁이입니다.
 
 ```python
 >>> from contingent.projectlib import Project, Task
