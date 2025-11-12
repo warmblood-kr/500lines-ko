@@ -178,7 +178,7 @@ abstract sig HttpRequest extends Call { ... }{
 }
 ```
 
-Rerunning now produces instances without the flaw.
+이제 다시 실행하면 결함이 없는 인스턴스들이 생성됩니다.
 
 Instead of generating sample instances, we can ask the analyzer to
 *check* whether the model satisfies a property. For example, one
@@ -191,7 +191,7 @@ check {
 } for 3 
 ```
 
-Given this `check` command, the analyzer explores every possible behavior of the system (up to the specified bound), and when it finds one that violates the property, displays that instance as a *counterexample*, as shown in \aosafigref{500l.same-origin-policy.fig-http-2a} and \aosafigref{500l.same-origin-policy.fig-http-2b}.
+이 `check` 명령이 주어지면, 분석기는 (명시된 범위까지) 시스템의 모든 가능한 동작을 탐색하고, 속성을 위반하는 것을 찾으면 그 인스턴스를 \aosafigref{500l.same-origin-policy.fig-http-2a}와 \aosafigref{500l.same-origin-policy.fig-http-2b}에서 보여지는 바와 같이 *반례*로 표시합니다.
 
 \aosafigure[180pt]{same-origin-policy-images/fig-http-2a.png}{Counterexample at time 0}{500l.same-origin-policy.fig-http-2a}
 
@@ -228,7 +228,7 @@ might be a counterexample in a larger scope. But it is unlikely that
 the property is false, since the analyzer has tested all possible
 instances involving 3 objects of each type.
 
-If desired, however, we can re-run the analysis with a larger scope for increased confidence. For example, running the above check with the scope of 10 still does not produce any counterexample, suggesting that the property is likely to be valid. However, keep in mind that given a larger scope, the analyzer needs to test a greater number of instances, and so it will likely take longer to complete.
+하지만 원한다면, 신뢰도를 높이기 위해 더 큰 범위로 분석을 다시 실행할 수 있습니다. 예를 들어, 위의 확인을 범위 10으로 실행해도 여전히 반례가 생성되지 않으므로, 이 속성이 유효할 가능성이 높다는 것을 시사합니다. 하지만 더 큰 범위가 주어지면, 분석기는 더 많은 수의 인스턴스를 테스트해야 하므로 완료하는 데 더 오래 걸릴 것이라는 점을 명심하세요.
 
 ### Browser
 
@@ -268,7 +268,7 @@ sig Document {
 The inclusion of the `Time` column for the latter two fields tells us
 that they can vary over time, and its omission for the first (`src`,
 representing the source URL of the document) indicates that the source
-URL is fixed.
+URL은 고정되어 있습니다.
 
 To model the effect of an HTTP request on a browser, we introduce a
 new signature, since not all HTTP requests will originate at the level
@@ -587,7 +587,7 @@ sig DataflowModule in Endpoint {
 }
 ```
 
-We also need to restrict data elements that a module can provide as arguments or return values of a call. Otherwise, we may get weird scenarios where a module can make a call with an argument that it has no access to.
+또한 모듈이 호출의 인수나 반환 값으로 제공할 수 있는 데이터 요소들을 제한할 필요가 있습니다. 그렇지 않으면, 모듈이 접근할 수 없는 인수로 호출을 만들 수 있는 이상한 시나리오가 발생할 수 있습니다.
 
 ```alloy
 sig DataflowCall in Call { ... } {
@@ -678,9 +678,9 @@ confidentiality property, the analyzer generates the scenario seen in
 \aosafigure[180pt]{same-origin-policy-images/fig-attack-1a.png}{Confidentiality counterexample at time 0}{500l.same-origin-policy.fig-attack-1a}
 \aosafigure[180pt]{same-origin-policy-images/fig-attack-1b.png}{Confidentiality counterexample at time 1}{500l.same-origin-policy.fig-attack-1b}
 
-This counterexample involves two steps. In the first step (\aosafigref{500l.same-origin-policy.fig-attack-1a}), `EvilScript`, executing inside `AdBanner` from `EvilDomain`, reads the content of `InboxPage`, which originates from `EmailDomain`. In the next step (\aosafigref{500l.same-origin-policy.fig-attack-1b}), `EvilScript` sends the same content (`MyInboxInfo`) to `EvilServer` by making an `XmlHtttpRequest` call. The core of the problem here is that a script executing under one domain is able to read the content of a document from another domain; as we will see in the next section, this is exactly one of the scenarios that the SOP is designed to prevent.
+이 반례는 두 단계를 포함합니다. 첫 번째 단계(\aosafigref{500l.same-origin-policy.fig-attack-1a})에서, `EvilDomain`의 `AdBanner` 내부에서 실행되는 `EvilScript`는 `EmailDomain`에서 유래한 `InboxPage`의 콘텐츠를 읽습니다. 다음 단계(\aosafigref{500l.same-origin-policy.fig-attack-1b})에서, `EvilScript`는 `XmlHttpRequest` 호출을 만들어 동일한 콘텐츠(`MyInboxInfo`)를 `EvilServer`에 보냅니다. 여기서 문제의 핵심은 한 도메인 하에서 실행되는 스크립트가 다른 도메인의 문서 콘텐츠를 읽을 수 있다는 것입니다; 다음 섹션에서 보게 되겠지만, 이는 정확히 SOP가 방지하도록 설계된 시나리오 중 하나입니다.
 
-There may be multiple counterexamples to a single assertion. Consider \aosafigref{500l.same-origin-policy.fig-attack-2}, which shows a different way in which the system may violate the confidentiality property.
+단일 단언에 대해 여러 반례가 있을 수 있습니다. 시스템이 기밀성 속성을 위반할 수 있는 다른 방법을 보여주는 \aosafigref{500l.same-origin-policy.fig-attack-2}를 고려해보세요.
 
 \aosafigure[180pt]{same-origin-policy-images/fig-attack-2.png}{Another confidentiality violation}{500l.same-origin-policy.fig-attack-2}
 
@@ -728,15 +728,15 @@ fact domSop {
     origin[target] = origin[caller] 
 }
 ```
-An instance such as the first script scenario (from the previous section) is not possible under `domSop`, since `Script` is not allowed to invoke `ReadDom` on a document from a different origin.
+첫 번째 스크립트 시나리오(이전 섹션의)와 같은 인스턴스는 `domSop` 하에서는 불가능합니다. `Script`가 다른 출처의 문서에 대해 `ReadDom`을 호출하는 것이 허용되지 않기 때문입니다.
 
-The second part of the policy says that a script cannot send an HTTP request to a server unless its context has the same origin as the target URL&mdash;effectively preventing instances such as the second script scenario.
+정책의 두 번째 부분은 스크립트가 그 컨텍스트가 대상 URL과 동일한 출처를 가지지 않는 한 서버에 HTTP 요청을 보낼 수 없다고 말합니다—두 번째 스크립트 시나리오와 같은 인스턴스들을 효과적으로 방지합니다.
 ```alloy
 fact xmlHttpReqSop { 
   all x: XmlHttpRequest | origin[x.url] = origin[x.from.context.src] 
 }
 ```
-As we can see, the SOP is designed to prevent the two types of vulnerabilities that could arise from actions of a malicious script; without it, the web would be a much more dangerous place than it is today.
+보다시피, SOP는 악의적인 스크립트의 행동으로부터 발생할 수 있는 두 가지 유형의 취약점을 방지하도록 설계되었습니다; 그것 없이는 웹이 오늘날보다 훨씬 더 위험한 곳이 될 것입니다.
 
 It turns out, however, that the SOP can be *too* restrictive. For
 example, sometimes you *do* want to allow communication between two
@@ -753,54 +753,26 @@ benefits of the SOP. In the following sections, we will describe the
 most common of these mechanisms, and discuss their potential security
 pitfalls.
 
-## Techniques for Bypassing the SOP
+## SOP 우회 기법들
 
-The SOP is a classic example of the tension between functionality and
-security; we want to make sure our sites are robust and functional,
-but the mechanism for securing it can sometimes get in the
-way. Indeed, when the SOP was initially introduced, developers ran
-into trouble building sites that made legitimate uses of cross-domain
-communication (e.g., mashups).
+SOP는 기능성과 보안 사이의 긴장 관계를 보여주는 전형적인 예입니다. 우리는 사이트가 견고하고 기능적이기를 원하지만, 보안을 위한 메커니즘이 때로는 방해가 될 수 있습니다. 실제로 SOP가 처음 도입되었을 때, 개발자들은 도메인 간 통신을 합법적으로 사용하는 사이트(예: 매시업)를 구축하는 데 어려움을 겪었습니다.
 
-In this section, we will discuss four techniques that have been
-devised and frequently used by web developers to bypass the
-restrictions imposed by the SOP: (1) The `document.domain` property
-relaxation; (2) JSONP; (3) PostMessage; and (4) CORS. These are valuable
-tools, but if used without caution, may render a web application
-vulnerable to exactly the kinds of attacks that the SOP was designed
-to thwart in the first place.
+이 섹션에서는 웹 개발자들이 SOP에 의해 부과된 제한을 우회하기 위해 고안하고 자주 사용하는 네 가지 기법에 대해 논의할 것입니다: (1) `document.domain` 속성 완화; (2) JSONP; (3) PostMessage; (4) CORS. 이들은 유용한 도구들이지만, 주의 없이 사용된다면 웹 애플리케이션을 SOP가 애초에 방지하도록 설계된 바로 그 종류의 공격에 취약하게 만들 수 있습니다.
 
-Each of these four techniques is surprisingly complex, and if
-described in full detail, would merit its own chapter. So here we just
-give a brief impression of how they work, potential security problems that
-they introduce, and how to prevent these problems. In particular, we
-will ask the Alloy Analyzer to check, for each technique, whether it
-could be abused by an attacker to undermine the two security
-properties that we defined earlier:
+이 네 가지 기법 각각은 놀랍도록 복잡하며, 완전히 자세하게 설명한다면 각각 별도의 장이 필요할 것입니다. 따라서 여기서는 이들이 어떻게 작동하는지, 이들이 도입하는 잠재적 보안 문제들, 그리고 이러한 문제들을 방지하는 방법에 대한 간략한 인상만 제공합니다. 특히, 각 기법에 대해 공격자가 앞서 정의한 두 보안 속성을 훼손하기 위해 악용할 수 있는지 Alloy 분석기에 확인을 요청할 것입니다:
 
 ```
 check Confidentiality for 5
 check Integrity for 5
 ```
 
-Based on insights from the counterexamples that the analyzer
-generates, we will discuss guidelines for safely using these techniques
-without falling into security pitfalls.
+분석기가 생성하는 반례들로부터 얻은 통찰력을 바탕으로, 보안 함정에 빠지지 않고 이러한 기법들을 안전하게 사용하기 위한 가이드라인을 논의할 것입니다.
 
 ### Domain Property
 
-As the first technique on our list, we will look at the use of the
-`document.domain` property as a way of bypassing the SOP. The idea
-behind this technique is to allow two documents from different origins
-to access each other's DOM simply by setting the `document.domain`
-property to the same value. So, for example, a script from
-`email.example.com` could read or write the DOM of a document from
-`calendar.example.com` if the scripts in both documents set the
-`document.domain` property to `example.com` (assuming both source URLs
-have also the same protocol and port).
+목록의 첫 번째 기법으로, SOP를 우회하는 방법으로 `document.domain` 속성의 사용을 살펴보겠습니다. 이 기법의 아이디어는 서로 다른 출처의 두 문서가 단순히 `document.domain` 속성을 동일한 값으로 설정함으로써 서로의 DOM에 접근할 수 있도록 하는 것입니다. 예를 들어, `email.example.com`의 스크립트가 두 문서의 스크립트가 모두 `document.domain` 속성을 `example.com`으로 설정한다면 (두 소스 URL이 동일한 프로토콜과 포트를 가진다고 가정) `calendar.example.com`의 문서 DOM을 읽거나 쓸 수 있습니다.
 
-We model the behavior of setting the `document.domain` property as a type
-of browser operation called `SetDomain`:
+우리는 `document.domain` 속성을 설정하는 동작을 `SetDomain`이라는 브라우저 연산의 한 유형으로 모델링합니다:
 
 ```alloy
 // Modify the document.domain property
@@ -812,11 +784,7 @@ sig SetDomain extends BrowserOp { newDomain: Domain }{
 }
 ```
 
-The `newDomain` field represents the value to which the property should be set.
-There's a caveat, though: scripts can only set the domain property to 
-a right-hand, fully qualified fragment of its hostname.
-(I.e., `email.example.com` can set it to `example.com` but not to
- `google.com`.) We use a fact to capture this rule about subdomains:
+`newDomain` 필드는 속성이 설정되어야 할 값을 나타냅니다. 하지만 주의할 점이 있습니다: 스크립트는 호스트명의 우측, 완전히 정규화된 조각에만 도메인 속성을 설정할 수 있습니다. (즉, `email.example.com`은 `example.com`으로는 설정할 수 있지만 `google.com`으로는 설정할 수 없습니다.) 우리는 서브도메인에 대한 이 규칙을 포착하기 위해 팩트를 사용합니다:
 
 ```alloy
 // Scripts can only set the domain property to only one that is a right-hand,
@@ -826,18 +794,9 @@ fact setDomainRule {
 }
 ```
 
-If it weren't for this rule, any site could set the `document.domain`
-property to any value, which means that, for example, a malicious site
-could set the domain property to your bank domain, load your bank
-account in an iframe, and (assuming the bank page has set its domain
-property) read the DOM of your bank page.
+이 규칙이 없다면, 어떤 사이트든 `document.domain` 속성을 임의의 값으로 설정할 수 있으며, 이는 예를 들어 악의적인 사이트가 도메인 속성을 여러분의 은행 도메인으로 설정하고, 은행 계정을 iframe에 로드한 다음, (은행 페이지가 도메인 속성을 설정했다고 가정하고) 여러분의 은행 페이지의 DOM을 읽을 수 있다는 것을 의미합니다.
 
-Let us go back to our original definition of the SOP, and relax its
-restriction on DOM access in order to take into account the effect of
-the `document.domain` property. If two scripts set the property to the
-same value, and they have the same protocol and port, then these two
-scripts can interact with each other (that is, read and write each
-other's DOM). 
+`document.domain` 속성의 효과를 고려하기 위해 DOM 접근에 대한 제한을 완화하여 SOP의 원래 정의로 돌아가봅시다. 두 스크립트가 속성을 동일한 값으로 설정하고, 동일한 프로토콜과 포트를 가진다면, 이 두 스크립트는 서로 상호작용할 수 있습니다 (즉, 서로의 DOM을 읽고 쓸 수 있습니다).
 
 ```alloy
 fact domSop {
@@ -852,119 +811,66 @@ fact domSop {
 }
 ```
 
-Here, `currOrigin[d, t]` is a function that returns the origin of document `d` with the property `document.domain` at time `t` as its hostname.
+여기서 `currOrigin[d, t]`는 시간 `t`에서 `document.domain` 속성을 호스트명으로 하는 문서 `d`의 출처를 반환하는 함수입니다.
 
-It is worth pointing out that the `document.domain` properties for
-_both_ documents must be _explictly_ set sometime after they
-are loaded into the browser. Let us say that document A is
-loaded from `example.com`, and document B from `calendar.example.com` has
-its domain property modified to `example.com`. Even though the two
-documents now have the same domain property, they will _not_ be able to
-interact with each other, unless document A also explictly sets its
-property to `example.com`. At first, this seems like a rather strange
-behavior. However, without this, various bad things can happen. For
-example, a site could be subject to a cross-site scripting attack from
-its subdomains: A malicious script in document B might modify
-its domain property to `example.com` and manipulate the DOM of
-document A, even though the latter never intended to interact with
-document B.
+_두_ 문서의 `document.domain` 속성이 모두 브라우저에 로드된 후 어느 시점에 _명시적으로_ 설정되어야 한다는 점을 지적할 가치가 있습니다. 문서 A가 `example.com`에서 로드되고, `calendar.example.com`의 문서 B가 도메인 속성을 `example.com`으로 수정했다고 가정해봅시다. 비록 두 문서가 이제 동일한 도메인 속성을 가지지만, 문서 A도 명시적으로 속성을 `example.com`으로 설정하지 않는 한 서로 상호작용할 수 _없을_ 것입니다. 처음에는 이것이 다소 이상한 동작처럼 보입니다. 하지만 이것 없이는 다양한 나쁜 일들이 일어날 수 있습니다. 예를 들어, 사이트가 서브도메인으로부터 사이트 간 스크립팅 공격을 받을 수 있습니다: 문서 B의 악의적인 스크립트가 도메인 속성을 `example.com`으로 수정하고 문서 A의 DOM을 조작할 수 있으며, 후자는 결코 문서 B와 상호작용할 의도가 없었음에도 불구하고 말입니다.
 
-**Analysis:** Now that we have relaxed the SOP to allow
-  cross-origin communication under certain circumstances, do the
-  security guarantees of the SOP still hold? Let us ask the Alloy
-  Analyzer to tell us whether the `document.domain` property could be
-  abused by an attacker to access or tamper with a user's sensitive data.
+**분석:** 이제 특정 상황에서 도메인 간 통신을 허용하도록 SOP를 완화했으니, SOP의 보안 보장이 여전히 유지될까요? Alloy 분석기에 `document.domain` 속성이 공격자에 의해 사용자의 민감한 데이터에 접근하거나 변조하는 데 악용될 수 있는지 알려달라고 요청해봅시다.
 
-Indeed, given the new, relaxed definition of the SOP, the analyzer
-generates a counterexample scenario to the confidentiality property:
+실제로, 새롭고 완화된 SOP 정의가 주어지면, 분석기는 기밀성 속성에 대한 반례 시나리오를 생성합니다:
 
 ```
 check Confidentiality for 5
 ```
 
-This scenario consists of five steps; the first three steps show a typical use of `document.domain`, where two documents from distinct origins, `CalendarPage` and `InboxPage`, communicate by setting their domain properties to a common value (`ExampleDomain`). The last two steps introduce another document, `BlogPage`, that has been compromised with a malicious script that attempts to access the content of the other two documents.
+이 시나리오는 다섯 단계로 구성됩니다; 처음 세 단계는 서로 다른 출처의 두 문서인 `CalendarPage`와 `InboxPage`가 도메인 속성을 공통 값(`ExampleDomain`)으로 설정하여 통신하는 `document.domain`의 전형적인 사용을 보여줍니다. 마지막 두 단계는 다른 두 문서의 콘텐츠에 접근을 시도하는 악의적인 스크립트로 손상된 또 다른 문서 `BlogPage`를 소개합니다.
 
-At the beginning of the scenario
-(\aosafigref{500l.same-origin-policy.fig-setdomain-1a} and
-\aosafigref{500l.same-origin-policy.fig-setdomain-1b}), `InboxPage` and
-`CalendarPage` have domain properties with two distinct values (`EmailDomain`
-and `ExampleDomain`, respectively), so the browser will prevent them from
-accessing each other's DOM.  The scripts running inside the documents
-(`InboxScript` and `CalendarScript`) each execute the `SetDomain` operation to
-modify their domain properties to `ExampleDomain` (which is allowed because
-`ExampleDomain` is a superdomain of the original domain).
+시나리오의 시작에서 (\aosafigref{500l.same-origin-policy.fig-setdomain-1a}와 \aosafigref{500l.same-origin-policy.fig-setdomain-1b}), `InboxPage`와 `CalendarPage`는 두 개의 서로 다른 값(`EmailDomain`과 `ExampleDomain` 각각)을 가진 도메인 속성을 가지므로, 브라우저는 이들이 서로의 DOM에 접근하는 것을 방지할 것입니다. 문서 내부에서 실행되는 스크립트들(`InboxScript`와 `CalendarScript`)은 각각 `SetDomain` 연산을 실행하여 도메인 속성을 `ExampleDomain`으로 수정합니다 (`ExampleDomain`이 원래 도메인의 상위 도메인이므로 허용됨).
 
-\aosafigure[180pt]{same-origin-policy-images/fig-setdomain-1a.png}{Cross-origin counterexample at time 0}{500l.same-origin-policy.fig-setdomain-1a}
-\aosafigure[180pt]{same-origin-policy-images/fig-setdomain-1b.png}{Cross-origin counterexample at time 1}{500l.same-origin-policy.fig-setdomain-1b}
+\aosafigure[180pt]{same-origin-policy-images/fig-setdomain-1a.png}{도메인 간 반례 시간 0}{500l.same-origin-policy.fig-setdomain-1a}
+\aosafigure[180pt]{same-origin-policy-images/fig-setdomain-1b.png}{도메인 간 반례 시간 1}{500l.same-origin-policy.fig-setdomain-1b}
 
-Having done this, they can now access each other's DOM by
-executing `ReadDom` or `WriteDom` operations, as in \aosafigref{500l.same-origin-policy.fig-setdomain-1c}.
+이렇게 함으로써, 이들은 이제 \aosafigref{500l.same-origin-policy.fig-setdomain-1c}에서와 같이 `ReadDom` 또는 `WriteDom` 연산을 실행하여 서로의 DOM에 접근할 수 있습니다.
 
-\aosafigure[180pt]{same-origin-policy-images/fig-setdomain-1c.png}{Cross-origin counterexample at time 2}{500l.same-origin-policy.fig-setdomain-1c}
+\aosafigure[180pt]{same-origin-policy-images/fig-setdomain-1c.png}{도메인 간 반례 시간 2}{500l.same-origin-policy.fig-setdomain-1c}
 
-Note that when you set the domain of `email.example.com`
-and `calendar.example.com` to `example.com`, you are allowing not only
-these two pages to communicate between each other, but also _any_
-other page that has `example.com` as a superdomain
-(e.g., `blog.example.com`). An attacker also realizes this, and
-constructs a special script (`EvilScript`) that runs inside the
-attacker's blog page (`BlogPage`). In the next step (\aosafigref{500l.same-origin-policy.fig-setdomain-2a}), the script executes the `SetDomain` operation to modify the domain property of `BlogPage` to `ExampleDomain`.
+주목할 점은 `email.example.com`과 `calendar.example.com`의 도메인을 `example.com`으로 설정할 때, 이 두 페이지가 서로 통신할 수 있을 뿐만 아니라 `example.com`을 상위 도메인으로 가진 _모든_ 다른 페이지(예: `blog.example.com`)도 통신할 수 있게 된다는 것입니다. 공격자도 이를 깨닫고, 공격자의 블로그 페이지(`BlogPage`) 내부에서 실행되는 특별한 스크립트(`EvilScript`)를 구성합니다. 다음 단계(\aosafigref{500l.same-origin-policy.fig-setdomain-2a})에서, 스크립트는 `SetDomain` 연산을 실행하여 `BlogPage`의 도메인 속성을 `ExampleDomain`으로 수정합니다.
 
-\aosafigure[180pt]{same-origin-policy-images/fig-setdomain-2a.png}{Cross-origin counterexample at time 3}{500l.same-origin-policy.fig-setdomain-2a}
+\aosafigure[180pt]{same-origin-policy-images/fig-setdomain-2a.png}{도메인 간 반례 시간 3}{500l.same-origin-policy.fig-setdomain-2a}
 
-Now that `BlogPage` has the same domain property as the other two documents, it can successfully execute the `ReadDOM` operation to access their content (\aosafigref{500l.same-origin-policy.fig-setdomain-2b}.)
+이제 `BlogPage`가 다른 두 문서와 동일한 도메인 속성을 가지게 되었으므로, `ReadDOM` 연산을 성공적으로 실행하여 그들의 콘텐츠에 접근할 수 있습니다 (\aosafigref{500l.same-origin-policy.fig-setdomain-2b}).
 
-\aosafigure[180pt]{same-origin-policy-images/fig-setdomain-2b.png}{Cross-origin counterexample at time 4}{500l.same-origin-policy.fig-setdomain-2b}
+\aosafigure[180pt]{same-origin-policy-images/fig-setdomain-2b.png}{도메인 간 반례 시간 4}{500l.same-origin-policy.fig-setdomain-2b}
 
-This attack points out one crucial weakness of the domain property
-method for cross-origin communication: The security of an application
-that uses this method is only as strong as the weakest link in all of
-the pages that share the same base domain. We will shortly discuss
-another method called PostMessage, which can be used for a more
-general class of cross-origin communication while also being more
-secure.
+이 공격은 도메인 간 통신을 위한 도메인 속성 방법의 한 가지 중요한 약점을 지적합니다: 이 방법을 사용하는 애플리케이션의 보안은 동일한 기본 도메인을 공유하는 모든 페이지 중 가장 약한 링크만큼만 강합니다. 곧 PostMessage라는 또 다른 방법에 대해 논의할 것인데, 이는 더 일반적인 클래스의 도메인 간 통신에 사용될 수 있으면서도 더 안전합니다.
 
 ### JSON with Padding (JSONP)
 
-Before the introduction of CORS (which we will discuss shortly), JSONP
-was perhaps the most popular technique for bypassing the SOP
-restriction on XMLHttpRequest, and still remains widely used
-today. JSONP takes advantage of the fact that script inclusion tags in
-HTML (i.e., `<script>`) are exempt from the SOP*; that is, you can
-include a script from _any_ URL, and the browser readily executes it
-in the current document:
+CORS(곧 논의할 예정)가 도입되기 전에는, JSONP가 XMLHttpRequest에 대한 SOP 제한을 우회하는 가장 인기 있는 기법이었으며, 오늘날에도 여전히 널리 사용되고 있습니다. JSONP는 HTML의 스크립트 포함 태그(즉, `<script>`)가 SOP에서 면제된다는 사실을 활용합니다*; 즉, _어떤_ URL에서든 스크립트를 포함할 수 있으며, 브라우저는 현재 문서에서 그것을 즉시 실행합니다:
 
-(\* Without this exemption, it would not be possible to load JavaScript libraries, such as JQuery, from other domains.)
+(\* 이 면제가 없다면, JQuery와 같은 JavaScript 라이브러리를 다른 도메인에서 로드하는 것이 불가능할 것입니다.)
 
 ```html
 <script src="http://www.example.com/myscript.js"></script>
 ```
 
-A script tag can be used to obtain code, but how do we use it to
-receive arbitrary _data_ (e.g., a JSON object) from a different
-domain? The problem is that the browser expects the content of `src`
-to be a piece of JavaScript code, and so simply having it point at a
-data source (e.g., a JSON or HTML file) results in a syntax error.
+스크립트 태그는 코드를 얻는 데 사용될 수 있지만, 서로 다른 도메인에서 임의의 _데이터_(예: JSON 객체)를 받기 위해 어떻게 사용할 수 있을까요? 문제는 브라우저가 `src`의 내용이 JavaScript 코드 조각이기를 기대한다는 것이며, 따라서 단순히 데이터 소스(예: JSON 또는 HTML 파일)를 가리키게 하면 구문 오류가 발생한다는 것입니다.
 
-One workaround is to wrap the desired data inside a string that the browser recognizes as valid JavaScript code; this string is sometimes called _padding_ (hence the name "JSON with padding"). This padding could be any arbitrary JavaScript code, but conventionally, it is the name of a callback function (already defined in the current document) that is to be executed on the response data:
+한 가지 해결 방법은 브라우저가 유효한 JavaScript 코드로 인식하는 문자열 내부에 원하는 데이터를 감싸는 것입니다; 이 문자열은 때때로 _패딩_(따라서 "JSON with padding"이라는 이름)이라고 불립니다. 이 패딩은 임의의 JavaScript 코드일 수 있지만, 관례적으로는 응답 데이터에 대해 실행될 (현재 문서에 이미 정의된) 콜백 함수의 이름입니다:
 
 ```html
 <script src="http://www.example.com/mydata?jsonp=processData"></script>
 ```
 
-The server on `www.example.com` recognizes it as a JSONP request, and wraps the requested data inside the `jsonp` parameter:
+`www.example.com`의 서버는 이것을 JSONP 요청으로 인식하고, 요청된 데이터를 `jsonp` 매개변수 내부에 감쌉니다:
 
 ```javascript
 processData(mydata)
 ```
 
-which is a valid JavaScript statement (namely, the application of function "processData" on value "mydata"), and is executed by the browser in the current document.
+이것은 유효한 JavaScript 문(즉, 값 "mydata"에 대한 함수 "processData"의 적용)이며, 브라우저에 의해 현재 문서에서 실행됩니다.
 
-In our model, JSONP is modeled as a kind of HTTP request that includes
-the identifier of a callback function in the field `padding`. After
-receiving a JSONP request, the server returns a response that has the
-requested resource (`payload`) wrapped inside the callback function
-(`cb`).
+우리 모델에서 JSONP는 `padding` 필드에 콜백 함수의 식별자를 포함하는 HTTP 요청의 한 종류로 모델링됩니다. JSONP 요청을 받은 후, 서버는 요청된 리소스(`payload`)가 콜백 함수(`cb`) 내부에 감싸진 응답을 반환합니다.
 
 ```alloy
 sig CallbackID {}  // identifier of a callback function
@@ -980,8 +886,7 @@ sig JsonpResponse in Resource {
 }
 ```
 
-When the browser receives the response, it executes the callback
-function on the payload:
+브라우저가 응답을 받으면, 페이로드에 대해 콜백 함수를 실행합니다:
 
 ```alloy
 sig JsonpCallback extends EventHandler {
@@ -989,62 +894,34 @@ sig JsonpCallback extends EventHandler {
   payload: Resource
 }{
   causedBy in JsonpRequest
-  let resp = causedBy.response | 
+  let resp = causedBy.response |
     cb = resp.@cb and
     -- result of JSONP request is passed on as an argument to the callback
     payload = resp.@payload
 }
 ```
 
-(`EventHandler` is a special type of call that must take place sometime after another call, which is denoted by `causedBy`; we will use event handlers to model  actions that are performed by scripts in response to browser events.) 
+(`EventHandler`는 다른 호출 이후 어느 시점에 발생해야 하는 특별한 유형의 호출로, `causedBy`로 표시됩니다; 우리는 브라우저 이벤트에 응답하여 스크립트가 수행하는 작업을 모델링하기 위해 이벤트 핸들러를 사용할 것입니다.)
 
-Note that the callback function executed is the same as the one that's
-included in the response (`cb = resp.@cb`), but _not_ necessarily the
-same as `padding` in the original JSONP request. In other words, for
-the JSONP communication to work, the server is responsible for
-properly constructing a response that includes the original padding as
-the callback function (i.e., ensure that `JsonRequest.padding =
-JsonpResponse.cb`). In principle, the server can choose to include any
-callback function (or any piece of JavaScript), including one that has
-nothing to do with `padding` in the request. This highlights a
-potential risk of JSONP: the server that accepts the JSONP requests
-must be trustworthy and secure, because it has the ability to execute
-any piece of JavaScript code in the client document.
+실행되는 콜백 함수는 응답에 포함된 것과 동일하지만(`cb = resp.@cb`), 원래 JSONP 요청의 `padding`과 _반드시_ 동일한 것은 아닙니다. 다시 말해, JSONP 통신이 작동하려면, 서버는 원래 패딩을 콜백 함수로 포함하는 응답을 적절히 구성할 책임이 있습니다 (즉, `JsonRequest.padding = JsonpResponse.cb`를 보장). 원칙적으로, 서버는 요청의 `padding`과 아무 관련이 없는 것을 포함하여 모든 콜백 함수(또는 모든 JavaScript 조각)를 포함하도록 선택할 수 있습니다. 이는 JSONP의 잠재적 위험을 강조합니다: JSONP 요청을 받는 서버는 클라이언트 문서에서 모든 JavaScript 코드 조각을 실행할 능력을 가지고 있기 때문에 신뢰할 수 있고 안전해야 합니다.
 
-**Analysis:** Checking the `Confidentiality` property with
- the Alloy Analyzer returns a counterexample that shows one potential
- security risk of JSONP.  In this scenario, the calendar application
- (`CalendarServer`) makes its resources available to third-party sites
- using a JSONP endpoint (`GetSchedule`). To restrict access to the
- resources, `CalendarServer` only sends back a response with the
- schedule for a user if the request contains a cookie that correctly
- identifies that user.
+**분석:** Alloy 분석기로 `Confidentiality` 속성을 확인하면 JSONP의 한 가지 잠재적 보안 위험을 보여주는 반례가 반환됩니다. 이 시나리오에서 캘린더 애플리케이션(`CalendarServer`)은 JSONP 엔드포인트(`GetSchedule`)를 사용하여 제3자 사이트에서 리소스를 사용할 수 있도록 합니다. 리소스에 대한 접근을 제한하기 위해, `CalendarServer`는 요청에 해당 사용자를 올바르게 식별하는 쿠키가 포함된 경우에만 사용자의 일정이 포함된 응답을 다시 보냅니다.
 
-Note that once a server provides an HTTP endpoint as a JSONP service,
-anyone can make a JSONP request to it, including malicious sites. In
-this scenario, the ad banner page from `EvilServer` includes a
-_script_ tag that causes a `GetSchedule` request, with a callback
-function called `Leak` as `padding`. Typically, the developer of
-`AdBanner` does not have direct access to the victim user's session
-cookie (`MyCookie`) for `CalendarServer`. However, because the JSONP
-request is being sent to `CalendarServer`, the browser automatically
-includes `MyCookie` as part of the request; `CalendarServer`, having
-received a JSONP request with `MyCookie`, will return the victim's
-resource (`MySchedule`) wrapped inside the padding `Leak` (\aosafigref{500l.same-origin-policy.fig-jsonp-1}.)
+서버가 HTTP 엔드포인트를 JSONP 서비스로 제공하면, 악의적인 사이트를 포함하여 누구나 JSONP 요청을 만들 수 있다는 점에 주목하세요. 이 시나리오에서 `EvilServer`의 광고 배너 페이지는 `Leak`라는 콜백 함수를 `padding`으로 하는 `GetSchedule` 요청을 발생시키는 _script_ 태그를 포함합니다. 일반적으로, `AdBanner`의 개발자는 `CalendarServer`에 대한 피해자 사용자의 세션 쿠키(`MyCookie`)에 직접 접근할 수 없습니다. 하지만 JSONP 요청이 `CalendarServer`로 보내지기 때문에, 브라우저는 자동으로 `MyCookie`를 요청의 일부로 포함합니다; `MyCookie`가 포함된 JSONP 요청을 받은 `CalendarServer`는 피해자의 리소스(`MySchedule`)를 패딩 `Leak` 내부에 감싸서 반환할 것입니다 (\aosafigref{500l.same-origin-policy.fig-jsonp-1}).
 
-\aosafigure[240pt]{same-origin-policy-images/fig-jsonp-1.png}{JSONP counterexample at time 0}{500l.same-origin-policy.fig-jsonp-1}
+\aosafigure[240pt]{same-origin-policy-images/fig-jsonp-1.png}{JSONP 반례 시간 0}{500l.same-origin-policy.fig-jsonp-1}
 
-In the next step, the browser interprets the JSONP response as a call to `Leak(MySchedule)` (\aosafigref{500l.same-origin-policy.fig-jsonp-2}). The rest of the attack is simple; `Leak` can simply be programmed to forward the input argument to `EvilServer`, allowing the attacker to access the victim's sensitive information.
+다음 단계에서, 브라우저는 JSONP 응답을 `Leak(MySchedule)` 호출로 해석합니다 (\aosafigref{500l.same-origin-policy.fig-jsonp-2}). 나머지 공격은 간단합니다; `Leak`는 단순히 입력 인수를 `EvilServer`로 전달하도록 프로그래밍될 수 있어, 공격자가 피해자의 민감한 정보에 접근할 수 있게 됩니다.
 
-\aosafigure[180pt]{same-origin-policy-images/fig-jsonp-2.png}{JSONP counterexample at time 1}{500l.same-origin-policy.fig-jsonp-2}
+\aosafigure[180pt]{same-origin-policy-images/fig-jsonp-2.png}{JSONP 반례 시간 1}{500l.same-origin-policy.fig-jsonp-2}
 
-This attack, an example of _cross-site request forgery_ (CSRF), shows an inherent weakness of JSOPN; _any_ site on the web can make a JSONP request simply by including a `<script>` tag and access the payload inside the padding. The risk can be mitigated in two ways: (1) ensure that a JSONP request never returns sensitive data, or (2) use another mechanism in place of cookies (e.g., secret tokens) to authorize the request.
+_사이트 간 요청 위조_(CSRF)의 예인 이 공격은 JSONP의 내재적 약점을 보여줍니다; 웹상의 _모든_ 사이트가 단순히 `<script>` 태그를 포함함으로써 JSONP 요청을 만들고 패딩 내부의 페이로드에 접근할 수 있습니다. 이 위험은 두 가지 방법으로 완화될 수 있습니다: (1) JSONP 요청이 민감한 데이터를 결코 반환하지 않도록 보장하거나, (2) 요청을 승인하기 위해 쿠키 대신 다른 메커니즘(예: 비밀 토큰)을 사용하는 것입니다.
 
 ### PostMessage
 
-PostMessage is a new feature in HTML5 that allows scripts from two documents (of possibly different origins) to communicate with each other. It offers a more disciplined alternative to the method of setting the `domain` property, but brings its own security risks.
+PostMessage는 (가능하면 서로 다른 출처의) 두 문서의 스크립트가 서로 통신할 수 있게 해주는 HTML5의 새로운 기능입니다. 이는 `domain` 속성을 설정하는 방법에 대한 더 체계적인 대안을 제공하지만, 고유한 보안 위험을 가져옵니다.
 
-`PostMessage` is a browser API function that takes two arguments: (1) the data to be sent (`message`), and (2) the origin of the document receiving the message (`targetOrigin`):
+`PostMessage`는 두 개의 인수를 취하는 브라우저 API 함수입니다: (1) 전송될 데이터(`message`), (2) 메시지를 받는 문서의 출처(`targetOrigin`):
 
 ```alloy
 sig PostMessage extends BrowserOp {
@@ -1053,7 +930,7 @@ sig PostMessage extends BrowserOp {
 }
 ```
 
-To receive a message from another document, the receiving document  registers an event handler that is invoked by the browser as a consequence of a `PostMessage`:
+다른 문서로부터 메시지를 받기 위해, 받는 문서는 `PostMessage`의 결과로 브라우저에 의해 호출되는 이벤트 핸들러를 등록합니다:
 
 ```alloy
 sig ReceiveMessage extends EventHandler {
@@ -1065,76 +942,36 @@ sig ReceiveMessage extends EventHandler {
   origin[to.context.src] = causedBy.targetOrigin
   -- messages match
   data = causedBy.@message
-  -- the origin of the sender script is provided as "srcOrigin" param 
+  -- the origin of the sender script is provided as "srcOrigin" param
   srcOrigin = origin[causedBy.@from.context.src]
 }
 ```
 
-The browser passes two parameters to `ReceiveMessage`: a resource (`data`) that corresponds to the message being sent, and the origin of the sender document (`srcOrigin`). The signature fact contains four constraints to ensure that each `ReceiveMessage` is well-formed with respect to its corresponding `PostMessage`.
+브라우저는 `ReceiveMessage`에 두 개의 매개변수를 전달합니다: 전송되는 메시지에 해당하는 리소스(`data`)와 송신자 문서의 출처(`srcOrigin`)입니다. 시그니처 팩트는 각 `ReceiveMessage`가 해당하는 `PostMessage`와 관련하여 잘 구성되도록 보장하기 위한 네 가지 제약을 포함합니다.
 
-**Analysis:** Again, let us ask the Alloy Analyzer whether `PostMessage` is a secure way of performing cross-origin communication. This time, the analyzer returns a counterexample for the `Integrity` property, meaning the attacker is able to exploit a weakness in `PostMessage` to introduce malicious data into a trusted application.
+**분석:** 다시 한번, `PostMessage`가 도메인 간 통신을 수행하는 안전한 방법인지 Alloy 분석기에 물어봅시다. 이번에는 분석기가 `Integrity` 속성에 대한 반례를 반환하는데, 이는 공격자가 `PostMessage`의 약점을 악용하여 신뢰할 수 있는 애플리케이션에 악의적인 데이터를 도입할 수 있다는 것을 의미합니다.
 
-Note that by default, the PostMessage mechanism does not restrict
- who is allowed to send PostMessage; in other words, any document can
- send a message to another document as long as the latter has
- registered a `ReceiveMessage` handler. For example, in the following
- instance generated from Alloy, `EvilScript`, running inside
- `AdBanner`, sends a malicious `PostMessage` to a document with the
- target origin of `EmailDomain` (\aosafigref{500l.same-origin-policy.fig-postmessage-1}.)
+기본적으로 PostMessage 메커니즘은 누가 PostMessage를 보낼 수 있는지를 제한하지 않는다는 점에 주목하세요; 다시 말해, 후자가 `ReceiveMessage` 핸들러를 등록한 한 모든 문서가 다른 문서에 메시지를 보낼 수 있습니다. 예를 들어, Alloy에서 생성된 다음 인스턴스에서 `AdBanner` 내부에서 실행되는 `EvilScript`는 `EmailDomain`의 대상 출처를 가진 문서에 악의적인 `PostMessage`를 보냅니다 (\aosafigref{500l.same-origin-policy.fig-postmessage-1}).
 
-\aosafigure[240pt]{same-origin-policy-images/fig-postmessage-1.png}{PostMessage counterexample at time 0}{500l.same-origin-policy.fig-postmessage-1}
+\aosafigure[240pt]{same-origin-policy-images/fig-postmessage-1.png}{PostMessage 반례 시간 0}{500l.same-origin-policy.fig-postmessage-1}
 
-The browser then forwards this message to the document(s)
-with the corresponding origin (in this case, `InboxPage`).  Unless
-`InboxScript` specifically checks the value of `srcOrigin` to filter out
-messages from unwanted origins, `InboxPage` will accept the malicious
-data, possibly leading to further security attacks. (For example, it
-may embed a piece of JavaScript to carry out an XSS attack.) This is shown in \aosafigref{500l.same-origin-policy.fig-postmessage-1}.
+그러면 브라우저는 이 메시지를 해당 출처의 문서(이 경우 `InboxPage`)로 전달합니다. `InboxScript`가 원하지 않는 출처의 메시지를 필터링하기 위해 `srcOrigin` 값을 구체적으로 확인하지 않는 한, `InboxPage`는 악의적인 데이터를 받아들일 것이며, 이는 추가적인 보안 공격으로 이어질 수 있습니다. (예를 들어, XSS 공격을 수행하기 위한 JavaScript 조각을 포함할 수 있습니다.) 이는 \aosafigref{500l.same-origin-policy.fig-postmessage-2}에 나와 있습니다.
 
-\aosafigure[240pt]{same-origin-policy-images/fig-postmessage-2.png}{PostMessage counterexample at time 1}{500l.same-origin-policy.fig-postmessage-2}
+\aosafigure[240pt]{same-origin-policy-images/fig-postmessage-2.png}{PostMessage 반례 시간 1}{500l.same-origin-policy.fig-postmessage-2}
 
-As this example illustrates, `PostMessage` is not secure by default,
-and it is the responsibility of the receiving document to
-_additionally_ check the `srcOrigin` parameter to ensure that the
-message is coming from a trustworthy document. Unfortunately, in
-practice, many sites omit this check, enabling a malicious document to
-inject bad content as part of a `PostMessage`[^postMessageStudy].
+이 예제가 보여주는 바와 같이, `PostMessage`는 기본적으로 안전하지 않으며, 메시지가 신뢰할 수 있는 문서에서 오는 것임을 보장하기 위해 `srcOrigin` 매개변수를 _추가적으로_ 확인하는 것은 받는 문서의 책임입니다. 불행히도, 실제로는 많은 사이트들이 이 확인을 생략하여, 악의적인 문서가 `PostMessage`의 일부로 나쁜 콘텐츠를 주입할 수 있게 합니다[^postMessageStudy].
 
-However, the omission of the origin check may not simply be the result
-of programmer ignorance. Implementing an appropriate check on an incoming
-PostMessage can be tricky; in some applications, it is hard to
-determine in advance the list of trusted origins from which messages
-are expected to be received. (In some apps, this list may even change
-dynamically.) This, again, highlights the tension between security and
-functionality: PostMessage can be used for secure cross-origin
-communication, but only when a whitelist of trusted
-origins is known.
+하지만 출처 확인의 생략은 단순히 프로그래머의 무지의 결과가 아닐 수도 있습니다. 들어오는 PostMessage에 대한 적절한 확인을 구현하는 것은 까다로울 수 있습니다; 일부 애플리케이션에서는 메시지가 받아질 것으로 예상되는 신뢰할 수 있는 출처들의 목록을 미리 결정하기 어렵습니다. (일부 앱에서는 이 목록이 동적으로 변경될 수도 있습니다.) 이것은 다시 보안과 기능성 사이의 긴장을 강조합니다: PostMessage는 안전한 도메인 간 통신에 사용될 수 있지만, 신뢰할 수 있는 출처들의 화이트리스트가 알려져 있을 때만 가능합니다.
 
 ### Cross-Origin Resource Sharing (CORS)
 
-Cross-Origin Resource Sharing (CORS) is a mechanism designed to allow
-a server to share its resources with sites from different origins. In
-particular, CORS can be used by a script from one origin to make
-requests to a server with a different origin, effectively bypassing
-the restriction of the SOP on cross-origin Ajax requests. 
+Cross-Origin Resource Sharing (CORS)은 서버가 서로 다른 출처의 사이트들과 리소스를 공유할 수 있도록 설계된 메커니즘입니다. 특히, CORS는 한 출처의 스크립트가 서로 다른 출처의 서버에 요청을 만드는 데 사용될 수 있어, 도메인 간 Ajax 요청에 대한 SOP의 제한을 효과적으로 우회합니다.
 
-Briefly, a typical CORS process involves two steps: (1) a script
-wanting to access a resource from a foreign server includes, in its
-request, an "Origin" header that specifies the origin of the script,
-and (2) the server includes an "Access-Control-Allow-Origin" header as
-part of its response, indicating a set of origins that are allowed to
-access the server's resource. Normally, without CORS, a browser would
-prevent the script from making a cross-origin request in the first
-place, conforming to the SOP. However, with CORS enabled, the browser
-allows the script to send the request and access its response, but
-_only if_ "Origin" is one of the origins specified in
-"Access-Control-Allow-Origin".
+간략하게, 전형적인 CORS 프로세스는 두 단계를 포함합니다: (1) 외부 서버의 리소스에 접근하려는 스크립트는 요청에 스크립트의 출처를 명시하는 "Origin" 헤더를 포함하고, (2) 서버는 응답의 일부로 서버의 리소스에 접근할 수 있는 출처들의 집합을 나타내는 "Access-Control-Allow-Origin" 헤더를 포함합니다. 일반적으로, CORS가 없다면 브라우저는 SOP를 준수하여 처음부터 스크립트가 도메인 간 요청을 만드는 것을 방지할 것입니다. 하지만 CORS가 활성화되면, 브라우저는 스크립트가 요청을 보내고 응답에 접근할 수 있게 하지만, _오직_ "Origin"이 "Access-Control-Allow-Origin"에서 명시된 출처 중 하나인 경우에만 가능합니다.
 
-(CORS additionally includes a notion of _preflight_ requests, not discussed here, to
-support complex types of cross-origin requests besides GETs and POSTs.)
+(CORS는 추가적으로 GET과 POST 외의 복잡한 유형의 도메인 간 요청을 지원하기 위해 여기서는 논의되지 않는 _프리플라이트_ 요청의 개념을 포함합니다.)
 
-In Alloy, we model a CORS request as a special kind of
-`XmlHttpRequest`, with two extra fields `origin` and `allowedOrigins`:
+Alloy에서, 우리는 CORS 요청을 두 개의 추가 필드 `origin`과 `allowedOrigins`를 가진 특별한 종류의 `XmlHttpRequest`로 모델링합니다:
 
 ```alloy
 sig CorsRequest in XmlHttpRequest {
@@ -1147,7 +984,7 @@ sig CorsRequest in XmlHttpRequest {
 }
 ```
 
-We then use an Alloy fact `corsRule` to describe what constitutes a valid CORS request:
+그런 다음 유효한 CORS 요청을 구성하는 것이 무엇인지 설명하기 위해 Alloy 팩트 `corsRule`을 사용합니다:
 
 ```alloy
 fact corsRule {
@@ -1159,129 +996,54 @@ fact corsRule {
 }
 ```
 
-**Analysis:** Can CORS be misused in a way that would allow the
-attacker to compromise the security of a trusted site? When prompted,
-the Alloy Analyzer returns a simple counterexample for the
-`Confidentiality` property. 
+**분석:** CORS가 공격자가 신뢰할 수 있는 사이트의 보안을 손상시킬 수 있는 방식으로 오용될 수 있을까요? 요청받으면, Alloy 분석기는 `Confidentiality` 속성에 대한 간단한 반례를 반환합니다.
 
-Here, the developer of the calendar application decides to share some
-of its resources with other applications by using the CORS
-mechanism. Unfortunately, `CalendarServer` is configured to return
-`Origin` (which represents the set of all origin values) for the
-`access-control-allow-origin` header in CORS responses. As a result, a
-script from any origin, including `EvilDomain`, is allowed to make
-a cross-site request to `CalendarServer` and read its response (\aosafigref{500l.same-origin-policy.fig-cors}).
+여기서 캘린더 애플리케이션의 개발자는 CORS 메커니즘을 사용하여 다른 애플리케이션들과 일부 리소스를 공유하기로 결정합니다. 불행히도, `CalendarServer`는 CORS 응답에서 `access-control-allow-origin` 헤더에 대해 (모든 출처 값들의 집합을 나타내는) `Origin`을 반환하도록 구성되어 있습니다. 결과적으로, `EvilDomain`을 포함하여 모든 출처의 스크립트가 `CalendarServer`에 사이트 간 요청을 만들고 그 응답을 읽는 것이 허용됩니다 (\aosafigref{500l.same-origin-policy.fig-cors}).
 
-\aosafigure[240pt]{same-origin-policy-images/fig-cors.png}{CORS counterexample}{500l.same-origin-policy.fig-cors}
+\aosafigure[240pt]{same-origin-policy-images/fig-cors.png}{CORS 반례}{500l.same-origin-policy.fig-cors}
 
-This example highlights one common mistake that developers make with
-CORS: Using the wildcard value "\*" as the value of
-"access-control-allow-origin" header, allowing any site to access a
-resource on the server. This access pattern is appropriate if the
-resource is considered public and accessible to anyone. However, it
-turns out that many sites use "\*" as the default value even for
-private resources, inadvertently allowing malicious scripts to access
-them through CORS requests[^corsStudy].
+이 예제는 개발자들이 CORS로 범하는 한 가지 일반적인 실수를 강조합니다: "access-control-allow-origin" 헤더의 값으로 와일드카드 값 "\*"를 사용하여, 모든 사이트가 서버의 리소스에 접근할 수 있게 하는 것입니다. 이 접근 패턴은 리소스가 공개적이고 누구나 접근 가능한 것으로 간주되는 경우에는 적절합니다. 하지만 많은 사이트들이 개인 리소스에 대해서도 "\*"를 기본값으로 사용하여, 부주의하게 악의적인 스크립트들이 CORS 요청을 통해 그것들에 접근할 수 있게 한다는 것이 밝혀졌습니다[^corsStudy].
 
-Why would a developer ever use the wildcard? It turns out that
-specifying the allowed origins can be tricky, since it may not be
-clear at design time which origins should be granted access at runtime
-(similar to the PostMessage issue discusssed above). A service may,
-for example, allow third-party applications to subscribe dynamically
-to its resources.
+왜 개발자가 와일드카드를 사용하려고 할까요? 허용된 출처들을 명시하는 것이 까다로울 수 있다는 것이 밝혀졌는데, 설계 시점에서 런타임에 어떤 출처들이 접근을 허가받아야 하는지 명확하지 않을 수 있기 때문입니다 (위에서 논의한 PostMessage 문제와 유사). 예를 들어, 서비스는 제3자 애플리케이션들이 동적으로 자신의 리소스를 구독할 수 있게 허용할 수 있습니다.
 
-## Conclusion
+## 결론
 
-In this chapter, we set out to construct a document that provides a
-clear understanding of the SOP and its related mechanisms by building
-a _model_ of the policy in a language called Alloy. Our model of the
-SOP is not an implementation in the traditional sense, and can't be
-deployed for use, unlike artifacts shown in other chapters. Instead, 
-we wanted to demonstrate the key elements behind our approach to
-"agile modeling": (1) starting out with a small, abstract model of
-the system and _incrementally_ adding details as necessary, (2)
-specifying _properties_ that the system is expected to satisfy, and
-(3) applying _rigorous analysis_ to explore potential flaws in the
-design of the system. Of course, this chapter was written long after
-the SOP was first introduced, but we believe that this type of
-modeling would potentially be even more beneficial if it is done
-during the early stage of system design.
+이 장에서 우리는 Alloy라는 언어로 정책의 _모델_을 구축함으로써 SOP와 관련 메커니즘에 대한 명확한 이해를 제공하는 문서를 구성하기 시작했습니다. 우리의 SOP 모델은 전통적인 의미의 구현이 아니며, 다른 장들에서 보여진 산출물들과 달리 사용을 위해 배포될 수 없습니다. 대신, 우리는 "애자일 모델링"에 대한 우리 접근법의 핵심 요소들을 보여주고자 했습니다: (1) 시스템의 작고 추상적인 모델로 시작하여 필요에 따라 _점진적으로_ 세부 사항을 추가하기, (2) 시스템이 만족할 것으로 예상되는 _속성들_을 명시하기, (3) 시스템 설계의 잠재적 결함을 탐색하기 위해 _엄밀한 분석_을 적용하기. 물론 이 장은 SOP가 처음 도입된 훨씬 뒤에 작성되었지만, 이런 유형의 모델링이 시스템 설계의 초기 단계에서 수행된다면 잠재적으로 훨씬 더 유익할 것이라고 믿습니다.
 
-Besides the SOP, Alloy has been used to model and reason about a
-variety of systems across different domains&mdash;ranging from network
-protocols, semantic web, bytecode security to electronic voting and
-medical systems. For many of these systems, Alloy's analysis led to
-discovery of design flaws and bugs that had eluded the developers, in
-some cases, for years. We invite our readers to visit the [Alloy
-page](http://alloy.mit.edu) and try building a model of their favorite system!
+SOP 외에도, Alloy는 네트워크 프로토콜, 시맨틱 웹, 바이트코드 보안부터 전자 투표와 의료 시스템에 이르기까지 서로 다른 도메인의 다양한 시스템들을 모델링하고 추론하는 데 사용되어 왔습니다. 이러한 많은 시스템들에 대해, Alloy의 분석은 경우에 따라서는 수년간 개발자들을 피해 온 설계 결함과 버그의 발견으로 이어졌습니다. 독자들에게 [Alloy 페이지](http://alloy.mit.edu)를 방문하여 자신이 좋아하는 시스템의 모델을 구축해보기를 권합니다!
 
 [^postMessageStudy]: Sooel Son and Vitaly Shmatikov. *The Postman Always Rings Twice: Attacking and Defending postMessage in HTML5 Websites*. Network and Distributed System Security Symposium (NDSS), 2013.
 
 [^corsStudy]: Sebastian Lekies, Martin Johns, and Walter Tighzert. *The State of the Cross-Domain Nation*. Web 2.0 Security and Privacy (W2SP), 2011.
 
-## Appendix: Reusing Modules in Alloy 
+## 부록: Alloy에서 모듈 재사용
 \label{500l.sop.appendix}
-As mentioned earlier in this chapter, Alloy makes no assumptions about
-the behavior of the system being modeled. The lack of a built-in
-paradigm allows the user to encode a wide range of modeling idioms
-using a small core of the basic language constructs. We could, for
-example, specify a system as a state machine, a data model with
-complex invariants, a distributed event model with a global clock, or
-whatever idiom is most suitable for the problem at hand. Commonly used
-idioms can be captured as a generic module and reused across multiple
-systems.
+이 장의 앞부분에서 언급한 바와 같이, Alloy는 모델링되는 시스템의 동작에 대해 어떤 가정도 하지 않습니다. 내장된 패러다임의 부재는 사용자가 기본 언어 구조의 작은 핵심을 사용하여 광범위한 모델링 관용구를 인코딩할 수 있게 해줍니다. 예를 들어, 우리는 시스템을 상태 기계로, 복잡한 불변량을 가진 데이터 모델로, 전역 클록을 가진 분산 이벤트 모델로, 또는 해당 문제에 가장 적합한 어떤 관용구로든 명시할 수 있습니다. 일반적으로 사용되는 관용구들은 제네릭 모듈로 포착되어 여러 시스템에서 재사용될 수 있습니다.
 
-In our model of the SOP, we model the system as a set of endpoints
-that communicate with each other by making one or more _calls_. Since
-_call_ is a fairly generic notion, we encapsulate its description in a
-separate Alloy module, to be imported from other modules that rely on
-it -- similar to standard libraries in programming languages:
+우리의 SOP 모델에서, 우리는 시스템을 하나 이상의 _호출_을 만들어 서로 통신하는 엔드포인트들의 집합으로 모델링합니다. _호출_이 상당히 일반적인 개념이므로, 우리는 그것의 설명을 별도의 Alloy 모듈에 캡슐화하여, 그것에 의존하는 다른 모듈들에서 가져올 수 있게 합니다 -- 프로그래밍 언어의 표준 라이브러리와 유사합니다:
 
-```alloy 
-module call[T] 
+```alloy
+module call[T]
 ```
 
-In this module declaration, `T` represents a type parameter that can be
-instantiated to a concrete type that is provided when the module is
-imported. We will soon see how this type parameter is used.
+이 모듈 선언에서 `T`는 모듈이 가져올 때 제공되는 구체적인 타입으로 인스턴스화될 수 있는 타입 매개변수를 나타냅니다. 이 타입 매개변수가 어떻게 사용되는지 곧 보게 될 것입니다.
 
-It is often convenient to describe the system execution as taking
-place over a global time frame, so that we can talk about calls as
-occurring before or after each other (or at the same time). To
-represent the notion of time, we introduce a new signature called `Time`:
+시스템 실행을 전역 시간 프레임에서 발생하는 것으로 설명하는 것이 종종 편리한데, 이를 통해 호출들이 서로 전후로 발생하는 것(또는 동시에)으로 말할 수 있습니다. 시간의 개념을 나타내기 위해, 우리는 `Time`이라는 새로운 시그니처를 도입합니다:
 
 ```alloy
 open util/ordering[Time] as ord
 sig Time {}
 ```
-In Alloy, `util/ordering` is a built-in module that imposes a total
-order on the type parameter, and so by importing `ordering[Time]`, we
-obtain a set of `Time` objects that behave like other totally ordered
-sets (e.g., natural numbers).
 
-Note that there is absolutely nothing special about `Time`; we
-could have named it any other way (for example, `Step` or `State`), and it
-wouldn't have changed the behavior of the model at all. All we are
-doing here is using an additional column in a relation as a way of
-representing the content of a field at different points in a system
-execution; for example, `cookies` in the `Browser` signature. In this
-sense, `Time` objects are nothing but helper objects used as a kind of
-index.
+Alloy에서 `util/ordering`은 타입 매개변수에 전순서를 부과하는 내장 모듈이므로, `ordering[Time]`을 가져옴으로써 다른 전순서 집합들(예: 자연수)처럼 행동하는 `Time` 객체들의 집합을 얻습니다.
 
-Each call occurs between two points in time&mdash;its `start` and `end`
-times, and is associated with a sender (represented by `from`) and a
-receiver (`to`):
+`Time`에 대해 절대적으로 특별한 것은 없다는 점에 주목하세요; 우리는 그것을 다른 방식으로 명명할 수 있었고(예를 들어, `Step`이나 `State`), 그것이 모델의 동작을 전혀 변경하지 않았을 것입니다. 우리가 여기서 하고 있는 것은 시스템 실행의 서로 다른 지점에서 필드의 내용을 나타내는 방법으로 관계의 추가 열을 사용하는 것입니다; 예를 들어, `Browser` 시그니처의 `cookies`. 이런 의미에서 `Time` 객체들은 일종의 색인으로 사용되는 도우미 객체들에 불과합니다.
 
-```alloy 
-abstract sig Call { start, end: Time, from, to: T } 
+각 호출은 두 시점 사이에 발생합니다—그것의 `start`와 `end` 시간—그리고 송신자(`from`으로 표현)와 수신자(`to`)와 연관됩니다:
+
+```alloy
+abstract sig Call { start, end: Time, from, to: T }
 ```
 
-Recall that in our discussion of HTTP requests, we imported the module
-`call` by passing `Endpoint` as its type parameter. As a result, the
-parametric type `T` is instantiated to `Endpoint`, and we obtain a set
-of `Call` objects that are associated with a pair of sender and receiver
-endpoints. A module can be imported multiple times; for example, we
-could declare a signature called `UnixProcess`, and instantiate the
-module `call` to obtain a distinct set of `Call` objects that are sent
-from one Unix process to another.
+HTTP 요청에 대한 우리의 논의에서, 우리가 `Endpoint`를 타입 매개변수로 전달하여 모듈 `call`을 가져왔다는 것을 기억하세요. 결과적으로, 매개변수 타입 `T`는 `Endpoint`로 인스턴스화되고, 우리는 한 쌍의 송신자와 수신자 엔드포인트와 연관된 `Call` 객체들의 집합을 얻습니다. 모듈은 여러 번 가져올 수 있습니다; 예를 들어, 우리는 `UnixProcess`라는 시그니처를 선언하고, 한 Unix 프로세스에서 다른 프로세스로 보내지는 `Call` 객체들의 별개 집합을 얻기 위해 모듈 `call`을 인스턴스화할 수 있습니다.
 
