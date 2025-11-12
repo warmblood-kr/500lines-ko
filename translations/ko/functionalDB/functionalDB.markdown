@@ -747,39 +747,39 @@ VAET 인덱스에서 발견되는 정보는 엔티티에 대한 모든 들어오
 <markdown>
 <table>
   <tr>
-    <td>Name</td>
-    <td>Meaning</td>
-    <td>Example</td>
+    <td>이름</td>
+    <td>의미</td>
+    <td>예시</td>
   </tr>
   <tr>
-    <td>Constant</td>
-    <td>Is the value of the item in the datom equal to the constant?</td>
+    <td>상수</td>
+    <td>datom 항목의 값이 상수와 같은가?</td>
     <td>:likes</td>
   </tr>
   <tr>
-    <td>Variable</td>
-    <td>Bind the value of the item in the datom to the variable and return true.</td>
+    <td>변수</td>
+    <td>datom 항목의 값을 변수에 바인드하고 참을 반환한다.</td>
     <td>?e</td>
   </tr>
   <tr>
-    <td>Don’t-care</td>
-    <td>Always returns true.</td>
+    <td>무관심</td>
+    <td>항상 참을 반환한다.</td>
     <td>_</td>
   </tr>
   <tr>
-    <td>Unary operator</td>
-    <td>Unary operation that takes a variable as its operand.<br/>
-        Bind the datom's item's value to the variable (unless it's an '_').<br/>
-        Replace the variable with the value of the item in the datom.<br/>
-        Return the application of the operation.</td>
+    <td>단항 연산자</td>
+    <td>변수를 피연산자로 받는 단항 연산.<br/>
+        datom 항목의 값을 변수에 바인드한다('_'가 아닌 경우).<br/>
+        변수를 datom 항목의 값으로 치환한다.<br/>
+        연산의 적용 결과를 반환한다.</td>
     <td>(bday-mo? _)</td>
   </tr>
   <tr>
-    <td>Binary operator</td>
-    <td>A binary operation that must have a variable as one of its operands.<br/>
-        Bind the datom's item's value to the variable (unless it's an '_').<br/>        
-        Replace the variable with the value of the item in the datom.<br/>
-        Return the result of the operation.</td>
+    <td>이항 연산자</td>
+    <td>피연산자 중 하나가 변수여야 하는 이항 연산.<br/>
+        datom 항목의 값을 변수에 바인드한다('_'가 아닌 경우).<br/>
+        변수를 datom 항목의 값으로 치환한다.<br/>
+        연산의 결과를 반환한다.</td>
     <td>(&gt; ?age 20)</td>
   </tr>
 </table>
@@ -792,13 +792,13 @@ VAET 인덱스에서 발견되는 정보는 엔티티에 대한 모든 들어오
 \rowcolors{2}{TableOdd}{TableEven}
 \begin{tabular}{lll}
 \hline
-\textbf{Name} & \textbf{Meaning} & \textbf{Example} \\
+\textbf{이름} & \textbf{의미} & \textbf{예시} \\
 \hline
-Constant & Is the value of the datom item equal to the constant? & \verb|:likes| \\
-Variable & Bind the value of the datom item to the variable and return true. & \verb|?e| \\
-Don't-care & Always returns true. & \verb|_| \\
-Unary operator & \begin{tabular}{@{}l@{}} Unary operation that takes a variable as its operand. \\ Bind the datom's item's value to the variable (unless it's an \verb|_|). \\  Replace the variable with the value of the item in the datom. \\ Return the application of the operation. \end{tabular} & \verb|(bday-mo? _)| \\
-Binary operator & \begin{tabular}{@{}l@{}} A binary operation that requires a variable as an operand. \\ Bind the datom's item's value to the variable (unless it's an \verb|_|). \\ Replace the variable with the value of the item in the datom. \\ Return the result of the operation. \end{tabular} & \verb|(&gt; ?age 20)| \\
+상수 & datom 항목의 값이 상수와 같은가? & \verb|:likes| \\
+변수 & datom 항목의 값을 변수에 바인드하고 참을 반환한다. & \verb|?e| \\
+무관심 & 항상 참을 반환한다. & \verb|_| \\
+단항 연산자 & \begin{tabular}{@{}l@{}} 변수를 피연산자로 받는 단항 연산. \\ datom 항목의 값을 변수에 바인드한다(\verb|_|가 아닌 경우). \\ 변수를 datom 항목의 값으로 치환한다. \\ 연산의 적용 결과를 반환한다. \end{tabular} & \verb|(bday-mo? _)| \\
+이항 연산자 & \begin{tabular}{@{}l@{}} 피연산자 중 하나가 변수여야 하는 이항 연산. \\ datom 항목의 값을 변수에 바인드한다(\verb|_|가 아닌 경우). \\ 변수를 datom 항목의 값으로 치환한다. \\ 연산의 결과를 반환한다. \end{tabular} & \verb|(&gt; ?age 20)| \\
 \hline
 \end{tabular}
 }
@@ -840,7 +840,7 @@ The `:find` part of the query is transformed into a set of the given variable na
 (defmacro symbol-col-to-set [coll] (set (map str coll)))
 ```
 
-The `:where` part of the query retains its nested vector structure. However, each of the terms in each of the clauses is replaced with a predicate according to \aosatblref{500l.functionaldb.predicates}. 
+쿼리의 `:where` 부분은 중첩된 벡터 구조를 유지합니다. 하지만 각 절의 각 항들은 \aosatblref{500l.functionaldb.predicates}에 따라 술어로 치환됩니다. 
 
 ```clojure
 (defmacro clause-term-expr [clause-term]
@@ -857,7 +857,7 @@ The `:where` part of the query retains its nested vector structure. However, eac
       `#(~(first clause-term) ~(second clause-term) %)))
 ```
 
-For each clause, a vector with the variable names used in that clause is set as its metadata. 
+각 절에 대해, 해당 절에서 사용된 변수 이름들을 포함하는 벡터가 메타데이터로 설정됩니다. 
 
 ```clojure
 (defmacro clause-term-meta [clause-term]
@@ -878,7 +878,7 @@ We use `pred-clause` to iterate over the terms in each clause:
           (with-meta exprs# {:db/variable metas#}))))
 ```
 
-Iterating over the clauses themselves happens in `q-clauses-to-pred-clauses`:
+절 자체에 대한 반복은 `q-clauses-to-pred-clauses`에서 일어납니다:
           
 ```clojure
 (defmacro  q-clauses-to-pred-clauses [clauses]
@@ -886,15 +886,15 @@ Iterating over the clauses themselves happens in `q-clauses-to-pred-clauses`:
        (if-not frst#  preds-vecs#
          (recur rst# `(conj ~preds-vecs# (pred-clause ~frst#))))))
 ```
-We are once again relying on the fact that macros do not eagerly evaluate their arguments. This allows us to define a simpler API where users provide variable names as symbols (e.g., `?name`) instead of asking the user to understand the internals of the engine by providing variable names as strings ( e.g., `"?name"`), or even worse, quoting the variable name (e.g., `'?name`).
+매크로가 인수를 즉시 평가하지 않는다는 사실을 다시 한번 활용합니다. 이를 통해 사용자가 변수 이름을 문자열(예: `"?name"`)로 제공하거나 더 나쁘게는 변수 이름을 인용(예: `'?name`)하여 엔진의 내부를 이해하도록 요구하는 대신, 변수 이름을 심볼(예: `?name`)로 제공하는 더 간단한 API를 정의할 수 있습니다.
 
-At the end of this phase, our example yields the following set for the `:find` part: 
+이 단계가 끝날 때, 우리 예시는 `:find` 부분에 대해 다음 집합을 산출합니다: 
 
 ```clojure 
 #{"?nm" "?bd"} 
 ``` 
 
-and the following structure in \aosatblref{500l.functionaldb.clauses} for the `:where` part. (Each cell in the _Predicate Clause_ column holds the metadata found in its neighbor at the _Meta Clause_ column.)
+그리고 `:where` 부분에 대해서는 \aosatblref{500l.functionaldb.clauses}에서의 다음 구조를 얻습니다. (_Predicate Clause_ 열의 각 셀은 _Meta Clause_ 열의 이웃에서 발견된 메타데이터를 보유합니다.)
 
 <markdown>
 <table>
@@ -948,27 +948,27 @@ and the following structure in \aosatblref{500l.functionaldb.clauses} for the `:
 \end{table}
 </latex>
 
-This structure acts as the query that is executed in a later phase, once the engine decides on the right plan of execution.
+이 구조는 엔진이 올바른 실행 계획을 결정한 후 나중 단계에서 실행되는 쿼리 역할을 합니다.
 
-#### Phase 2: Making a Plan
+#### 2단계: 계획 수립
 
-In this phase, we inspect the query in order to construct a good plan to produce the result it describes.
+이 단계에서는 쿼리가 설명하는 결과를 생성하기 위한 좋은 계획을 구성하기 위해 쿼리를 검사합니다.
 
-In general, this will involve choosing the appropriate index (\aosatblref{500l.functionaldb.indexselection}) and constructing a plan in the form of a function.  We choose the index based on the _single_ joining variable (that can operate on only a single kind of element).
+일반적으로 이는 적절한 인덱스(\aosatblref{500l.functionaldb.indexselection})를 선택하고 함수 형태의 계획을 구성하는 것을 포함합니다. 우리는 _단일_ 조인 변수(하나의 종류의 요소에만 작동할 수 있는)를 기반으로 인덱스를 선택합니다.
 
 <markdown>
 <table>
 	<tr>
-		<td>Joining variable operates on</td><td>Index to use</td>
+		<td>조인 변수가 작동하는 대상</td><td>사용할 인덱스</td>
 	</tr>
 	<tr>
-		<td>Entity IDs</td><td>AVET</td>
+		<td>엔티티 ID</td><td>AVET</td>
 	</tr>
 	<tr>
-		<td>Attribute names</td><td>VEAT</td>
+		<td>속성 이름</td><td>VEAT</td>
 	</tr>
 	<tr>
-		<td>Attribute values</td><td>EAVT</td>
+		<td>속성 값</td><td>EAVT</td>
 	</tr>
 </table>
 : \label{500l.functionaldb.indexselection} Index Selection
@@ -980,11 +980,11 @@ In general, this will involve choosing the appropriate index (\aosatblref{500l.f
 \rowcolors{2}{TableOdd}{TableEven}
 \begin{tabular}{ll}
 \hline
-\textbf{Joining variable operates on} & \textbf{Index to use} \\
+\textbf{조인 변수가 작동하는 대상} & \textbf{사용할 인덱스} \\
 \hline
-Entity IDs & AVET \\
-Attribute names & VEAT \\
-Attribute values & EAVT \\
+엔티티 ID & AVET \\
+속성 이름 & VEAT \\
+속성 값 & EAVT \\
 \hline
 \end{tabular}
 }
@@ -993,9 +993,9 @@ Attribute values & EAVT \\
 \end{table}
 </latex>
 
-The reasoning behind this mapping will become clearer in the next section, when we actually execute the plan produced. For now, just note that the key here is to select an index whose leaves hold the elements that the joining variable operates on.
+이 매핑 뒤의 논리는 실제로 생성된 계획을 실행할 때인 다음 섹션에서 더 명확해질 것입니다. 지금은 여기서 핵심이 조인 변수가 작동하는 요소들을 리프에 보유하는 인덱스를 선택하는 것이라는 점만 주목하세요.
 
-Locating the index of the joining variable is done by `index-of-joining-variable`:
+조인 변수의 인덱스 찾기는 `index-of-joining-variable`에 의해 수행됩니다:
 
 ```clojure
 (defn index-of-joining-variable [query-clauses]
@@ -1004,9 +1004,9 @@ Locating the index of the joining variable is done by `index-of-joining-variable
          collapsed (reduce collapsing-fn metas-seq)] 
      (first (keep-indexed #(when (variable? %2 false) %1)  collapsed)))) 
 ```
-We begin by extracting the metadata of each clause in the query. This extracted metadata is a 3-element vector; each element is either a variable name or nil. (Note that there is no more than one variable name in that vector.) Once the vector is extracted, we produce from it (by reducing it) a single value, which is either a variable name or nil. If a variable name is produced, then it appeared in all of the metadata vectors at the same index; i.e., this is the joining variable. We can thus choose to use the index relevant for this joining variable based on the mapping described above.
+쿼리에서 각 절의 메타데이터를 추출하는 것부터 시작합니다. 이 추출된 메타데이터는 3개 요소 벡터이며, 각 요소는 변수 이름이거나 nil입니다. (해당 벡터에는 하나를 넘지 않는 변수 이름이 있다는 점에 주목하세요.) 벡터가 추출되면, 그것으로부터 (리듀싱을 통해) 변수 이름이거나 nil인 단일 값을 생성합니다. 변수 이름이 생성되면, 그것은 모든 메타데이터 벡터에서 같은 인덱스에 나타났다는 의미입니다. 즉, 이것이 조인 변수입니다. 따라서 위에서 설명한 매핑을 기반으로 이 조인 변수에 관련된 인덱스를 사용하도록 선택할 수 있습니다.
 
-Once the index is chosen, we construct our plan, which is a function that closes over the query and the index name and executes the operations necessary to return the query results.
+인덱스가 선택되면, 쿼리와 인덱스 이름을 닫고 쿼리 결과를 반환하는 데 필요한 연산을 실행하는 함수인 우리의 계획을 구성합니다.
  
 
 ```clojure
@@ -1016,22 +1016,22 @@ Once the index is chosen, we construct our plan, which is a function that closes
       (partial single-index-query-plan query ind-to-use)))
 ```
 
-In our example the chosen index is the `AVET` index, as the joining variable acts on the entity IDs.
+우리 예시에서 선택된 인덱스는 조인 변수가 엔티티 ID에서 작동하므로 `AVET` 인덱스입니다.
 
-#### Phase 3: Execution of the Plan
+#### 3단계: 계획 실행
 
-We saw in the previous phase that our query plan ends by calling `single-index-query-plan`. This function will:
+이전 단계에서 우리의 쿼리 계획이 `single-index-query-plan`을 호출하는 것으로 끝난다는 것을 보았습니다. 이 함수는 다음을 수행합니다:
 
-1. Apply each predicate clause on an index (each predicate on its appropriate index level).
-2. Perform an AND operation across the results.
-3. Merge the results into a simpler data structure.
+1. 인덱스에서 각 술어 절을 적용합니다(각 술어는 적절한 인덱스 레벨에서).
+2. 결과들 간에 AND 연산을 수행합니다.
+3. 결과들을 더 간단한 데이터 구조로 병합합니다.
 
 ```clojure
 (defn single-index-query-plan [query indx db]
    (let [q-res (query-index (indx-at db indx) query)]
      (bind-variables-to-query q-res (indx-at db indx))))
 ```
-To better explain this process we'll demonstrate it using our exemplary query, assuming that our database holds the entities in \aosatblref{500l.functionaldb.exampleentities}.
+이 프로세스를 더 잘 설명하기 위해 우리 데이터베이스가 \aosatblref{500l.functionaldb.exampleentities}의 엔티티들을 보유하고 있다고 가정하고 우리의 예시 쿼리를 사용하여 시연하겠습니다.
 
 <markdown>
 <table>
@@ -1102,7 +1102,7 @@ To better explain this process we'll demonstrate it using our exemplary query, a
 \end{table}
 </latex>
 
-Now it is time to go deeper into the rabbit hole and take a look at the `query-index` function, where our query finally begins to yield some results:
+이제 더 깊이 들어가서 우리의 쿼리가 드디어 결과를 산출하기 시작하는 `query-index` 함수를 살펴볼 때입니다:
 
 ```clojure
 (defn query-index [index pred-clauses]
@@ -1114,15 +1114,15 @@ Now it is time to go deeper into the rabbit hole and take a look at the `query-i
                                      result-clauses)] 
      (filter #(not-empty (last %)) cleaned-result-clauses)))
 ```
-This function starts by applying the predicate clauses on the previously chosen index. Each application of a predicate clause on an index returns a _result clause_. 
+이 함수는 이전에 선택된 인덱스에 술어 절들을 적용하는 것부터 시작합니다. 인덱스에서 술어 절의 각 적용은 _결과 절_을 반환합니다. 
 
-The main characteristics of a result are:
+결과의 주요 특징은 다음과 같습니다:
 
-1. It is built of three items, each from a different level of the index, and each passed its respective predicate. 
-2. The order of items matches the index's levels structure. (Predicate clauses are always in EAV order.) The re-ordering is done when applying the index's `from-eav` on the predicate clause. 
-3. The metadata of the predicate clause is attached to it. 
+1. 인덱스의 서로 다른 레벨에서 각각 나오고 각각이 해당 술어를 통과한 세 개의 항목으로 구성됩니다.
+2. 항목들의 순서는 인덱스의 레벨 구조와 일치합니다. (술어 절들은 항상 EAV 순서입니다.) 재정렬은 술어 절에 인덱스의 `from-eav`를 적용할 때 수행됩니다.
+3. 술어 절의 메타데이터가 첨부됩니다.
 
-All of this is done in the function `filter-index`.
+이 모든 것은 `filter-index` 함수에서 수행됩니다.
 
 ```clojure
 (defn filter-index [index predicate-clauses]
@@ -1135,7 +1135,7 @@ All of this is done in the function `filter-index`.
          :let [res (set (filter lvl3-prd l3-set))] ]
      (with-meta [k1 k2 res] (meta pred-clause))))
 ```
-Assuming the query was executed on July 4th, the results of executing it on the above data are seen in \aosatblref{500l.functionaldb.queryresults}.
+쿼리가 7월 4일에 실행되었다고 가정하면, 위 데이터에서 실행한 결과는 \aosatblref{500l.functionaldb.queryresults}에서 볼 수 있습니다.
 <markdown>
 <table>
 <tr>
@@ -1193,7 +1193,7 @@ Assuming the query was executed on July 4th, the results of executing it on the 
 \end{table}
 </latex>
 
-Once we have produced all of the result clauses, we need to perform an `AND` operation between them. This is done by finding all of the elements that passed all the predicate clauses:
+모든 결과 절들을 생성했으면, 그들 사이에 `AND` 연산을 수행해야 합니다. 이는 모든 술어 절들을 통과한 모든 요소들을 찾음으로써 수행됩니다:
 
 ```clojure
 (defn items-that-answer-all-conditions [items-seq num-of-conditions]
@@ -1206,16 +1206,16 @@ Once we have produced all of the result clauses, we need to perform an `AND` ope
          (set))) ; return it as set
 ```
 
-In our example, the result of this step is a set that holds the value *1* (which is the entity ID of USA). 
+우리 예시에서 이 단계의 결과는 값 *1*(USA의 엔티티 ID)을 보유하는 집합입니다. 
 
-We now have to remove the items that didn’t pass all of the conditions:
+이제 모든 조건을 통과하지 못한 항목들을 제거해야 합니다:
 
 ```clojure
 (defn mask-path-leaf-with-items [relevant-items path]
      (update-in path [2] CS/intersection relevant-items))
 ```
 
-Finally, we remove all of the result clauses that are "empty" (i.e., their last item is empty). We do this in the last line of the `query-index` function. Our example leaves us with the items in \aosatblref{500l.functionaldb.filteredqueryresults}.
+마지막으로, "비어 있는" 모든 결과 절들(즉, 마지막 항목이 비어 있는)을 제거합니다. 우리는 이를 `query-index` 함수의 마지막 줄에서 수행합니다. 우리 예시는 \aosatblref{500l.functionaldb.filteredqueryresults}의 항목들을 남깁니다.
 
 <markdown>
 <table>
@@ -1258,11 +1258,11 @@ Finally, we remove all of the result clauses that are "empty" (i.e., their last 
 \end{table}
 </latex>
 
-We are now ready to report the results. The result clause structure is unwieldy for this purpose, so we will convert it into an an index-like structure (map of maps)&mdash;with a significant twist. 
+이제 결과를 보고할 준비가 되었습니다. 결과 절 구조는 이 목적에 다루기 어려우므로, 인덱스와 같은 구조(맵의 맵)로 변환할 것입니다&mdash;중요한 변형과 함께. 
 
-To understand the twist, we must first introduce the idea of a _binding pair_, which is a pair that matches a variable name to its value. The variable name is the one used at the predicate clauses, and the value is the value found in the result clauses.
+이 변형을 이해하려면, 먼저 _바인딩 쌍_의 개념을 도입해야 합니다. 이는 변수 이름을 그 값과 일치시키는 쌍입니다. 변수 이름은 술어 절에서 사용된 것이고, 값은 결과 절에서 발견된 값입니다.
 
-The twist to the index structure is that now we hold a binding pair of the entity-id / attr-name / value in the location where we held an entity-id / attr-name / value in an index: 
+인덱스 구조에 대한 변형은 이제 인덱스에서 엔티티 ID / 속성 이름 / 값을 보유했던 위치에 엔티티 ID / 속성 이름 / 값의 바인딩 쌍을 보유한다는 것입니다: 
 
 ```clojure
 (defn bind-variables-to-query [q-res index]
@@ -1278,7 +1278,7 @@ The twist to the index structure is that now we hold a binding pair of the entit
        (apply (partial map vector) combined-data-and-meta-path)))
 ```
 
-At the end of phase 3 of our example execution, we have the following structure at hand:
+우리 예시 실행의 3단계 끝에서, 우리는 다음 구조를 가지고 있습니다:
 ```clojure
 {[1 "?e"]{ 
 	{[:likes nil]    ["Pizza" nil]}
@@ -1288,16 +1288,16 @@ At the end of phase 3 of our example execution, we have the following structure 
 }}
 ```
 
-#### Phase 4: Unify and Report
+#### 4단계: 통합 및 보고
 
-At this point, we’ve produced a superset of the results that the user initially asked for. In this phase, we'll extract the values that the user wants. This process is called _unification_: it is here that we will unify the binding pairs structure with the vector of variable names that the user defined in the `:find` clause of the query. 
+이 시점에서, 우리는 사용자가 처음에 요청한 결과의 상위 집합을 생성했습니다. 이 단계에서는 사용자가 원하는 값들을 추출할 것입니다. 이 과정을 _통합_이라고 합니다: 여기서 바인딩 쌍 구조를 사용자가 쿼리의 `:find` 절에서 정의한 변수 이름들의 벡터와 통합할 것입니다. 
 
 ```clojure
 (defn unify [binded-res-col needed-vars]
    (map (partial locate-vars-in-query-res needed-vars) binded-res-col))
 ```  
 
-Each unification step is handled by `locate-vars-in-query-result`, which iterates over a query result (structured as an index entry, but with binding pairs) to detect all the variables and values that the user asked for.
+각 통합 단계는 `locate-vars-in-query-result`에 의해 처리되며, 이는 쿼리 결과(인덱스 항목으로 구조화되지만 바인딩 쌍과 함께)를 반복하여 사용자가 요청한 모든 변수와 값을 감지합니다.
 
 ```clojure
 (defn locate-vars-in-query-res [vars-set q-res]
@@ -1312,14 +1312,14 @@ Each unification step is handled by `locate-vars-in-query-result`, which iterate
 (defn resultify-av-pair [vars-set accum-res av-pair]
    (reduce (partial resultify-bind-pair vars-set) accum-res av-pair))
 ```
-At the end of this phase, the results for our example are:
+이 단계의 끝에서, 우리 예시의 결과는 다음과 같습니다:
 ```
 [("?nm" "USA") ("?bd" "July 4, 1776")]
 ```
 
-#### Running the Show
+#### 쇼 실행하기
 
-We've finally built all of the components we need for our user-facing query mechanism, the `q` macro, which receives as arguments a database and a query.
+마침내 사용자 대면 쿼리 메커니즘인 `q` 매크로에 필요한 모든 구성 요소를 구축했습니다. 이 매크로는 데이터베이스와 쿼리를 인수로 받습니다.
 
 ```clojure
 (defmacro q
