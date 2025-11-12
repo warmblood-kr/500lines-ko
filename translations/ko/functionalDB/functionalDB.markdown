@@ -476,15 +476,15 @@ AVET, VEAT, EAVT 인덱스에는 `always` 함수를 사용하고 VAET 인덱스�
 ```clojure
 (defn add-entities [db ents-seq] (reduce add-entity db ents-seq))
 ```
-#### Removing an Entity
+#### 엔티티 제거
 
-Removing an entity from our database means adding a layer in which it does not exist. To do this, we need to:
+데이터베이스에서 엔티티를 제거한다는 것은 그 엔티티가 존재하지 않는 층을 추가하는 것을 의미합니다. 이를 위해서는 다음과 같은 작업이 필요합니다:
 
-* Remove the entity itself
-* Update any attributes of other entities that reference it 
-* Clear the entity from our indexes
+* 엔티티 자체를 제거
+* 해당 엔티티를 참조하는 다른 엔티티들의 속성 업데이트
+* 인덱스에서 해당 엔티티 삭제
 
-This "construct-without" process is executed by the `remove-entity` function, which looks very similar to `add-entity`:
+이러한 "없이 구성하기" 과정은 `remove-entity` 함수에 의해 실행되며, 이는 `add-entity`와 매우 유사해 보입니다:
 ```clojure
 (defn remove-entity [db ent-id]
    (let [ent (entity-at db ent-id)
@@ -497,7 +497,7 @@ This "construct-without" process is executed by the `remove-entity` function, wh
                                  no-ent-layer (indexes))]
      (assoc db :layers (conj  (:layers db) new-layer))))
 ```
-Reference removal is done by the `remove-back-refs` function:
+참조 제거는 `remove-back-refs` 함수에 의해 수행됩니다:
 ```clojure
 (defn- remove-back-refs [db e-id layer]
    (let [reffing-datoms (reffing-to e-id layer)
@@ -505,7 +505,7 @@ Reference removal is done by the `remove-back-refs` function:
          clean-db (reduce remove-fn db reffing-datoms)]
      (last (:layers clean-db))))
 ```
-We begin by using `reffing-datoms-to` to find all entities that reference ours in the given layer; it returns a sequence of triplets that contain the ID of the referencing entity, as well as the attribute name and the ID of the removed entity.
+우리는 먼저 `reffing-datoms-to`를 사용하여 주어진 층에서 우리 엔티티를 참조하는 모든 엔티티를 찾습니다. 이는 참조하는 엔티티의 ID, 속성 이름, 그리고 제거되는 엔티티의 ID를 포함하는 삼중항들의 시퀀스를 반환합니다.
 ```clojure
 (defn- reffing-to [e-id layer]
    (let [vaet (:VAET layer)]
@@ -514,17 +514,17 @@ We begin by using `reffing-datoms-to` to find all entities that reference ours i
               [reffing attr-name])))
 
 ```
-We then apply `update-entity` to each triplet to update the attributes that reference our removed entity. (We'll explore how `update-entity` works in the next section.)
+그런 다음 각 삼중항에 `update-entity`를 적용하여 제거된 엔티티를 참조하는 속성들을 업데이트합니다. (`update-entity`가 어떻게 작동하는지는 다음 섹션에서 살펴보겠습니다.)
 
-The last step of `remove-back-refs` is to clear the reference itself from our indexes, and more specifically from the VAET index, since it is the only index that stores reference information. 
+`remove-back-refs`의 마지막 단계는 인덱스에서, 더 구체적으로는 참조 정보를 저장하는 유일한 인덱스인 VAET 인덱스에서 참조 자체를 삭제하는 것입니다. 
 
-#### Updating an Entity
+#### 엔티티 업데이트
 
-At its essence, an update is the modification of an entity’s attribute’s value. The modification process itself depends on the cardinality of the attribute: an attribute with cardinality `:db/multiple` holds a set of values, so we must allow items to be added to or removed from this set, or the set to be replaced entirely. An attribute with cardinality `:db/single` holds a single value, and thus only allows replacement.  
+본질적으로 업데이트는 엔티티 속성의 값을 수정하는 것입니다. 수정 과정 자체는 속성의 카디널리티에 따라 달라집니다: `:db/multiple` 카디널리티를 가진 속성은 값들의 집합을 보유하므로, 이 집합에 항목을 추가하거나 제거하거나 집합 전체를 완전히 교체할 수 있어야 합니다. `:db/single` 카디널리티를 가진 속성은 단일 값을 보유하므로 교체만 허용됩니다.
 
-Since we also have indexes that provide lookups directly on attributes and their values, these will also have to be updated. 
+우리는 또한 속성과 그 값에 대해 직접 조회를 제공하는 인덱스들을 가지고 있으므로, 이들도 업데이트되어야 합니다.
 
-As with `add-entity` and `remove-entity`, we won't actually be modifying our entity in place, but will instead add a new layer which contains the updated entity.
+`add-entity` 및 `remove-entity`와 마찬가지로, 실제로는 엔티티를 제자리에서 수정하지 않고 대신 업데이트된 엔티티를 포함하는 새 층을 추가할 것입니다.
 
 ```clojure
 (defn update-entity
@@ -540,7 +540,7 @@ As with `add-entity` and `remove-entity`, we won't actually be modifying our ent
                                               new-val operation)]
         (update-in db [:layers] conj fully-updated-layer))))
 ```
-To update an attribute, we locate it with `attr-at` and then use `update-attr` to perform the actual update. 
+속성을 업데이트하기 위해, `attr-at`으로 속성을 찾은 다음 `update-attr`을 사용하여 실제 업데이트를 수행합니다. 
 ```clojure
 (defn- update-attr [attr new-val new-ts operation]
     {:pre  [(if (single? attr)
@@ -550,13 +550,13 @@ To update an attribute, we locate it with `attr-at` and then use `update-attr` t
        (update-attr-modification-time new-ts)
        (update-attr-value new-val operation)))
 ```
-We use two helper functions to perform the update. `update-attr-modification-time` updates timestamps to reflect the creation of the black arrows in Figure 1:
+업데이트를 수행하기 위해 두 개의 헬퍼 함수를 사용합니다. `update-attr-modification-time`은 그림 1의 검은 화살표 생성을 반영하도록 타임스탬프를 업데이트합니다:
 ```clojure
 (defn- update-attr-modification-time  
   [attr new-ts]
        (assoc attr :ts new-ts :prev-ts (:ts attr)))
 ```
-`update-attr-value` actually updates the value:
+`update-attr-value`는 실제로 값을 업데이트합니다:
 ```clojure
 (defn- update-attr-value [attr value operation]
    (cond
@@ -569,21 +569,21 @@ We use two helper functions to perform the update. `update-attr-modification-tim
       (= :db/remove operation)
         (assoc attr :value (CS/difference (:value attr) value))))
 ```
-All that remains is to remove the old value from the indexes and add the new one to them, and then construct the new layer with all of our updated components. Luckily, we can leverage the code we wrote for adding and removing entities to do this.
+남은 것은 인덱스에서 이전 값을 제거하고 새 값을 추가한 다음, 업데이트된 모든 구성 요소로 새 층을 구성하는 것입니다. 다행히도 엔티티 추가 및 제거를 위해 작성한 코드를 활용하여 이를 수행할 수 있습니다.
 
-### Transactions
+### 트랜잭션
 
-Each of the operations in our low-level API acts on a single entity. However, nearly all databases have a way for users to do multiple operations as a single _transaction_. This means: 
+우리의 하위 수준 API에서 각 연산은 단일 엔티티에 대해 작동합니다. 하지만 거의 모든 데이터베이스는 사용자가 여러 연산을 하나의 _트랜잭션_으로 수행할 수 있는 방법을 제공합니다. 이는 다음을 의미합니다:
 
-* The batch of operations is viewed as a single atomic operation, so all of the operations either succeed together or fail together.
-* The database is in a valid state before and after the transaction.
-* The batch update appears to be _isolated_; other queries should never see a database state in which only some of the operations have been applied.
+* 연산들의 배치는 하나의 원자적 연산으로 간주되므로, 모든 연산이 함께 성공하거나 함께 실패합니다.
+* 데이터베이스는 트랜잭션 전후에 유효한 상태를 유지합니다.
+* 배치 업데이트는 _격리된_ 것으로 보입니다. 즉, 다른 쿼리는 연산 중 일부만 적용된 데이터베이스 상태를 절대 볼 수 없어야 합니다.
 
-We can fulfill these requirements through an interface that consumes a database and a set of operations to be performed, and produces a database whose state reflects the given changes. All of the changes submitted in the batch should be applied through the addition of a _single_ layer. However, we have a problem: All of the functions we wrote in our low-level API add a new layer to the database. If we were to perform a batch with _n_ operations, we would thus see _n_ new layers added, when what we would really like is to have exactly one new layer.   
+데이터베이스와 수행될 연산 집합을 소비하고 주어진 변경사항이 반영된 상태의 데이터베이스를 생성하는 인터페이스를 통해 이러한 요구사항을 충족할 수 있습니다. 배치에서 제출된 모든 변경사항은 _단일_ 층의 추가를 통해 적용되어야 합니다. 하지만 문제가 있습니다: 하위 수준 API에서 작성한 모든 함수가 데이터베이스에 새 층을 추가합니다. _n_개의 연산으로 배치를 수행한다면 _n_개의 새 층이 추가되는 것을 보게 될 텐데, 우리가 정말 원하는 것은 정확히 하나의 새 층을 갖는 것입니다.
 
-The key here is that the layer we want is the _top_ layer that would be produced by performing those updates in sequence. Therefore, the solution is to execute the user’s operations one after another, each creating a new layer. When the last layer is created, we take only that top layer and place it on the initial database (leaving all the intermediate layers to pine for the fjords). Only after we've done all this will we update the database's timestamp.
+여기서 핵심은 우리가 원하는 층이 해당 업데이트를 순서대로 수행하여 생성될 _최상위_ 층이라는 것입니다. 따라서 해결책은 사용자의 연산을 하나씩 실행하여 각각 새 층을 생성하는 것입니다. 마지막 층이 생성되면, 해당 최상위 층만 취해서 초기 데이터베이스에 배치합니다(모든 중간 층들은 피오르드로 떠나보내며). 이 모든 작업을 완료한 후에만 데이터베이스의 타임스탬프를 업데이트합니다.
 
-All this is done in the `transact-on-db` function, which receives the initial value of the database and the batch of operations to perform, and returns its updated value. 
+이 모든 것은 데이터베이스의 초기 값과 수행할 연산 배치를 받아서 업데이트된 값을 반환하는 `transact-on-db` 함수에서 수행됩니다. 
 
 ```clojure
 (defn transact-on-db [initial-db ops]
@@ -596,30 +596,30 @@ All this is done in the `transact-on-db` function, which receives the initial va
                               :curr-time (next-ts initial-db) 
                               :top-id (:top-id transacted))))))
 ``` 
-Note here that we used the term _value_, meaning that only the caller to this function is exposed to the updated state; all other users of the database are unaware of this change (as a database is a value, and therefore cannot change). 
-In order to have a system where users can be exposed to state changes performed by others, users do not interact directly with the database, but rather refer to it using another level of indirection. This additional level is implemented using Clojure's `Atom`, a reference type. Here we leverage the main three key features of an `Atom`, which are:
+여기서 우리가 _값_이라는 용어를 사용했다는 점에 주목하세요. 이는 이 함수의 호출자만이 업데이트된 상태에 노출되며, 데이터베이스의 다른 모든 사용자는 이 변경사항을 알 수 없다는 것을 의미합니다(데이터베이스는 값이고, 따라서 변경될 수 없습니다).
+다른 사용자가 수행한 상태 변경에 사용자들이 노출될 수 있는 시스템을 만들기 위해, 사용자들은 데이터베이스와 직접 상호작용하지 않고 대신 또 다른 수준의 간접 참조를 사용하여 참조합니다. 이 추가 수준은 Clojure의 참조 타입인 `Atom`을 사용하여 구현됩니다. 여기서 우리는 `Atom`의 주요한 세 가지 핵심 기능을 활용합니다:
 
-1. It references a value.
-2. It is possible to update the referencing of the `Atom` to another value by executing a transaction (using Clojure's Software Transaction Memory capabilities). The transaction accepts an `Atom` and a function. That function operates on the value of the `Atom` and returns a new value. After the execution of the transaction, the `Atom` references the value that was returned from the function.
-3. Getting to the value that is referenced by the `Atom` is done by dereferencing it, which returns the state of that `Atom` at that time.
+1. 값을 참조합니다.
+2. 트랜잭션을 실행하여 `Atom`의 참조를 다른 값으로 업데이트할 수 있습니다(Clojure의 소프트웨어 트랜잭셔널 메모리 기능 사용). 트랜잭션은 `Atom`과 함수를 받습니다. 해당 함수는 `Atom`의 값에 대해 작동하고 새 값을 반환합니다. 트랜잭션 실행 후, `Atom`은 함수에서 반환된 값을 참조합니다.
+3. `Atom`이 참조하는 값에 접근하는 것은 역참조를 통해 수행되며, 이는 해당 시점에서 그 `Atom`의 상태를 반환합니다.
 
-In between Clojure's `Atom` and the work done in `transact-on-db`, there's still a gap to be bridged; namely, to invoke the transaction with the right inputs.
+Clojure의 `Atom`과 `transact-on-db`에서 수행되는 작업 사이에는 여전히 연결해야 할 간격이 있습니다. 즉, 올바른 입력으로 트랜잭션을 호출하는 것입니다.
 
-To have the simplest and clearest APIs, we  would like users to just provide the `Atom` and the list of operations, and have the database transform the user input into a proper transaction.
+가장 간단하고 명확한 API를 제공하기 위해, 사용자가 단지 `Atom`과 연산 목록만 제공하고, 데이터베이스가 사용자 입력을 적절한 트랜잭션으로 변환하도록 하고 싶습니다.
 
-That transformation occurs in the following transaction call chain:
+그 변환은 다음 트랜잭션 호출 체인에서 발생합니다:
 
 ```
 transact →  _transact → swap! → transact-on-db
 ```
 
-Users call `transact` with the `Atom` (i.e., the connection) and the operations to perform, which relays its input to `_transact`, adding to it the name of the function that updates the `Atom` (`swap!`).
+사용자는 `Atom`(즉, 연결)과 수행할 연산들로 `transact`를 호출하며, 이는 입력을 `_transact`에 전달하면서 `Atom`을 업데이트하는 함수의 이름(`swap!`)을 추가합니다.
 
 ```clojure
 (defmacro transact [db-conn & txs]  `(_transact ~db-conn swap! ~@txs))
 ```
 
-`_transact` prepares the call to `swap!`. It does so by creating a list that begins with `swap!`, followed by the `Atom`, then the `transact-on-db` symbol and the batch of operations.
+`_transact`는 `swap!` 호출을 준비합니다. 이는 `swap!`로 시작하고, 그 다음에 `Atom`, 그리고 `transact-on-db` 심볼과 연산 배치가 이어지는 목록을 생성함으로써 수행됩니다.
 
 ```clojure
 (defmacro  _transact [db op & txs]
@@ -630,65 +630,65 @@ Users call `transact` with the `Atom` (i.e., the connection) and the operations 
            (list* (conj res#  accum-txs#))))))
 ```
 
-`swap!` invokes `transact-on-db` within a transaction (with the previously prepared arguments), and `transact-on-db` creates the new state of the database and returns it.
+`swap!`는 트랜잭션 내에서 (이전에 준비된 인수들로) `transact-on-db`를 호출하고, `transact-on-db`는 데이터베이스의 새 상태를 생성하여 반환합니다.
 
-At this point we can see that with few minor tweaks, we can also provide a way to ask "what if" questions. This can be done by replacing `swap!` with a function that would not make any change to the system. This scenario is implemented with the `what-if` call chain:
+이 시점에서 약간의 미세한 수정으로 "만약에"라는 질문을 할 수 있는 방법도 제공할 수 있음을 알 수 있습니다. 이는 `swap!`를 시스템에 어떤 변경도 가하지 않는 함수로 교체함으로써 수행할 수 있습니다. 이 시나리오는 `what-if` 호출 체인으로 구현됩니다:
 
 `what-if` $\to$ `_transact` $\to$ `_what-if` $\to$ `transact-on-db`
 
-The user calls `what-if` with the database value and the operations to perform. It then relays these inputs to `_transact`, adding to them a function that mimics `swap!`'s APIs, without its effect (callled `_what-if`).  
+사용자는 데이터베이스 값과 수행할 연산들로 `what-if`를 호출합니다. 그러면 이러한 입력을 `_transact`에 전달하면서, `swap!`의 API를 흉내내지만 그 효과는 없는 함수(`_what-if`라고 함)를 추가합니다.
 
 ```clojure
 (defmacro what-if [db & ops]  `(_transact ~db _what-if  ~@ops))
 ```
 
-`_transact` prepares the call to `_what-if`. It does so by creating a list that begins with `_what-if`, followed by the database, then the `transact-on-db` symbol and the batch of operations.  `_what-if` invokes `transact-on-db`, just like `swap!` does in the transaction scenario, but does not inflict any change on the system.
+`_transact`는 `_what-if` 호출을 준비합니다. 이는 `_what-if`로 시작하고, 그 다음에 데이터베이스, 그리고 `transact-on-db` 심볼과 연산 배치가 이어지는 목록을 생성함으로써 수행됩니다. `_what-if`는 트랜잭션 시나리오에서 `swap!`가 하는 것처럼 `transact-on-db`를 호출하지만, 시스템에 어떤 변경도 가하지 않습니다.
 
 ```clojure
 (defn- _what-if [db f txs]  (f db txs))
 ```
  
-Note that we are not using functions, but macros. The reason for using macros here is that arguments to macros do not get evaluated as the call happens; this allows us to offer a cleaner API design where the user provides the operations structured in the same way that any function call is structured in Clojure. 
+여기서 함수가 아닌 매크로를 사용하고 있다는 점에 주목하세요. 여기서 매크로를 사용하는 이유는 매크로의 인수들이 호출이 일어날 때 평가되지 않기 때문입니다. 이를 통해 사용자가 Clojure에서 모든 함수 호출이 구조화되는 것과 같은 방식으로 연산을 구조화하여 제공하는 더 깨끗한 API 설계를 제공할 수 있습니다.
 
-The above process can be seen in the following examples. For Transaction, the user call: 
+위의 과정은 다음 예시들에서 볼 수 있습니다. 트랜잭션의 경우, 사용자 호출: 
 ```clojure
 (transact db-conn  (add-entity e1) (update-entity e2 atr2 val2 :db/add))  
 ```
-changes into: 
+다음으로 변환됩니다:
 ```clojure
 (_transact db-conn swap! (add-entity e1) (update-entity e2 atr2 val2 :db/add))
 ```
-which becomes: 
+그리고 다음이 됩니다:
 ```clojure
 (swap! db-conn transact-on-db [[add-entity e1][update-entity e2 atr2 val2 :db/add]])
 ```
 
-For what-if, the user call:
+what-if의 경우, 사용자 호출:
 
 ```clojure
 (what-if my-db (add-entity e3) (remove-entity e4))
 ```
-changes into: 
+다음으로 변환됩니다:
 ```clojure
 (_transact my-db _what-if (add-entity e3) (remove-entity e4))
 ```
-then:
+그 다음:
 ```clojure
 (_what-if my-db transact-on-db [[add-entity e3] [remove-entity e4]])
 ```
-and eventually: 
+그리고 최종적으로:
 ```clojure
 (transact-on-db my-db  [[add-entity e3] [remove-entity e4]])
 ```
 
-## Insight Extraction as Libraries
+## 라이브러리로서의 인사이트 추출
 
-At this point we have the core functionality of the database in place, and it is time to add its *raison d'être*: insights extraction. The architecture approach we used here is to allow adding these capabilities as libraries, as different usages of the database would need different such mechanisms. 
+이 시점에서 데이터베이스의 핵심 기능이 구현되었으며, 이제 그 *존재 이유*인 인사이트 추출을 추가할 때입니다. 여기서 사용한 아키텍처 접근법은 이러한 기능을 라이브러리로 추가할 수 있도록 하는 것입니다. 데이터베이스의 다양한 용도에서 서로 다른 메커니즘이 필요하기 때문입니다. 
 
-### Graph Traversal
+### 그래프 탐색
 
-A reference connection between entities is created when an entity’s attribute’s type is `:db/ref`, which means that the value of that attribute is an ID of another entity. When a referring entity is added to the database, the reference is indexed at the VAET index.  
-The information found in the VAET index can be leveraged to extract all the incoming links to an entity. This is done in the `incoming-refs` function, which collects all the leaves that are reachable from the entity at that index:
+엔티티 간의 참조 연결은 엔티티 속성의 타입이 `:db/ref`일 때 생성되며, 이는 해당 속성의 값이 다른 엔티티의 ID라는 것을 의미합니다. 참조하는 엔티티가 데이터베이스에 추가되면, 참조는 VAET 인덱스에서 인덱싱됩니다.
+VAET 인덱스에서 발견되는 정보는 엔티티에 대한 모든 들어오는 링크를 추출하는 데 활용될 수 있습니다. 이는 해당 인덱스에서 엔티티로부터 도달 가능한 모든 리프를 수집하는 `incoming-refs` 함수에서 수행됩니다:
 
 ```clojure
 (defn incoming-refs [db ts ent-id & ref-names]
@@ -699,7 +699,7 @@ The information found in the VAET index can be leveraged to extract all the inco
                           all-attr-map)]
       (reduce into #{} (vals filtered-map))))
 ```
-We can also go through all of a given entity’s attributes and collect all the values of attributes of type `:db/ref`, and by that extract all the outgoing references from that entity. This is done by the `outgoing-refs` function.
+주어진 엔티티의 모든 속성을 살펴보고 `:db/ref` 타입인 속성의 모든 값을 수집함으로써 해당 엔티티에서 나가는 모든 참조를 추출할 수도 있습니다. 이는 `outgoing-refs` 함수에 의해 수행됩니다.
 
 ```clojure
 (defn outgoing-refs [db ts ent-id & ref-names]
@@ -708,19 +708,19 @@ We can also go through all of a given entity’s attributes and collect all the 
      (->> (entity-at db ts ent-id)
           (:attrs) (val-filter-fn) (filter ref?) (mapcat :value)))))
 ```
-These two functions act as the basic building blocks for any graph traversal operation, as they are the ones that raise the level of abstraction from entities and attributes to nodes and links in a graph. Once we have the ability to look at our database as a graph, we can provide various graph traversing and querying APIs. We leave this as a solved exercise to the reader; one solution can be found in the chapter's source code (see `graph.clj`).   
+이 두 함수는 엔티티와 속성에서 그래프의 노드와 링크로 추상화 수준을 높이는 역할을 하므로, 모든 그래프 탐색 연산의 기본 구성 요소 역할을 합니다. 데이터베이스를 그래프로 바라볼 수 있는 능력을 갖추게 되면, 다양한 그래프 탐색 및 쿼리 API를 제공할 수 있습니다. 이는 독자에게 해결된 연습 문제로 남겨둡니다. 한 가지 해결책은 이 장의 소스 코드에서 찾을 수 있습니다(`graph.clj` 참조).   
 
 
-## Querying the Database
+## 데이터베이스 쿼리
 
-The second library we present provides querying capabilities, which is the main concern of this section. 
-A database is not very useful to its users without a powerful query mechanism. This feature is usually exposed to users through a _query language_ that is used to declaratively specify the set of data of interest. 
+우리가 제시하는 두 번째 라이브러리는 쿼리 기능을 제공하며, 이것이 이 섹션의 주요 관심사입니다.
+데이터베이스는 강력한 쿼리 메커니즘 없이는 사용자에게 그다지 유용하지 않습니다. 이 기능은 일반적으로 관심 있는 데이터 집합을 선언적으로 지정하는 데 사용되는 _쿼리 언어_를 통해 사용자에게 노출됩니다. 
 
-Our data model is based on accumulation of facts (i.e., datoms) over time. For this model, a natural place to look for the right query language is _logic programming_. A commonly used query language influenced by logic programming is _Datalog_ which, in addition to being well-suited for our data model, has a very elegant adaptation to Clojure’s syntax. Our query engine will implement a subset of the Datalog language from the [Datomic database](http://docs.datomic.com/query.html).
+우리의 데이터 모델은 시간이 지남에 따라 사실(즉, datom)을 축적하는 것을 기반으로 합니다. 이 모델에서 올바른 쿼리 언어를 찾기 위한 자연스러운 곳은 _논리 프로그래밍_입니다. 논리 프로그래밍의 영향을 받은 일반적으로 사용되는 쿼리 언어는 _Datalog_인데, 이는 우리의 데이터 모델에 매우 적합할 뿐만 아니라 Clojure의 구문에 매우 우아하게 적응됩니다. 우리의 쿼리 엔진은 [Datomic 데이터베이스](http://docs.datomic.com/query.html)의 Datalog 언어 부분집합을 구현할 것입니다.
 
-### Query Language
+### 쿼리 언어
 
-Let's look at an example query in our proposed language. This query asks: "What are the names and birthdays of entities who like pizza, speak English, and who have a birthday this month?"
+제안된 언어의 예시 쿼리를 살펴보겠습니다. 이 쿼리는 "피자를 좋아하고, 영어를 말하며, 이번 달에 생일이 있는 엔티티의 이름과 생일은 무엇인가?"라고 묻습니다:
 ```clojure
 {  :find [?nm ?bd ]
    :where [
@@ -729,20 +729,20 @@ Let's look at an example query in our proposed language. This query asks: "What 
       [?e  :speak "English"]
       [?e  :bday (bday-mo? ?bd)]]}
 ```
-#### Syntax
+#### 구문
 
-We use the syntax of Clojure’s data literals directly to provide the basic syntax for our queries. This allows us to avoid having to write a specialized parser, while still providing a form that is familiar and easily readable to programmers familiar with Clojure.
+우리는 쿼리의 기본 구문을 제공하기 위해 Clojure 데이터 리터럴의 구문을 직접 사용합니다. 이를 통해 특수한 파서를 작성할 필요를 피하면서도 Clojure에 익숙한 프로그래머에게 친숙하고 쉽게 읽을 수 있는 형태를 제공할 수 있습니다.
 
-A query is a map with two items:
+쿼리는 두 개의 항목을 가진 맵입니다:
 
-* An item with `:where` as a key, and with a _rule_ as a value. A rule is a vector of _clauses_, and a clause is a vector composed of three _predicates_, each of which operates on a different component of a datom.  In the example above, `[?e  :likes "pizza"]` is a clause.  This `:where` item defines a rule that acts as a filter on datoms in our database (like a SQL `WHERE` clause.)
-* An item with `:find` as a key, and with a vector as a value. The vector defines which components of the selected datom should be projected into the results (like a SQL `SELECT` clause.)
+* `:where`를 키로 하고 _규칙_을 값으로 하는 항목. 규칙은 _절_들의 벡터이고, 절은 세 개의 _술어_로 구성된 벡터이며, 각 술어는 datom의 서로 다른 구성 요소에 대해 작동합니다. 위의 예시에서 `[?e  :likes "pizza"]`는 하나의 절입니다. 이 `:where` 항목은 우리 데이터베이스의 datom에 대한 필터 역할을 하는 규칙을 정의합니다(SQL `WHERE` 절과 같이).
+* `:find`를 키로 하고 벡터를 값으로 하는 항목. 벡터는 선택된 datom의 어떤 구성 요소가 결과에 투영되어야 하는지를 정의합니다(SQL `SELECT` 절과 같이).
 
-The description above omits a crucial requirement: how to make different clauses sync on a value (i.e., make a join operation between them), and how to structure the found values in the output (specified by the `:find` part). 
+위의 설명은 중요한 요구사항을 생략합니다: 서로 다른 절들이 값에 대해 어떻게 동기화되는지(즉, 그들 사이에 조인 연산을 만드는 방법), 그리고 발견된 값들이 출력에서 어떻게 구조화되는지(`:find` 부분에서 지정됨). 
 
-We fulfill both of these requirements using _variables_, which are denoted with a leading `?`. The only exception to this definition is the "don't care" variable `_`  (underscore).  
+우리는 앞에 `?`가 붙어 표시되는 _변수_를 사용하여 이 두 요구사항을 모두 충족합니다. 이 정의의 유일한 예외는 "신경 쓰지 않는" 변수인 `_`(밑줄)입니다.
 
-A clause in a query is composed of three predicates; \aosatblref{500l.functionaldb.predicates} defines what can act as a predicate in our query language.
+쿼리의 절은 세 개의 술어로 구성됩니다. \aosatblref{500l.functionaldb.predicates}는 우리 쿼리 언어에서 술어 역할을 할 수 있는 것을 정의합니다.
 
 <markdown>
 <table>
@@ -807,32 +807,32 @@ Binary operator & \begin{tabular}{@{}l@{}} A binary operation that requires a va
 \end{table}
 </latex>
 
-#### Limitations of our Query Language 
+#### 쿼리 언어의 제한사항
 
-Engineering is all about managing tradeoffs, and designing our query engine is no different. In our case, the main tradeoff we must address is feature-richness versus complexity. Resolving this tradeoff requires us to look at common use-cases of the system, and from there deciding what limitations would be acceptable. 
+엔지니어링은 모두 트레이드오프를 관리하는 것이고, 쿼리 엔진을 설계하는 것도 다르지 않습니다. 우리의 경우, 해결해야 하는 주요 트레이드오프는 기능 풍부함 대 복잡성입니다. 이 트레이드오프를 해결하려면 시스템의 일반적인 사용 사례를 살펴보고, 거기서 어떤 제한사항이 받아들일 만한지 결정해야 합니다.
 
-In our database, we decided to build a query engine with the following limitations:
+우리 데이터베이스에서는 다음과 같은 제한사항을 가진 쿼리 엔진을 구축하기로 결정했습니다:
 
-* Users cannot define logical operations between the clauses; they are always ‘ANDed’ together. (This can be worked around by using unary or binary predicates.)
-* If there is more than one clause in a query, there must be one variable that is found in all of the clauses of that query. This variable acts as a joining variable. This limitation simplifies the query optimizer.
-* A query is only executed on a single database. 
+* 사용자는 절 사이에 논리 연산을 정의할 수 없습니다. 항상 'AND'로 함께 연결됩니다. (이는 단항 또는 이항 술어를 사용하여 해결할 수 있습니다.)
+* 쿼리에 둘 이상의 절이 있는 경우, 해당 쿼리의 모든 절에서 발견되는 변수가 하나 있어야 합니다. 이 변수는 조인 변수 역할을 합니다. 이 제한사항은 쿼리 최적화기를 단순화합니다.
+* 쿼리는 단일 데이터베이스에서만 실행됩니다.
 
-While these design decisions result in a query language that is less rich than Datalog, we are still able to support many types of simple but useful queries.
+이러한 설계 결정은 Datalog보다 덜 풍부한 쿼리 언어를 만들지만, 여전히 많은 유형의 간단하면서도 유용한 쿼리를 지원할 수 있습니다.
 
-### Query Engine Design
+### 쿼리 엔진 설계
 
-While our query language allows the user to specify _what_ they want to access, it hides the details of _how_ this will be accomplished. The query engine is the database component responsible for yielding the data for a given query. 
+우리의 쿼리 언어는 사용자가 _무엇을_ 액세스하고 싶은지 지정할 수 있게 해주지만, _어떻게_ 이것이 달성될지의 세부사항은 숨깁니다. 쿼리 엔진은 주어진 쿼리에 대한 데이터를 산출하는 책임을 지는 데이터베이스 구성 요소입니다.
 
-This involves four steps:
+이는 네 단계를 포함합니다:
 
-1. Transformation to internal representation: Transform the query from its textual form into a data structure that is consumed by the query planner.
-2. Building a query plan: Determine an efficient _plan_ for yielding the results of the given query. In our case, a query plan is a function to be invoked.
-3. Executing the plan: Execute the plan and send its results to the next phase.
-4. Unification and reporting: Extract only the results that need to be reported and format them as specified.
+1. 내부 표현으로의 변환: 쿼리를 텍스트 형태에서 쿼리 플래너가 소비하는 데이터 구조로 변환합니다.
+2. 쿼리 계획 구축: 주어진 쿼리의 결과를 산출하는 효율적인 _계획_을 결정합니다. 우리의 경우, 쿼리 계획은 호출될 함수입니다.
+3. 계획 실행: 계획을 실행하고 그 결과를 다음 단계로 보냅니다.
+4. 통합 및 보고: 보고되어야 하는 결과만 추출하고 지정된 대로 형식을 맞춥니다.
 
-#### Phase 1: Transformation
+#### 1단계: 변환
 
-In this phase, we transform the given query from a representation that is easy for the user to understand into a representation that can be consumed efficiently by the query planner. 
+이 단계에서는 주어진 쿼리를 사용자가 이해하기 쉬운 표현에서 쿼리 플래너가 효율적으로 소비할 수 있는 표현으로 변환합니다. 
 
 The `:find` part of the query is transformed into a set of the given variable names:
 
@@ -1330,20 +1330,20 @@ We've finally built all of the components we need for our user-facing query mech
          query-internal-res# (query-plan# ~db)]
      (unify query-internal-res# needed-vars#)))
 ```  
-## Summary
+## 요약
 
-Our journey started with a conception of a different kind of database, and ended with one that:
+우리의 여정은 다른 종류의 데이터베이스에 대한 개념에서 시작하여 다음과 같은 기능을 가진 데이터베이스로 끝났습니다:
 
-* Supports ACI transactions (durability was lost when we decided to have the data stored in-memory).
-* Supports "what if" interactions.
-* Answers time-related questions.
-* Handles simple datalog queries that are optimized with indexes.
-* Provides APIs for graph queries.
-* Introduces and implements the notion of evolutionary queries.
+* ACI 트랜잭션 지원 (데이터를 인메모리에 저장하기로 결정했을 때 내구성은 잃었습니다).
+* "만약에" 상호작용 지원.
+* 시간 관련 질문에 답변.
+* 인덱스로 최적화된 간단한 데이터로그 쿼리 처리.
+* 그래프 쿼리를 위한 API 제공.
+* 진화적 쿼리 개념 도입 및 구현.
 
-There are still many things that we could improve: We could add caching to several components to improve performance; support richer queries; and add real storage support to provide data durability, to name a few.
+우리가 개선할 수 있는 것들이 여전히 많이 있습니다: 성능 향상을 위해 여러 구성 요소에 캐싱을 추가하고, 더 풍부한 쿼리를 지원하고, 데이터 내구성을 제공하기 위해 실제 스토리지 지원을 추가하는 것 등을 들 수 있습니다.
 
-However, our final product can do a great many things, and was implemented in 488 lines of Clojure source code, 73 of which are blank lines and 55 of which are docstrings. 
+하지만 우리의 최종 제품은 매우 많은 일을 할 수 있으며, 488줄의 Clojure 소스 코드로 구현되었습니다. 이 중 73줄은 빈 줄이고 55줄은 문서 문자열입니다.
 
-Finally, there's one thing that is still missing: a name. 
-The only sensible option for an in-memory, index-optimized, query-supporting, library developer-friendly, time-aware functional database implemented in 360 lines of Clojure code is CircleDB.
+마지막으로, 아직 빠진 것이 하나 있습니다: 이름입니다.
+360줄의 Clojure 코드로 구현된 인메모리, 인덱스 최적화, 쿼리 지원, 라이브러리 개발자 친화적, 시간 인식 함수형 데이터베이스의 유일하게 합리적인 선택은 CircleDB입니다.
