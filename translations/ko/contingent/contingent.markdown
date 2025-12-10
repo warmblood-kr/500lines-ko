@@ -27,8 +27,8 @@ _Daniel Rocco는 Python, 커피, 크래프트 맥주, 스타우트, 객체 및 �
 ACM 소프트웨어 시스템 상을 수상한
 표준 `make` 빌드 시스템은
 1976년에 처음 개발되었습니다. 이를 재귀적으로 수행할 수 있게 해줍니다.
-A program, for example, might depend upon an object file
-which itself depends upon the corresponding source code:
+예를 들어, 프로그램은 객체 파일에 의존할 수 있고,
+그 객체 파일은 다시 해당 소스 코드에 의존합니다:
 
 ```
     prog: main.o
@@ -78,8 +78,8 @@ which itself depends upon the corresponding source code:
 공식 Python 언어 문서와 Python 커뮤니티의
 많은 다른 프로젝트에서 사용되는 문서 빌더인
 [Sphinx](http://sphinx-doc.org/)를 생각해 보세요.
-A Sphinx project’s `index.rst`
-will usually include a table of contents:
+Sphinx 프로젝트의 `index.rst`는
+보통 목차를 포함합니다:
 
 ```
    Table of Contents
@@ -412,15 +412,15 @@ Python의 유연성의 핵심은
 초기 충동으로는 모든 엣지 튜플을
 단순히 리스트에 던져 넣을 수도 있지만,
 그것은 단점이 있을 것입니다.
-A list is careful to maintain order,
-but it is not meaningful to talk about an absolute order
-for the edges in a graph.
+리스트는 순서를 유지하는 데 신경을 쓰지만,
+그래프의 엣지들에 대해 절대적인 순서를
+말하는 것은 의미가 없습니다.
 그리고 리스트는 정확히 동일한 엣지의 여러 사본을
 완벽하게 기꺼이 보관하게 되지만,
 우리는 `tutorial.rst`와 `tutorial.html` 사이에
 단일 화살표만 그어질 수 있기를 원합니다.
-The correct choice is thus the set,
-which would have us represent \aosafigref{500l.contingent.graph} as:
+따라서 올바른 선택은 집합입니다.
+집합을 사용하면 \aosafigref{500l.contingent.graph}를 다음과 같이 표현할 수 있습니다:
 
 ```python
     {('tutorial.rst', 'tutorial.html'),
@@ -823,9 +823,9 @@ True
  >>> open('figure1.dot', 'w').write(as_graphviz(g)) and None
 ```
 
-\aosafigref{500l.contingent.graph} ignored one of the most important relationships
-that we discovered in the opening section of our chapter:
-the way that document titles appear in the table of contents.
+이 장의 서두에서 발견한 가장 중요한 관계 중 하나인
+문서 제목이 목차에 나타나는 방식을
+\aosafigref{500l.contingent.graph}에서 무시했습니다.
 이 세부 사항을 채워봅시다.
 입력 파일을 파싱하여 생성되고
 다른 루틴 중 하나에 전달되어야 하는
@@ -838,16 +838,16 @@ the way that document titles appear in the table of contents.
 >>> g.add_edge('tutorial-title', 'index.html')
 ```
 
-The result is a graph (\aosafigref{500l.contingent.graph2}) that could properly handle
-rebuilding the table of contents that we discussed
-in the opening of this chapter.
+결과물은 이 장의 시작 부분에서 논의했던
+목차 재빌드를 적절히 처리할 수 있는
+그래프입니다 (\aosafigref{500l.contingent.graph2}).
 
 \aosafigure[240pt]{contingent-images/figure2.png}{Being prepared to rebuild `index.html` whenever any title that it mentions gets changed.}{500l.contingent.graph2}
 
-This manual walk-through illustrates what we
-will eventually have Contingent do for us:
-the graph `g` captures the inputs and consequences
-for the various artifacts in our project's documentation.
+이 수동 단계별 과정은 결국 Contingent가
+우리를 위해 수행하게 될 작업을 보여줍니다:
+그래프 `g`는 프로젝트 문서의 다양한 산출물에 대한
+입력과 결과를 캡처합니다.
 
 ## 연결 학습
 
@@ -945,8 +945,8 @@ Contingent는 작업들을 `Project`로 그룹화하여 관리하며,
 >>> task = project.task
 ```
 
-A build system for the example given at the beginning of the chapter
-might involve a few tasks.
+이 장의 시작 부분에서 제시한 예제를 위한 빌드 시스템은
+몇 가지 작업을 포함할 수 있습니다.
 
 우리의 `read()` 작업은 디스크에서 파일을 읽는 척할 것입니다.
 실제로는 소스 텍스트를 변수로 정의했으므로,
@@ -963,12 +963,11 @@ might involve a few tasks.
   ...     return filesystem[filename]
 ```
 
-The `parse()` task interprets the raw text of the file contents
-according to the specification of our document format.
-Our format is very simple:
-the title of the document appears on the first line,
-and the rest of the content is considered the document's body.
-
+`parse()` 작업은 파일 내용의 원시 텍스트를
+문서 포맷의 사양에 따라 해석합니다.
+우리의 포맷은 매우 간단합니다:
+문서의 제목이 첫 번째 줄에 나타나고,
+나머지 내용은 문서의 본문으로 간주됩니다.
 ```python
   >>> @task
   ... def parse(filename):
@@ -978,26 +977,23 @@ and the rest of the content is considered the document's body.
   ...     return title, body
 ```
 
-Because the format is so simple,
-the parser is a little silly, 
-but it illustrates the interpretive responsibilities
-that parsers are required to carry out.
-(Parsing in general is a very interesting subject
-and many books have been written
-either partially or completely about it.)
-In a system like Sphinx,
-the parser must understand the many markup tokens,
-directives, and commands defined by the system,
-transforming the input text into something
-the rest of the system can work with.
+포맷이 매우 간단하기 때문에
+파서는 약간 단순해 보이지만,
+파서가 수행해야 하는 해석적 책임을 잘 보여줍니다.
+(파싱은 일반적으로 매우 흥미로운 주제이며
+이에 대해 부분적으로 또는 전체적으로
+다루는 많은 책들이 쓰여졌습니다.)
+Sphinx와 같은 시스템에서는
+파서가 시스템에서 정의한 많은 마크업 토큰,
+지시문, 명령을 이해해야 하며,
+입력 텍스트를 시스템의 나머지 부분이
+작업할 수 있는 형태로 변환해야 합니다.
+`parse()`와 `read()` 사이의 연결점을 주목하세요 —
+파싱의 첫 번째 작업은 받은 파일명을
+`read()`에 전달하는 것이며, `read()`는 해당 파일의 내용을 찾아 반환합니다.
 
-Notice the connection point between
-`parse()` and `read()` —
-the first task in parsing is to pass the filename it has been given
-to `read()`, which finds and returns the contents of that file.
-
-The `title_of()` task, given a source file name,
-returns the document's title:
+`title_of()` 작업은 소스 파일 이름이 주어지면
+문서의 제목을 반환합니다:
 
 ```python
   >>> @task
@@ -1006,31 +1002,28 @@ returns the document's title:
   ...     return title
 ```
 
-This task nicely illustrates the
-separation of responsibilities between
-the parts of a document processing system.
-The `title_of()` function works directly
-from an in-memory representation of a document —
-in this case, a tuple —
-instead of taking it upon itself to re-parse
-the entire document again just to find the title.
-The `parse()` function alone produces the in-memory representation,
-in accordance with the contract of the system specification,
-and the rest of the blog builder processing functions
-like `title_of()` simply use its output as their authority.
+이 작업은 문서 처리 시스템의 각 부분 간
+책임 분리를 잘 보여줍니다.
+`title_of()` 함수는 문서의 메모리 내 표현 —
+이 경우에는 튜플 —에서 직접 작업하며,
+제목을 찾기 위해 전체 문서를 다시 파싱하는
+작업을 스스로 수행하지 않습니다.
+`parse()` 함수만이 시스템 사양의 계약에 따라
+메모리 내 표현을 생성하며,
+`title_of()`와 같은 나머지 블로그 빌더 처리 함수들은
+단순히 그 출력을 권위 있는 것으로 사용합니다.
+정통 객체지향 전통에서 오신 분이라면,
+이 함수 지향적 설계가 약간 이상해 보일 수 있습니다.
+OO 솔루션에서는
+`parse()`가 `title_of()`를 메서드나 속성으로 갖는
+일종의 `Document` 객체를 반환할 것입니다.
+사실, Sphinx는 정확히 이런 방식으로 작동합니다:
+`Parser` 하위 시스템이 시스템의 다른 부분이 사용할
+"Docutils 문서 트리" 객체를 생성합니다.
 
-If you are coming from an orthodox object-oriented tradition,
-this function-oriented design may look a little weird.
-In an OO solution,
-`parse()` would return some sort of `Document` object
-that has `title_of()` as a method or property.
-In fact, Sphinx works exactly this way:
-its `Parser` subsystem produces a “Docutils document tree” object
-for the other parts of the system to use.
-
-Contingent is not opinionated
-with regard to these differing design paradigms
-and supports either approach equally well.
+Contingent는 이러한 서로 다른 설계 패러다임에 대해
+특정 의견을 갖고 있지 않으며,
+두 접근 방식을 동등하게 잘 지원합니다.
 이 장에서는 단순하게 유지하겠습니다.
 
 마지막 작업인
@@ -1038,13 +1031,10 @@ and supports either approach equally well.
 문서의 메모리 내 표현을
 출력 형태로 변환합니다.
 사실상 `parse()`의 역과정입니다.
-Whereas `parse()` takes an input document
-conforming to a specification
-and converts it to an in-memory representation,
-`render()` takes an in-memory representation
-and produces an output document
-conforming to some specification.
-
+`parse()`가 사양을 따르는 입력 문서를 받아
+메모리 내 표현으로 변환하는 반면,
+`render()`는 메모리 내 표현을 받아
+어떤 사양을 따르는 출력 문서를 생성합니다.
 ```python
   >>> import re
   >>>
@@ -1062,9 +1052,8 @@ conforming to some specification.
   ...     return PAGE.format(title, body)
 ```  
 
-Here is an example run
-that will invoke every stage of the above logic —
-rendering `tutorial.txt` to produce its output:
+다음은 위의 모든 논리 단계를 호출하는 예시 실행입니다 —
+`tutorial.txt`를 렌더링하여 출력을 생성합니다:
 
 ```python
 >>> print(render('tutorial.txt'))
@@ -1075,50 +1064,45 @@ rendering `tutorial.txt` to produce its output:
 <p>
 ```
 
-\aosafigref{500l.contingent.graph3} illustrates the task graph
-that transitively connects all the tasks
-required to produce the output,
-from reading the input file,
-to parsing and transforming the document,
-and rendering it:
-
+osafigref{500l.contingent.graph3}는 출력을 생성하는 데
+필요한 모든 작업을 전이적으로 연결하는
+작업 그래프를 보여줍니다 —
+입력 파일을 읽는 것부터,
+문서를 파싱하고 변환하는 것,
+그리고 렌더링하는 것까지:
 \aosafigure[240pt]{contingent-images/figure3.png}{A task graph.}{500l.contingent.graph3}
 
-It turns out that \aosafigref{500l.contingent.graph3} was not hand-drawn for this chapter,
-but has been generated directly from Contingent!
-Building this graph is possible for the `Project` object
-because it maintains its own call stack,
-similar to the stack of live execution frames
-that Python maintains to remember which function to continue running
-when the current one returns.
+사실 \aosafigref{500l.contingent.graph3}는 이 장을 위해 손으로 그린 것이 아니라,
+Contingent에서 직접 생성된 것입니다!
+`Project` 객체가 이 그래프를 빌드할 수 있는 이유는
+자체 호출 스택을 유지하기 때문입니다.
+이는 Python이 현재 함수가 반환될 때
+어떤 함수를 계속 실행할지 기억하기 위해 유지하는
+라이브 실행 프레임 스택과 유사합니다.
 
-Every time a new task is invoked,
-Contingent can assume that it has been called —
-and that its output will be used —
-by the task currently at the top of the stack.
-Maintaining the stack will require that several extra steps
-surround the invocation of a task *T*:
+새로운 작업이 호출될 때마다,
+Contingent는 그것이 호출되었다고 —
+그리고 그 출력이 사용될 것이라고 —
+스택 맨 위에 있는 작업에 의해 가정할 수 있습니다.
+스택을 유지하려면 작업 *T*의 호출을
+둘러싸는 여러 추가 단계가 필요합니다:
 
-1. Push *T* onto the stack.
-2. Execute *T*, letting it call any other tasks it needs.
-3. Pop *T* off the stack.
-4. Return its result.
+1. *T*를 스택에 푸시합니다.
+2. *T*를 실행하고, 필요한 다른 작업을 호출하게 합니다.
+3. *T*를 스택에서 팝합니다.
+4. 결과를 반환합니다.
 
-To intercept task calls,
-the `Project` leverages a key Python feature: *function decorators*.
-A decorator is allowed to process or transform a function
-at the moment that it is being defined.
-The `Project.task` decorator uses this opportunity
-to package every task inside another function, a *wrapper*,
-which allows a clean separation of responsibilities
-between the wrapper —
-which will worry about graph and stack management
-on behalf of the Project —
-and our task functions that focus on document processing.
-Here is what the `task` decorator boilerplate looks like:
-
-```python
-        from functools import wraps
+작업 호출을 가로채기 위해,
+`Project`는 핵심적인 Python 기능인 *함수 데코레이터*를 활용합니다.
+데코레이터는 함수가 정의되는 순간에
+함수를 처리하거나 변환할 수 있습니다.
+`Project.task` 데코레이터는 이 기회를 활용하여
+모든 작업을 다른 함수, 즉 *래퍼*로 감싸며,
+이를 통해 래퍼 —
+프로젝트를 대신하여 그래프와 스택 관리를 담당하는 —와
+문서 처리에 집중하는 작업 함수 간의
+깔끔한 책임 분리가 가능해집니다.
+다음은 `task` 데코레이터의 기본 틀입니다:
 
         def task(function):
             @wraps(function)
@@ -1139,15 +1123,14 @@ Here is what the `task` decorator boilerplate looks like:
         return title
 ```
 
-When this definition is complete,
-the name `title_of` will refer
-to the wrapped version of the function.
-The wrapper can access the original version of the function
-via the name `function`,
-calling it at the appropriate time.
-The body of the Contingent wrapper
-runs something like this:
-
+이 정의가 완료되면,
+`title_of`라는 이름은
+함수의 래핑된 버전을 참조하게 됩니다.
+래퍼는 `function`이라는 이름을 통해
+원본 함수에 접근할 수 있으며,
+적절한 시점에 이를 호출합니다.
+Contingent 래퍼의 본문은
+대략 다음과 같이 실행됩니다:
 ```python
     def task(function):
         @wraps(function)
@@ -1166,48 +1149,42 @@ runs something like this:
         return wrapper
 ```
 
-This wrapper performs several crucial maintenance steps:
+이 래퍼는 여러 중요한 유지보수 단계를 수행합니다:
 
-1. Packages the task —
-   a function plus its arguments —
-   into a small object for convenience.
-   The `wrapper` here names the wrapped version of the task function.
+1. 작업 — 함수와 그 인수 — 을
+   편의를 위해 작은 객체로 패키징합니다.
+   여기서 `wrapper`는 작업 함수의 래핑된 버전을 나타냅니다.
 
-2. If this task has been invoked
-   by a current task that is already underway,
-   add an edge capturing the fact that
-   this task is an input to the already-running task.
+2. 이 작업이 이미 진행 중인 현재 작업에 의해
+   호출되었다면, 이 작업이 이미 실행 중인 작업의
+   입력이라는 사실을 캡처하는 엣지를 추가합니다.
 
-3. Forget whatever we might have learned last time about the task,
-   since it might make new decisions this time —
-   if the source text of the API guide no longer mentions the Tutorial,
-   for example, then its `render()` will no longer ask
-   for the `title_of()` the Tutorial document.
+3. 작업에 대해 지난번에 배운 것을 모두 잊습니다,
+   이번에는 다른 결정을 할 수 있기 때문입니다 —
+   예를 들어, API 가이드의 소스 텍스트가 더 이상 튜토리얼을 언급하지 않는다면,
+   그것의 `render()`는 더 이상 튜토리얼 문서의
+   `title_of()`를 요청하지 않을 것입니다.
 
-4. Push this task onto the top of the task stack
-   in case it decides, in its turn, to invoke further tasks
-   in the course of doing its work.
+4. 이 작업을 작업 스택의 맨 위에 푸시합니다,
+   작업을 수행하는 과정에서 추가 작업을
+   호출하기로 결정할 경우를 대비해서입니다.
 
-5. Invoke the task
-   inside of a `try...finally` block
-   that ensures we correctly remove the finished task from the stack,
-   even if it dies by raising an exception.
-
+5. `try...finally` 블록 안에서 작업을 호출하여
+   예외가 발생하더라도 완료된 작업을
+   스택에서 올바르게 제거하도록 보장합니다.
 6. Return the task’s return value,
    so that callers of this wrapper
    will not be able to tell that they have not simply invoked
    the plain task function itself.
 
-Steps 4 and 5 maintain the task stack itself,
-which is then used by step 2 to perform the consequences tracking
-that is our whole reason for building a task stack in the first place.
-
-Since each task gets surrounded by its own copy of the wrapper function,
-the mere invocation and execution of the normal stack of tasks
-will produce a graph of relationships as an invisible side effect.
-That is why we were careful to use the wrapper
-around each processing step that we defined:
-
+4단계와 5단계는 작업 스택 자체를 유지하며,
+이는 2단계에서 애초에 작업 스택을 구축하는
+이유인 결과 추적을 수행하는 데 사용됩니다.
+각 작업이 자체 래퍼 함수의 복사본으로 둘러싸이기 때문에,
+일반적인 작업 스택의 단순한 호출과 실행만으로도
+보이지 않는 부작용으로 관계 그래프가 생성됩니다.
+그래서 우리가 정의한 각 처리 단계 주위에
+래퍼를 사용하는 데 주의를 기울인 것입니다:
 ```python
     @task
     def read(filename):
@@ -1226,15 +1203,13 @@ around each processing step that we defined:
         # body of render
 ```
 
-Thanks to these wrappers,
-when we called `parse('tutorial.txt')`
-the decorator learned
-the connection between `parse` and `read`.
-We can ask about the relationship by building another `Task` tuple
-and asking what the consequences would be
-if its output value changed:
-
-```python
+이러한 래퍼들 덕분에,
+`parse('tutorial.txt')`를 호출했을 때
+데코레이터는 `parse`와 `read` 사이의
+연결을 학습했습니다.
+다른 `Task` 튜플을 만들어 관계를 질의하고
+출력 값이 변경되면 어떤 결과가 발생할지
+물어볼 수 있습니다:
 >>> task = Task(read, ('tutorial.txt',))
 >>> print(task)
 read('tutorial.txt')
@@ -1242,9 +1217,9 @@ read('tutorial.txt')
 [parse('tutorial.txt')]
 ```
 
-The consequence of re-reading the `tutorial.txt` file
-and finding that its contents have changed
-is that we need to re-execute the `parse()` routine for that document.
+`tutorial.txt` 파일을 다시 읽어서
+내용이 변경되었다는 것을 발견했을 때의 결과는
+해당 문서에 대해 `parse()` 루틴을 다시 실행해야 한다는 것입니다.
 전체 문서 세트를 렌더링하면 어떻게 될까요?
 Contingent가 전체 빌드 프로세스를 학습할 수 있을까요?
 
