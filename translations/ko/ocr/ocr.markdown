@@ -611,18 +611,17 @@ of errors for a hidden layer. Here we call this `hidden_errors`.
                                         self.sigmoid_prime(sum1))
 ```
 
-Weight updates that adjust the ANN weights based on the errors computed
-earlier. Weights are updated at each layer via matrix multiplication. The error
-matrix at each layer is multiplied by the output matrix of the previous layer.
-This product is then multiplied by a scalar called the learning rate and added
-to the weight matrix. The learning rate is a value between 0 and 1 that
-influences the speed and accuracy of learning in the ANN. Larger learning rate
-values will generate an ANN that learns quickly but is less accurate, while
-smaller values will will generate an ANN that learns slower but is more
-accurate. In our case, we have a relatively small value for learning rate, 0.1.
-This works well since we do not need the ANN to be immediately trained in order
-for a user to continue making train or predict requests. Biases are updated by
-simply multiplying the learning rate by the layer’s error vector.
+가중치 업데이트는 앞서 계산된 오류를 기반으로 ANN 가중치를 조정합니다.
+가중치는 행렬 곱셈을 통해 각 계층에서 업데이트됩니다.
+각 계층의 오류 행렬은 이전 계층의 출력 행렬과 곱해집니다.
+이 곱은 학습률이라는 스칼라와 곱해져 가중치 행렬에 더해집니다.
+학습률은 0과 1 사이의 값으로 ANN의 학습 속도와 정확도에 영향을 미칩니다.
+학습률이 클수록 빠르게 학습하지만 정확도가 낮은 ANN이 생성되고,
+작을수록 느리게 학습하지만 더 정확한 ANN이 생성됩니다.
+우리의 경우 학습률은 0.1로 상대적으로 작은 값입니다.
+이는 사용자가 훈련이나 예측 요청을 계속하기 위해 ANN이 즉시
+훈련될 필요가 없기 때문에 잘 작동합니다.
+편향은 단순히 학습률에 해당 계층의 오류 벡터를 곱하여 업데이트됩니다.
 
 ```python
             self.theta1 += self.LEARNING_RATE * np.dot(np.mat(hidden_errors), 
@@ -638,8 +637,8 @@ simply multiplying the learning rate by the layer’s error vector.
 Once an ANN has been trained via backpropagation, it is fairly straightforward
 to use it for making predictions. As we can see here, we start by computing the
 output of the ANN, `y2`, exactly the way we did in step 2 of backpropagation.
-Then we look for the index in the vector with the maximum value. This index is
-the digit predicted by the ANN.
+그런 다음 벡터에서 최대값을 가진 인덱스를 찾습니다.
+이 인덱스가 ANN이 예측한 숫자입니다.
 
 ```
     def predict(self, test):

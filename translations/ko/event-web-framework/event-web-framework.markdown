@@ -899,7 +899,7 @@ HOUSE> (type-assertion 'blah :integer)
 HOUSE>
 ```
 
-There are cases where `type-assertion` won't need to do anything. For example, since HTTP parameters are given to us as strings, our `:string` type assertion has nothing to validate:
+`type-assertion`이 아무것도 할 필요가 없는 경우가 있습니다. 예를 들어, HTTP 매개변수는 문자열로 주어지므로 우리의 `:string` 타입 단언은 검증할 것이 없습니다:
 
 ```lisp
 HOUSE> (type-assertion 'blah :string)

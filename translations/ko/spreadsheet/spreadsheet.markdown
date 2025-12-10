@@ -296,7 +296,7 @@ The `init()` function tries restoring the `sheet` content from its previous stat
   }).call();
 ```
 
-A few things are worth nothing in the `init()` function above:
+위의 `init()` 함수에서 주목할 만한 몇 가지 사항이 있습니다:
 
 * We use the `($scope.init = ()=>{…}).call()` syntax to define the function and immediately call it.
 * Because localStorage only stores strings, we _parse_ the `sheet` structure from its [JSON](https://developer.mozilla.org/en-US/docs/Glossary/JSON) representation using `angular.fromJson()`.
@@ -360,7 +360,7 @@ With the handler in place, we can post the state of `sheet` to the worker, start
 
 ### JS: Background Worker
 
-There are three reasons for using a web worker to calculate formulas, instead of using the main JS thread for the task:
+메인 JS 스레드 대신 웹 워커를 사용하여 수식을 계산하는 데는 세 가지 이유가 있습니다:
 
 * While the worker runs in the background, the user is free to continue interacting with the spreadsheet without getting blocked by computation in the main thread. 
 * Because we accept any JS expression in a formula, the worker provides a _sandbox_ that prevents formulas from interfering with the page that contains them, such as by popping out an `alert()` dialog box.

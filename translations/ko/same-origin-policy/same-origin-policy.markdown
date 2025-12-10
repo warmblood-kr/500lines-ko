@@ -180,10 +180,9 @@ abstract sig HttpRequest extends Call { ... }{
 
 이제 다시 실행하면 결함이 없는 인스턴스들이 생성됩니다.
 
-Instead of generating sample instances, we can ask the analyzer to
-*check* whether the model satisfies a property. For example, one
-property we might want is that when a client sends the same request
-multiple times, it always receives the same response back:
+샘플 인스턴스를 생성하는 대신, 분석기에게 모델이 속성을 만족하는지
+*검사*하도록 요청할 수 있습니다. 예를 들어, 클라이언트가 동일한 요청을
+여러 번 보낼 때 항상 동일한 응답을 받는다는 속성을 원할 수 있습니다:
 
 ```alloy
 check { 
@@ -319,13 +318,13 @@ the mapping from browsers to documents when the call has ended. So
 this constraint says that after the call, the mapping is the same,
 except for a new entry in the table mapping `from` to `doc`.
 
-Some constraints use the `++` relational _override_ operator: `e1 ++ e2`
-contains all tuples of `e2`, and additionally, any tuples of `e1`
-whose first element is not the first element of a tuple in `e2`. For
-example, the constraint `content.end = content.start ++ doc ->
-response` says that after the call, the `content` mapping will be
-updated to map `doc` to `response` (overriding any previous mapping of
-`doc`).  If we were to use the union operator `+` instead, then the
+일부 제약조건은 `++` 관계형 _재정의_ 연산자를 사용합니다: `e1 ++ e2`는
+`e2`의 모든 튜플을 포함하고, 추가로 첫 번째 요소가 `e2`의 튜플의
+첫 번째 요소가 아닌 `e1`의 튜플들을 포함합니다. 예를 들어,
+`content.end = content.start ++ doc -> response` 제약조건은
+호출 후 `content` 매핑이 `doc`을 `response`에 매핑하도록
+업데이트된다는 것을 의미합니다(기존 `doc` 매핑을 재정의).
+만약 합집합 연산자 `+`를 대신 사용한다면,
 same document might (incorrectly) be mapped to multiple resources in
 the after state.
 
@@ -337,19 +336,16 @@ Next, we will build on the HTTP and browser models to introduce *client-side scr
 sig Script extends Client { context: Document }
 ```
 
-A script is a dynamic entity that can perform two different kinds of
-action: (1) it can make HTTP requests (i.e., Ajax requests) and (2) it
-can perform browser operations to manipulate the content and
-properties of a document. The flexibility of client-side scripts is
-one of the main catalysts of the rapid development of Web 2.0, but
-is also the reason why the SOP was created in the first place. Without
-the SOP, scripts would be able to send arbitrary requests to servers,
-or freely modify documents inside the browser&mdash;which would be bad
-news if one or more of the scripts turned out to be malicious.
+스크립트는 두 가지 종류의 작업을 수행할 수 있는 동적 엔티티입니다:
+(1) HTTP 요청(즉, Ajax 요청)을 보낼 수 있고 (2) 문서의 콘텐츠와
+속성을 조작하는 브라우저 작업을 수행할 수 있습니다. 클라이언트 측
+스크립트의 유연성은 웹 2.0의 급속한 발전의 주요 촉매제 중 하나이지만,
+SOP가 처음 만들어진 이유이기도 합니다. SOP가 없다면 스크립트는
+서버에 임의의 요청을 보내거나 브라우저 내의 문서를 자유롭게
+수정할 수 있을 것입니다&mdash;하나 이상의 스크립트가 악성으로
+판명될 경우 이는 나쁜 소식이 될 것입니다.
 
-A script can communicate to a server by sending an `XmlHttpRequest`:
-
-```alloy
+스크립트는 `XmlHttpRequest`를 보내서 서버와 통신할 수 있습니다:
 sig XmlHttpRequest extends HttpRequest {}{
   from in Script
   noBrowserChange[start, end] and noDocumentChange[start, end]
@@ -393,14 +389,12 @@ but not the set of documents or cookies that are stored in the
 browser. (Actually, cookies can be associated with a document and
 modified using a browser API, but we omit this detail for now.)
 
-A script can read from and write to various parts of a document
-(usually called DOM elements). In a typical browser, there are a large
-number of API functions for accessing the DOM (e.g.,
-`document.getElementById`), but enumerating all of them is not
-important for our purpose. Instead, we will simply group them into two
-kinds&mdash;`ReadDom` and `WriteDom`&mdash;and model modifications as
-wholesale replacements of the entire document:
-
+스크립트는 문서의 다양한 부분(보통 DOM 요소라고 함)을 읽고
+쓸 수 있습니다. 일반적인 브라우저에는 DOM에 접근하기 위한
+많은 API 함수(예: `document.getElementById`)가 있지만,
+우리의 목적을 위해 그것들을 모두 열거하는 것은 중요하지 않습니다.
+대신, 우리는 그것들을 두 종류&mdash;`ReadDom`과 `WriteDom`&mdash;로
+간단히 그룹화하고, 수정을 전체 문서의 도매 교체로 모델링할 것입니다:
 ```alloy
 sig ReadDom extends BrowserOp { result: Resource }{
   result = doc.content.start
@@ -428,14 +422,12 @@ arbitrarily picks _any_ one of the possible system scenarios (up to
 the specified bound), and assigns numeric identifiers to signature
 instances (`Server0`, `Browser1`, etc.) in the scenario.
 
-Sometimes, we may wish to analyze the behavior of a _particular_ web
-application, instead of exploring scenarios with a random
-configuration of servers and clients. For example, imagine that we
-wish to build an email application that runs inside a
-browser (like Gmail).  In addition to providing basic email features, our
-application might display a banner from a third-party advertisement
-service, which is controlled by a potentially malicious actor.
-
+때때로, 무작위 서버와 클라이언트 구성으로 시나리오를 탐색하는 대신
+_특정_ 웹 애플리케이션의 동작을 분석하고 싶을 수 있습니다.
+예를 들어, 브라우저 내에서 실행되는 이메일 애플리케이션(Gmail과 같은)을
+구축하고 싶다고 상상해 보세요. 기본적인 이메일 기능을 제공하는 것 외에도,
+우리의 애플리케이션은 잠재적으로 악의적인 행위자가 제어하는
+제3자 광고 서비스의 배너를 표시할 수 있습니다.
 In Alloy, the keywords `one sig` introduce a _singleton_ signature
 containing exactly one object; we saw an example above with
 `Dns`. This syntax can be used to specify concrete atoms. For example,
@@ -509,10 +501,9 @@ one sig ExampleDomain extends Domain {}{
 Note that `this` is included as a member of `subsumes`, since every
 domain name subsumes itself.
 
-There are other details about these applications that we omit here
-(see `example.als` for the full model). But we will revisit these
-applications as our running example throughout the remainder of this
-chapter.
+이러한 애플리케이션에 대한 다른 세부 사항은 여기서 생략합니다
+(전체 모델은 `example.als` 참조). 하지만 이 장의 나머지 부분에서
+이 애플리케이션들을 계속 예제로 사용할 것입니다.
 
 ## Security Properties
 
@@ -612,8 +603,8 @@ sig TrustedModule, MaliciousModule in DataflowModule {}
 sig CriticalData, MaliciousData in Data {}
 ```
 
-Then, the confidentiality property can be stated as an _assertion_ on
-the flow of critical data into non-trusted parts of the system:
+그러면 기밀성 속성은 시스템의 신뢰할 수 없는 부분으로
+중요 데이터가 흐르는 것에 대한 _단언_으로 표현할 수 있습니다:
 
 ```alloy
 // No malicious module should be able to access critical data
@@ -635,14 +626,11 @@ assert Integrity {
 
 ### Threat Model
 
-A threat model describes a set of actions that an attacker may perform
-in an attempt to compromise a security property of a system. Building
-a threat model is an important step in any secure system design; it
-allows us to identify (possibly invalid) assumptions that we have
-about the system and its environment, and prioritize different types
-of risks that need to be mitigated. 
-
-In our model, we consider an attacker that can act as a server, a
+위협 모델은 공격자가 시스템의 보안 속성을 침해하려는 시도에서
+수행할 수 있는 일련의 행동을 설명합니다. 위협 모델을 구축하는 것은
+모든 보안 시스템 설계에서 중요한 단계입니다; 이를 통해 시스템과
+환경에 대해 우리가 가진 (잠재적으로 잘못된) 가정을 식별하고,
+완화해야 할 다양한 유형의 위험에 우선순위를 매길 수 있습니다.
 script or a client. As a server, the attacker may set up malicious web
 pages to solicit visits from unsuspecting users, who, in turn, may
 inadvertently send sensitive information to the attacker as part of a
@@ -697,10 +685,9 @@ information across different domains&mdash;namely, that a script executing
 under one domain is able to make an HTTP request to a server with a
 different domain.
 
-These two counterexamples tell us that extra measures are needed to
-restrict the behavior of scripts, especially since some of those
-scripts could be malicious. This is exactly where the SOP comes in.
-
+이 두 반례는 스크립트의 동작을 제한하기 위해 추가적인 조치가
+필요하다는 것을 알려줍니다, 특히 일부 스크립트가 악의적일 수 있기
+때문입니다. 이것이 바로 SOP가 등장하는 이유입니다.
 ## Same-Origin Policy
 
 Before we can state the SOP, the first thing we should do is to introduce the

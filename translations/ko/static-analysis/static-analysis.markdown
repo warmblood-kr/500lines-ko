@@ -869,7 +869,7 @@ The `:(::)` operator is used to add type annotations. The first argument is the 
 At the end of the function, we return the set of RHS variable usages.
 
 
-There's a little more code that simplifies the method above. Because the version above only handles `Expr`s, but some of the values that get passed recursively may not be `Expr`s, we need a few more methods to handle the other possible types appropriately.
+위의 메서드를 단순화하는 코드가 조금 더 있습니다. 위 버전은 `Expr`만 처리하지만, 재귀적으로 전달되는 일부 값은 `Expr`이 아닐 수 있으므로, 다른 가능한 타입을 적절히 처리하기 위한 몇 가지 메서드가 더 필요합니다.
 
 ```julia
 # Recursive Base Cases, to simplify control flow in the Expr version

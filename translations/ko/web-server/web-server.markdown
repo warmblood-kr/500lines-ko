@@ -564,7 +564,7 @@ URL의 경로가 파일이 아닌 디렉터리일 때
 그것이 요청을 처리하도록 하고
 루프에서 빠져나옵니다.
 
-These three case classes reproduce the behavior of our previous server:
+이 세 가지 케이스 클래스는 이전 서버의 동작을 재현합니다:
 
 ```python
 class case_no_file(object):
