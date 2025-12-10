@@ -11,7 +11,7 @@ _케이트는 기술 업계를 떠나 1년간 자신만의 길을 찾으며 열�
 
 나는 이 프로젝트를 몇 년 동안 방치했습니다. 일, 생활, 여행, 강연에 정신이 팔려서였죠. 결국 다시 돌아와서 주요 색상을 계산하는 방법을 알아내고 [시각화를 완성했습니다](http://www.catehuston.com/blog/2013/09/02/visualising-a-photo-series/). 그때 이 아이디어가 사실 그리 훌륭하지 않다는 것을 발견했습니다. 진행 과정이 기대만큼 명확하지 않았고, 추출된 주요 색상이 일반적으로 가장 매력적인 색조가 아니었으며, 생성하는 데 오랜 시간이 걸렸고(이미지당 몇 초씩), 멋진 것을 만들기 위해서는 수백 개의 이미지가 필요했습니다(\aosafigref{500l.imagefilters.sunflower}).
 
-\aosafigure[180pt]{image-filters-images/sunflower.jpg}{Sunflower layout}{500l.imagefilters.sunflower}
+\aosafigure[180pt]{image-filters-images/sunflower.jpg}{해바라기 레이아웃}{500l.imagefilters.sunflower}
 
 이것이 실망스러울 수 있다고 생각할지도 모르겠지만, 이 지점에 이르렀을 때 나는 이전에는 접해보지 못했던 많은 것들을 배웠습니다. 색 공간과 픽셀 조작에 대한 지식이었죠. 그리고 멋진 부분 컬러 이미지들을 만들기 시작했습니다. 런던의 빨간 버스나 전화 부스만 컬러로 하고 나머지는 모두 회색조로 처리한 엽서에서 볼 수 있는 그런 이미지 말입니다.
 
@@ -51,9 +51,9 @@ _케이트는 기술 업계를 떠나 1년간 자신만의 길을 찾으며 열�
 
 \aosafigref{500l.imagefilters.animals}에서는 뉴욕의 MoMA에서 찍은 풍선 동물들의 고해상도 사진을 볼 수 있습니다. \aosafigref{500l.imagefilters.pixelanimals}는 같은 이미지를 확대한 것이지만 24 x 32 픽셀만 사용했습니다.
 
-\aosafigure[220pt]{image-filters-images/animals.jpg}{Blow-up animals at MoMA NY}{500l.imagefilters.animals}
+\aosafigure[220pt]{image-filters-images/animals.jpg}{MoMA NY의 확대된 동물}{500l.imagefilters.animals}
 
-\aosafigure[220pt]{image-filters-images/pixelanimals.jpg}{Blow-up animals, blown up}{500l.imagefilters.pixelanimals}
+\aosafigure[220pt]{image-filters-images/pixelanimals.jpg}{확대된 동물, 더 확대}{500l.imagefilters.pixelanimals}
 
 얼마나 흐릿한지 보이시나요? 이것을 _픽셀화_라고 부르는데, 이미지가 포함하고 있는 픽셀 수에 비해 너무 크기 때문에 사각형들이 보이게 되는 것을 의미합니다. 여기서는 이미지가 색상의 사각형들로 구성되어 있다는 것을 더 잘 이해할 수 있도록 사용할 수 있습니다.
 
@@ -87,7 +87,7 @@ FFF5B7
 - 이미지를 재설정합니다.
 - 만든 이미지를 저장합니다.
 
-\aosafigure[266pt]{image-filters-images/app.jpg}{The App}{500l.imagefilters.app}
+\aosafigure[266pt]{image-filters-images/app.jpg}{앱}{500l.imagefilters.app}
 
 Processing을 사용하면 작은 애플리케이션을 만들고 이미지 조작을 수행하는 것이 간단해집니다. 매우 시각적인 초점을 가지고 있습니다. Processing이 이제 다른 언어로 이식되었지만, 우리는 Java 기반 버전으로 작업할 것입니다.
 

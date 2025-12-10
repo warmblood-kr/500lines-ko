@@ -9,7 +9,7 @@ _[Dethe](https://twitter.com/dethe)는 geek dad이자 미적 프로그래머, �
 
 이와 대조적으로, 잘 만들어진 블록 언어는 구문 오류를 완전히 제거할 수 있습니다. 여전히 잘못된 일을 하는 프로그램을 만들 수는 있지만, 잘못된 구문을 가진 프로그램은 만들 수 없습니다: 블록들이 그런 방식으로는 맞지 않기 때문입니다. 블록 언어는 더 발견하기 쉽습니다: 언어의 모든 구조와 라이브러리를 블록 목록에서 바로 볼 수 있습니다. 더욱이, 블록은 프로그래밍 언어의 의미를 바꾸지 않으면서 어떤 인간 언어로든 현지화할 수 있습니다.
 
-\aosafigure[240pt]{blockcode-images/blockcode_ide.png}{The Blockcode IDE in use}{500l.blockcode.ide}
+\aosafigure[240pt]{blockcode-images/blockcode_ide.png}{사용 중인 Blockcode IDE}{500l.blockcode.ide}
 
 블록 기반 언어는 긴 역사를 가지고 있으며, 그 중 저명한 것들로는 [Lego Mindstorms](http://www.lego.com/en-us/mindstorms/), [Alice3D](http://www.alice.org/index.php), [StarLogo](http://education.mit.edu/projects/starlogo-tng), 그리고 특히 [Scratch](http://scratch.mit.edu/)가 있습니다. 웹에서도 블록 기반 프로그래밍을 위한 여러 도구들이 있습니다: [Blockly](https://developers.google.com/blockly/), [AppInventor](http://appinventor.mit.edu/explore/), [Tynker](http://www.tynker.com/), 그리고 [기타 많은 것들](http://en.wikipedia.org/wiki/Visual_programming_language).
 
@@ -62,7 +62,7 @@ Blockcode 스크립트는 (블록 기반이든 텍스트 기반이든) 어떤 �
 
 각 블록은 몇 개의 HTML 요소들로 구성되고, CSS로 스타일이 적용되며, 드래그 앤 드롭과 입력 인수 수정을 위한 일부 JavaScript 이벤트 핸들러가 있습니다. `blocks.js` 파일은 이러한 요소들의 그룹핑을 단일 객체로 생성하고 관리하는 데 도움을 줍니다. 블록 유형이 블록 메뉴에 추가될 때, 언어를 구현하는 JavaScript 함수와 연결되므로, 스크립트의 각 블록은 연결된 함수를 찾고 스크립트가 실행될 때 그것을 호출할 수 있어야 합니다.
 
-\aosafigure[144pt]{blockcode-images/block.png}{An example block}{500l.blockcode.block}
+\aosafigure[144pt]{blockcode-images/block.png}{예제 블록}{500l.blockcode.block}
 
 블록은 두 가지 선택적 구조 비트를 가집니다. 단일 숫자 매개변수(기본값 포함)를 가질 수 있고, 다른 블록들을 위한 컨테이너가 될 수 있습니다. 이들은 작업하기에 엄격한 제한이지만, 더 큰 시스템에서는 완화될 것입니다. Waterbear에서는 매개변수로 전달될 수 있는 표현식 블록들도 있으며; 다양한 타입의 다중 매개변수가 지원됩니다. 여기 엄격한 제약의 땅에서는 단 하나의 매개변수 타입으로 무엇을 할 수 있는지 보겠습니다.
 
@@ -344,7 +344,7 @@ HTML5 드래그 앤 드롭을 사용하고 있으며; 필요한 특정 JavaScrip
 
 `turtle.js`는 거북이 블록 언어의 구현입니다. 코드의 나머지 부분에 함수를 노출하지 않으므로, 다른 것들이 그것에 의존할 수 없습니다. 이런 방식으로 하나의 파일을 교체하여 새로운 블록 언어를 만들 수 있고 코어에서 아무것도 깨지지 않을 것을 알 수 있습니다.
 
-\aosafigure[240pt]{blockcode-images/turtle_example.png}{Example of Turtle code running}{500l.blockcode.turtle}
+\aosafigure[240pt]{blockcode-images/turtle_example.png}{Turtle 코드 실행 예제}{500l.blockcode.turtle}
 
 거북이 프로그래밍은 Logo에 의해 처음 대중화된 그래픽 프로그래밍 스타일로, 펜을 들고 다니는 상상의 거북이가 화면을 걷는 것입니다. 거북이에게 펜을 들라고(그리기를 멈추지만 여전히 이동), 펜을 내려놓으라고(가는 곳마다 선을 남기며), 몇 걸음 앞으로 이동하라고, 또는 몇 도 회전하라고 말할 수 있습니다. 이러한 명령들만으로도, 루핑과 결합하면, 놀랍도록 복잡한 이미지를 만들 수 있습니다.
 

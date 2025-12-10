@@ -31,9 +31,9 @@ _[Dr. Christian Muise](http://haz.ca)는 [MIT CSAIL](http://www.csail.mit.edu/)�
 
 두 개의 작업과 두 개의 기계가 있는 간단한 예를 생각해 보겠습니다. 첫 번째 작업에는 각각 1분과 2분이 걸리는 태스크 $\mathbf{A}$와 $\mathbf{B}$가 있습니다. 두 번째 작업에는 각각 2분과 1분이 걸리는 태스크 $\mathbf{C}$와 $\mathbf{D}$가 있습니다. $\mathbf{A}$는 $\mathbf{B}$ 앞에 와야 하고 $\mathbf{C}$는 $\mathbf{D}$ 앞에 와야 한다는 점을 기억하십시오. 두 개의 작업이 있으므로 고려해야 할 순열은 두 개뿐입니다. 작업 2를 작업 1보다 먼저 순서를 정하면 메이크스팬은 5입니다 (\aosafigref{500l.flowshop.example1}); 반면에 작업 1을 작업 2보다 먼저 순서를 정하면 메이크스팬은 4에 불과합니다 (\aosafigref{500l.flowshop.example2}).
 
-\aosafigure[240pt]{flow-shop-images/example1.png}{Flow Shop Example 1}{500l.flowshop.example1}
+\aosafigure[240pt]{flow-shop-images/example1.png}{플로 샵 예제 1}{500l.flowshop.example1}
 
-\aosafigure[240pt]{flow-shop-images/example2.png}{Flow Shop Example 2}{500l.flowshop.example2}
+\aosafigure[240pt]{flow-shop-images/example2.png}{플로 샵 예제 2}{500l.flowshop.example2}
 
 어떤 태스크도 더 일찍 시작할 여지가 없다는 점에 주목하십시오. 좋은 순열의 기본 원칙은 기계가 처리할 태스크 없이 남겨지는 시간을 최소화하는 것입니다.
 
@@ -63,7 +63,7 @@ import neighbourhood as neigh
 import heuristics as heur
 
 ##############
-## Settings ##
+## 설정 ##
 ##############
 TIME_LIMIT = 300.0 # Time (in seconds) to run the solver
 TIME_INCREMENT = 13.0 # Time (in seconds) in between heuristic measurements
@@ -501,9 +501,9 @@ def heur_random_hillclimbing(data, candidates):
 
 ```python
 ################
-## Strategies ##
+## 전략 ##
 #################################################
-## A strategy is a particular configuration
+## 전략은 특정 구성이다
 ##  of neighbourhood generator (to compute
 ##  the next set of candidates) and heuristic
 ##  computation (to select the best candidate).

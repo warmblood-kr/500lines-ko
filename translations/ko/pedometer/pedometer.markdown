@@ -27,7 +27,7 @@ _Dessy는 직업적으로는 엔지니어이고, 열정적으로는 기업가이
 
 \aosafigref{500l.pedometer.accelerationtotal}는 세 개의 시계열을 가진 가속도계 신호의 예를 보여줍니다.
 
-\aosafigure[333pt]{pedometer-images/acceleration-total.png}{Example acceleration signal}{500l.pedometer.accelerationtotal}
+\aosafigure[333pt]{pedometer-images/acceleration-total.png}{예제 가속도 신호}{500l.pedometer.accelerationtotal}
 
 가속도계의 *샘플링 속도*는 종종 조정할 수 있으며, 초당 측정 횟수를 결정합니다. 예를 들어, 샘플링 속도가 100인 가속도계는 매초마다 $x$, $y$, $z$ 시계열 각각에 대해 100개의 데이터 포인트를 반환합니다.
 
@@ -41,7 +41,7 @@ _Dessy는 직업적으로는 엔지니어이고, 열정적으로는 기업가이
 
 가속도계가 장착된 스마트폰을 셔츠 주머니에 넣고 걷는 사람을 살펴봅시다(\aosafigref{500l.pedometer.walk1}).
 
-\aosafigure[240pt]{pedometer-images/walk-1.png}{Walking}{500l.pedometer.walk1}
+\aosafigure[240pt]{pedometer-images/walk-1.png}{걷기}{500l.pedometer.walk1}
 
 단순화를 위해, 이 사람은:
 
@@ -61,7 +61,7 @@ _Dessy는 직업적으로는 엔지니어이고, 열정적으로는 기업가이
 
 스마트폰이 화면을 위로 향한 채 테이블 위에 놓여 있다고 가정해봅시다. 이 방향에서, 우리의 좌표계는 음의 $z$ 방향이 중력이 작용하는 방향이 되도록 설정되어 있습니다. 중력은 우리 휴대폰을 음의 $z$ 방향으로 끌어당기므로, 우리의 가속도계는 *완전히 정지해 있을 때조차* 음의 $z$ 방향으로 9.8 $m/s^2$의 가속도를 기록할 것입니다. 이 방향에서 우리 휴대폰의 가속도계 데이터는 \aosafigref{500l.pedometer.accelerationtotalphonestill}에 나와 있습니다.
 
-\aosafigure[333pt]{pedometer-images/acceleration-total-phone-still.png}{Example accelerometer data at rest}{500l.pedometer.accelerationtotalphonestill}
+\aosafigure[333pt]{pedometer-images/acceleration-total-phone-still.png}{정지 상태의 가속도계 데이터 예제}{500l.pedometer.accelerationtotalphonestill}
 
 $x(t)$와 $y(t)$는 0에서 일정하게 유지되는 반면, $z(t)$는 -1 *g*에서 일정함을 주목하세요. 우리의 가속도계는 중력 가속도를 포함한 모든 가속도를 기록합니다.
 
@@ -69,7 +69,7 @@ $x(t)$와 $y(t)$는 0에서 일정하게 유지되는 반면, $z(t)$는 -1 *g*�
 
 사용자 가속도는 사용자의 움직임으로 인한 기기의 가속도이며, 휴대폰이 완전히 정지해 있을 때는 0에서 일정합니다. 그러나 사용자가 기기와 함께 움직일 때, 사람이 일정한 가속도로 움직이기는 어렵기 때문에 사용자 가속도는 거의 일정하지 않습니다.
 
-\aosafigure[240pt]{pedometer-images/component-signals-2.png}{Component signals}{500l.pedometer.componentsignals}
+\aosafigure[240pt]{pedometer-images/component-signals-2.png}{구성 요소 신호}{500l.pedometer.componentsignals}
 
 걸음을 세기 위해서는, 중력 방향으로 사용자가 만든 튕김에 관심이 있습니다. 즉, 3차원 가속도 신호에서 **중력 방향의 사용자 가속도**를 설명하는 1차원 시계열을 분리하는 데 관심이 있습니다(\aosafigref{500l.pedometer.componentsignals}).
 
@@ -85,7 +85,7 @@ $x(t)$와 $y(t)$는 0에서 일정하게 유지되는 반면, $z(t)$는 -1 *g*�
 
 아야. 이제 세 구성 요소 모두가 0이 아닌 중력 가속도를 가지므로, 중력 방향의 사용자 가속도가 세 시계열 모두에 분산됩니다. 중력 방향의 사용자 가속도를 결정하려면, 먼저 중력이 어느 방향으로 작용하고 있는지 알아야 합니다. 이를 위해 세 시계열 각각에서 전체 가속도를 사용자 가속도 시계열과 중력 가속도 시계열로 분할해야 합니다(\aosafigref{500l.pedometer.component3}).
 
-\aosafigure[240pt]{pedometer-images/component-signals-3.png}{More complicated component signals}{500l.pedometer.component3}
+\aosafigure[240pt]{pedometer-images/component-signals-3.png}{더 복잡한 구성 요소 신호}{500l.pedometer.component3}
 
 그러면 각 구성 요소에서 중력 방향에 있는 사용자 가속도 부분을 분리할 수 있어, 중력 방향의 사용자 가속도 시계열만을 얻을 수 있습니다.
 
@@ -143,7 +143,7 @@ $$z_{g}(t) = \alpha_{0}(z(t)\beta_{0} + z(t-1)\beta_{1} + z(t-2)\beta_{2} - z_{g
 
 저역 통과 필터링 후의 결과 시계열은 \aosafigref{500l.pedometer.accelerationgravitational}에 있습니다.
 
-\aosafigure[333pt]{pedometer-images/acceleration-gravitational.png}{Gravitational acceleration}{500l.pedometer.accelerationgravitational}
+\aosafigure[333pt]{pedometer-images/acceleration-gravitational.png}{중력 가속도}{500l.pedometer.accelerationgravitational}
 
 $x_{g}(t)$와 $z_{g}(t)$는 0 주위에서 맴돌고, $y_{g}(t)$는 매우 빠르게 $-1g$로 떨어집니다. $y_{g}(t)$의 초기 0 값은 공식의 초기화에서 나온 것입니다.
 
@@ -161,7 +161,7 @@ $$
 
 결과는 \aosafigref{500l.pedometer.accelerationuser}에서 볼 수 있는 시계열입니다. 우리는 성공적으로 전체 가속도를 사용자 가속도와 중력 가속도로 분할했습니다!
 
-\aosafigure[333pt]{pedometer-images/acceleration-user.png}{Split acceleration}{500l.pedometer.accelerationuser}
+\aosafigure[333pt]{pedometer-images/acceleration-user.png}{분리된 가속도}{500l.pedometer.accelerationuser}
 
 
 ### 2. 중력 방향의 사용자 가속도 분리하기
@@ -176,14 +176,14 @@ $x_{u}(t)$, $y_{u}(t)$, $z_{u}(t)$는 중력 방향의 움직임뿐만 아니라
 
 내적은 우리를 3차원 공간에서 1차원 공간으로 이동시킵니다(\aosafigref{500l.pedometer.dotproduct}). 두 시계열, 즉 사용자 가속도와 중력 가속도의 내적을 구하면(둘 다 3차원 공간에 있음), 중력 방향의 사용자 가속도 부분을 나타내는 1차원 공간의 단일 시계열이 남게 됩니다. 우리는 이 새로운 시계열을 임의로 $a(t)$라고 부르겠습니다. 모든 중요한 시계열은 이름을 가질 자격이 있으니까요.
 
-\aosafigure[333pt]{pedometer-images/dot-product-explanation.png}{The dot product}{500l.pedometer.dotproduct}
+\aosafigure[333pt]{pedometer-images/dot-product-explanation.png}{내적}{500l.pedometer.dotproduct}
 
 
 #### 내적 구현하기
 
 우리는 공식 $a(t) = x_{u}(t)x_{g}(t) + y_{u}(t)y_{g}(t) + z_{u}(t)z_{g}(t)$를 사용하여 앞선 예에 대한 내적을 구현할 수 있으며, 이는 1차원 공간에서 $a(t)$를 남겨둡니다(\aosafigref{500l.pedometer.accelerationdotproduct}).
 
-\aosafigure[333pt]{pedometer-images/acceleration-dotproduct.png}{Implementing the dot product}{500l.pedometer.accelerationdotproduct}
+\aosafigure[333pt]{pedometer-images/acceleration-dotproduct.png}{내적 구현}{500l.pedometer.accelerationdotproduct}
 
 이제 $a(t)$에서 걸음이 어디에 있는지 시각적으로 선별할 수 있습니다. 내적은 매우 강력하면서도 아름답게 단순합니다.
 
@@ -191,7 +191,7 @@ $x_{u}(t)$, $y_{u}(t)$, $z_{u}(t)$는 중력 방향의 움직임뿐만 아니라
 
 겉보기에 단순한 문제가 현실 세계와 실제 사람들의 도전 과제를 던져 넣었을 때 얼마나 빠르게 복잡해졌는지 보았습니다. 그러나 우리는 걸음을 세는 것에 훨씬 더 가까워졌고, $a(t)$가 우리의 이상적인 사인파를 닮아가기 시작한 것을 볼 수 있습니다. 하지만 "어느 정도만" 시작한 것입니다. 우리는 여전히 지저분한 $a(t)$ 시계열을 더 부드럽게 만들어야 합니다. 현재 상태의 $a(t)$에는 네 가지 주요 문제(\aosafigref{500l.pedometer.problems})가 있습니다. 각각을 살펴봅시다.
 
-\aosafigure[333pt]{pedometer-images/jumpy-slow-short-bumpy.png}{Jumpy, slow, short, bumpy}{500l.pedometer.problems}
+\aosafigure[333pt]{pedometer-images/jumpy-slow-short-bumpy.png}{불규칙, 느림, 짧음, 울퉁불퉁}{500l.pedometer.problems}
 
 
 #### 1. 지터링 피크
@@ -214,7 +214,7 @@ $a(t)$는 매우 "지터링"입니다. 휴대폰이 각 걸음마다 흔들릴 �
 
 #### 딱 적절한 피크
 
-\aosafigure[333pt]{pedometer-images/acceleration-filtered.png}{Tweaked peaks}{500l.pedometer.accelerationfiltered}
+\aosafigure[333pt]{pedometer-images/acceleration-filtered.png}{조정된 피크}{500l.pedometer.accelerationfiltered}
 
 \noindent 이 네 가지 시나리오를 고려함으로써, 지저분한 $a(t)$를 이상적인 사인파에 상당히 가깝게 만들어(\aosafigref{500l.pedometer.accelerationfiltered}) 걸음을 셀 수 있게 되었습니다.
 
@@ -326,7 +326,7 @@ $$
 
 이를 처리하는 가장 깨끗한 방법은 두 입력 형식을 가능한 한 빨리 표준 형식에 맞추어, 프로그램의 나머지 부분이 이 새로운 표준 형식과 작동하도록 하는 것입니다. 우리의 솔루션은 사용자 가속도와 중력 가속도를 별도로 작업해야 하므로, 표준 형식은 두 가속도로 분할되어야 할 것입니다(\aosafigref{500l.pedometer.standardformat}).
 
-\aosafigure[240pt]{pedometer-images/standard-format.png}{Standard format}{500l.pedometer.standardformat}
+\aosafigure[240pt]{pedometer-images/standard-format.png}{표준 포맷}{500l.pedometer.standardformat}
 
 표준 형식을 사용하면 각 요소가 특정 시점의 가속도를 나타내므로 시계열을 저장할 수 있습니다. 이를 배열의 배열의 배열로 정의했습니다. 이 양파를 껍질을 벗겨봅시다.
 
@@ -338,7 +338,7 @@ $$
 
 우리 시스템의 입력은 가속도계의 데이터, 걷기를 수행하는 사용자에 대한 정보(성별, 보폭 등), 그리고 시험 걷기 자체에 대한 정보(샘플링 속도, 실제로 걸은 걸음 수 등)가 될 것입니다. 우리 시스템은 신호 처리 솔루션을 적용하고, 계산된 걸음 수, 실제 걸음과 계산된 걸음 사이의 차이, 이동 거리, 경과 시간을 출력할 것입니다. 입력에서 출력까지의 전체 과정은 파이프라인으로 볼 수 있습니다(\aosafigref{500l.pedometer.pipeline}).
 
-\aosafigure[240pt]{pedometer-images/pipeline.png}{The pipeline}{500l.pedometer.pipeline}
+\aosafigure[240pt]{pedometer-images/pipeline.png}{파이프라인}{500l.pedometer.pipeline}
 
 관심사의 분리 정신에 따라, 파이프라인의 각각의 구별되는 구성 요소&mdash;파싱, 처리, 분석&mdash;에 대한 코드를 개별적으로 작성할 것입니다.
 
@@ -346,7 +346,7 @@ $$
 
 가능한 한 빨리 데이터를 표준 형식으로 만들고 싶으므로, 두 개의 알려진 입력 형식을 취하고 이를 표준 출력 형식으로 변환할 수 있는 파서를 파이프라인의 첫 번째 구성 요소로 작성하는 것이 합리적입니다. 우리의 표준 형식은 사용자 가속도와 중력 가속도를 분리하므로, 데이터가 결합 형식이라면 파서가 먼저 저역 통과 필터를 통과시켜 표준 형식으로 변환해야 할 것입니다.
 
-\aosafigure[240pt]{pedometer-images/input-data-workflow-1.png}{Initial workflow}{500l.pedometer.input1}
+\aosafigure[240pt]{pedometer-images/input-data-workflow-1.png}{초기 워크플로}{500l.pedometer.input1}
 
 향후 다른 입력 형식을 추가해야 한다면, 수정해야 할 코드는 이 파서뿐입니다. 관심사를 다시 한 번 분리하여, 파싱을 처리할 `Parser` 클래스를 만들어봅시다.
 
@@ -422,7 +422,7 @@ $$[[[x_{u}^1,y_{u}^1,z_{u}^1], [x_{g}^1,y_{g}^1,z_{g}^1]], ... [[x_{u}^n,y_{u}^n
 
 이제 데이터가 표준 형식으로 되어 있으므로, 걸음을 세기 위해 분석할 수 있는 상태로 만들기 위해 처리할 수 있습니다(\aosafigref{500l.pedometer.input2}).
 
-\aosafigure[166pt]{pedometer-images/input-data-workflow-2.png}{Processing}{500l.pedometer.input2}
+\aosafigure[166pt]{pedometer-images/input-data-workflow-2.png}{처리}{500l.pedometer.input2}
 
 처리의 목적은 표준 형식의 데이터를 가져와 점진적으로 정리하여 이상적인 사인파에 가능한 한 가까운 상태로 만드는 것입니다. 내적을 구하는 것과 필터링이라는 두 가지 처리 작업은 상당히 구별되지만, 둘 다 데이터를 처리하기 위한 것이므로 `Processor`라는 하나의 클래스를 만들 것입니다.
 
@@ -677,13 +677,13 @@ end
 
 사용자가 `/uploads`로 이동하여 앱에 처음 들어왔을 때, 기존 데이터의 테이블과 가속도계 출력 파일 및 시험과 사용자 정보를 업로드하여 새 데이터를 제출하는 양식을 봅니다(\aosafigref{500l.pedometer.app1}).
 
-\aosafigure[240pt]{pedometer-images/app1.png}{Upload view}{500l.pedometer.app1}
+\aosafigure[240pt]{pedometer-images/app1.png}{업로드 뷰}{500l.pedometer.app1}
 
 양식을 제출하면 데이터를 파일 시스템에 저장하고, 파싱, 처리, 분석한 후 테이블의 새 항목과 함께 `/uploads`로 다시 리디렉션됩니다.
 
 항목의 **Detail** 링크를 클릭하면 사용자에게 \aosafigref{500l.pedometer.app3}의 다음 뷰가 제시됩니다.
 
-\aosafigure[240pt]{pedometer-images/app3.png}{Detail view}{500l.pedometer.app3}
+\aosafigure[240pt]{pedometer-images/app3.png}{상세 뷰}{500l.pedometer.app3}
 
 제시된 정보에는 업로드 양식을 통해 사용자가 입력한 값, 우리 프로그램이 계산한 값, 내적 연산 후의 시계열 그래프, 그리고 필터링 후의 시계열 그래프가 포함됩니다. 사용자는 *Back to Uploads* 링크를 사용하여 `/uploads`로 다시 이동할 수 있습니다.
 

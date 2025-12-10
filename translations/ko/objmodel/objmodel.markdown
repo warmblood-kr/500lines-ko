@@ -161,7 +161,7 @@ OBJECT.cls = TYPE
 
 새로운 메타클래스를 정의하기 위해서는 ``TYPE``을 서브클래스하는 것으로 충분합니다. 그러나 이 장의 나머지 부분에서는 그렇게 하지 않을 것입니다; 모든 클래스의 메타클래스로 단순히 항상 ``TYPE``을 사용할 것입니다.
 
-\aosafigure[240pt]{objmodel-images/inheritance.png}{Inheritance}{500l.objmodel.inheritance}
+\aosafigure[240pt]{objmodel-images/inheritance.png}{상속}{500l.objmodel.inheritance}
 
 이제 첫 번째 테스트가 통과합니다. 두 번째 테스트는 클래스에서도 속성 읽기와 쓰기가 작동하는지 확인합니다. 작성하기 쉽고 즉시 통과합니다. \newpage
 
@@ -669,7 +669,7 @@ a different map, which ``next_map`` computes. The method uses the ``next_maps``
 dictionary to cache already created maps. That way, objects that have the same
 layout also end up using the same ``Map`` object.
 
-\aosafigure[166pt]{objmodel-images/maptransition.png}{Map transitions}{500l.objmodel.maptransition}
+\aosafigure[166pt]{objmodel-images/maptransition.png}{맵 전이}{500l.objmodel.maptransition}
 
 The ``Instance`` implementation that uses maps looks like this:
 

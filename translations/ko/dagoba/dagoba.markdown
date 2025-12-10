@@ -729,7 +729,7 @@ Dagoba.addPipetype('back', function(graph, args, gremlin, state) {
 여기서 모든 실제 작업을 수행하기 위해 `Dagoba.gotoVertex` 도우미 함수를 사용한다. 이제 그것과 다른 몇 가지 도우미들을 살펴보자.
 
 
-## Helpers
+## 헬퍼
 
 위의 파이프타입들은 작업을 수행하기 위해 몇 가지 도우미들에 의존한다. 인터프리터로 들어가기 전에 그것들을 빠르게 살펴보자.
 
@@ -1076,7 +1076,7 @@ Dagoba.transform = function(program) {
 또한 이 트랜스포머 시스템을 사용하여 최적화와 관련 없는 새로운 기능을 추가할 수도 있다. 이제 그런 경우를 살펴보자.
 
 
-## Aliases
+## 별칭
 
 `g.v('Thor').out().in()`와 같은 질의를 만드는 것은 꽤 간결하지만, 이것은 토르의 형제자매인가 아니면 그의 동료들인가? 어느 해석도 완전히 만족스럽지 않다. 우리가 의미하는 바를 말하는 것이 더 좋을 것이다: `g.v('Thor').parents().children()` 또는 `g.v('Thor').children().parents()` 중 하나로.
 

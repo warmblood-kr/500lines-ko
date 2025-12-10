@@ -51,14 +51,14 @@ HTTP는 의도적으로 단순합니다:
 프로그램에 의해 동적으로 생성되거나,
 또는 둘의 조합일 수 있습니다.
 
-\aosafigure[240pt]{web-server-images/http-cycle.png}{The HTTP Cycle}{500l.web-server.cycle}
+\aosafigure[240pt]{web-server-images/http-cycle.png}{HTTP 사이클}{500l.web-server.cycle}
 
 HTTP 요청에서 가장 중요한 것은 이것이 단순한 텍스트라는 점입니다:
 원하는 프로그램이라면 누구든지 HTTP 요청을 생성하거나 파싱할 수 있습니다.
 하지만 제대로 인식되려면,
 이 텍스트는 \aosafigref{500l.web-server.request}에 나타난 부분들을 가져야 합니다.
 
-\aosafigure[240pt]{web-server-images/http-request.png}{An HTTP Request}{500l.web-server.request}
+\aosafigure[240pt]{web-server-images/http-request.png}{HTTP 요청}{500l.web-server.request}
 
 HTTP 메서드는 거의 항상 "GET"(정보를 가져오기 위해) 또는 "POST"(폼 데이터를 제출하거나 파일을 업로드하기 위해) 중 하나입니다.
 URL은 클라이언트가 원하는 것을 지정합니다;
@@ -94,7 +94,7 @@ HTTP 헤더에서는 키가 몇 번이든 나타날 수 있습니다.
 
 HTTP 응답은 HTTP 요청과 같은 형식을 갖습니다(\aosafigref{500l.web-server.response}):
 
-\aosafigure[240pt]{web-server-images/http-response.png}{An HTTP Response}{500l.web-server.response}
+\aosafigure[240pt]{web-server-images/http-response.png}{HTTP 응답}{500l.web-server.response}
 
 버전, 헤더, 본문은 같은 형태와 의미를 갖습니다.
 상태 코드는 요청이 처리될 때 무엇이 일어났는지를 나타내는 숫자입니다:
@@ -192,7 +192,7 @@ content length: 61
 `text`는 실제 데이터입니다
 (이 경우에는 HTML 페이지).
 
-## Hello, Web
+## 안녕, 웹
 
 이제 첫 번째 간단한 웹 서버를 작성할 준비가 되었습니다.
 기본 아이디어는 간단합니다:

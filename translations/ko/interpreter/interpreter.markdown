@@ -740,7 +740,7 @@ class VirtualMachine(object):
         return why
 ```
 
-## The Instructions
+## 명령어
 
 남은 것은 명령어들을 위한 수십 개의 메서드를 구현하는 것입니다. 실제 명령어들은 인터프리터의 가장 흥미롭지 않은 부분이므로, 여기서는 몇 개만 보여주지만 전체 구현은 [GitHub에서 이용 가능합니다](https://github.com/nedbat/byterun). (위에서 디스어셈블한 모든 코드 샘플을 실행하기에 충분한 명령어들이 여기에 포함되어 있습니다.)
 
@@ -929,7 +929,7 @@ class VirtualMachine(object):
         return "return"
 ```
 
-## Dynamic Typing: What the Compiler Doesn't Know
+## 동적 타이핑: 컴파일러가 모르는 것
 
 아마 들어본 적이 있는 한 가지는 파이썬이 "동적" 언어, 특히 "동적으로 타입이 지정되는" 언어라는 것입니다. 지금까지 우리가 한 작업은 이 설명에 어느 정도 빛을 비추어 줍니다.
 

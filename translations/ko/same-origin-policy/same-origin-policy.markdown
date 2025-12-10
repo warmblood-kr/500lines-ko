@@ -192,9 +192,9 @@ check {
 
 이 `check` 명령이 주어지면, 분석기는 (명시된 범위까지) 시스템의 모든 가능한 동작을 탐색하고, 속성을 위반하는 것을 찾으면 그 인스턴스를 \aosafigref{500l.same-origin-policy.fig-http-2a}와 \aosafigref{500l.same-origin-policy.fig-http-2b}에서 보여지는 바와 같이 *반례*로 표시합니다.
 
-\aosafigure[180pt]{same-origin-policy-images/fig-http-2a.png}{Counterexample at time 0}{500l.same-origin-policy.fig-http-2a}
+\aosafigure[180pt]{same-origin-policy-images/fig-http-2a.png}{시간 0에서의 반례}{500l.same-origin-policy.fig-http-2a}
 
-\aosafigure[180pt]{same-origin-policy-images/fig-http-2b.png}{Counterexample at time 1}{500l.same-origin-policy.fig-http-2b}
+\aosafigure[180pt]{same-origin-policy-images/fig-http-2b.png}{시간 1에서의 반례}{500l.same-origin-policy.fig-http-2b}
 
 This counterexample again shows an HTTP request being made by a
 client, but with two different servers. (In the Alloy visualizer,
@@ -413,7 +413,7 @@ such as its width, height, domain, and title. For our discussion of
 the SOP, we are only interested in the domain property, which we will
 introduce in a later section.
 
-## Example Applications
+## 예제 애플리케이션
 
 As we've seen earlier, given a `run` or `check` command, the Alloy
 Analyzer generates a scenario (if it exists) that is consistent with
@@ -505,7 +505,7 @@ domain name subsumes itself.
 (전체 모델은 `example.als` 참조). 하지만 이 장의 나머지 부분에서
 이 애플리케이션들을 계속 예제로 사용할 것입니다.
 
-## Security Properties
+## 보안 속성
 
 Before we get to the SOP itself, there is an important question that we
 have not discussed yet: What exactly do we mean when we say our system
@@ -663,14 +663,14 @@ confidentiality property, the analyzer generates the scenario seen in
 \aosafigref{500l.same-origin-policy.fig-attack-1b}, which shows how
 `EvilScript` may access a piece of critical data (`MyInboxInfo`).
 
-\aosafigure[180pt]{same-origin-policy-images/fig-attack-1a.png}{Confidentiality counterexample at time 0}{500l.same-origin-policy.fig-attack-1a}
-\aosafigure[180pt]{same-origin-policy-images/fig-attack-1b.png}{Confidentiality counterexample at time 1}{500l.same-origin-policy.fig-attack-1b}
+\aosafigure[180pt]{same-origin-policy-images/fig-attack-1a.png}{시간 0에서의 기밀성 반례}{500l.same-origin-policy.fig-attack-1a}
+\aosafigure[180pt]{same-origin-policy-images/fig-attack-1b.png}{시간 1에서의 기밀성 반례}{500l.same-origin-policy.fig-attack-1b}
 
 이 반례는 두 단계를 포함합니다. 첫 번째 단계(\aosafigref{500l.same-origin-policy.fig-attack-1a})에서, `EvilDomain`의 `AdBanner` 내부에서 실행되는 `EvilScript`는 `EmailDomain`에서 유래한 `InboxPage`의 콘텐츠를 읽습니다. 다음 단계(\aosafigref{500l.same-origin-policy.fig-attack-1b})에서, `EvilScript`는 `XmlHttpRequest` 호출을 만들어 동일한 콘텐츠(`MyInboxInfo`)를 `EvilServer`에 보냅니다. 여기서 문제의 핵심은 한 도메인 하에서 실행되는 스크립트가 다른 도메인의 문서 콘텐츠를 읽을 수 있다는 것입니다; 다음 섹션에서 보게 되겠지만, 이는 정확히 SOP가 방지하도록 설계된 시나리오 중 하나입니다.
 
 단일 단언에 대해 여러 반례가 있을 수 있습니다. 시스템이 기밀성 속성을 위반할 수 있는 다른 방법을 보여주는 \aosafigref{500l.same-origin-policy.fig-attack-2}를 고려해보세요.
 
-\aosafigure[180pt]{same-origin-policy-images/fig-attack-2.png}{Another confidentiality violation}{500l.same-origin-policy.fig-attack-2}
+\aosafigure[180pt]{same-origin-policy-images/fig-attack-2.png}{또 다른 기밀성 위반}{500l.same-origin-policy.fig-attack-2}
 
 In this scenario, instead of reading the content of the inbox page,
 `EvilScript` directly makes a `GetInboxInfo` request to `EmailServer`.
@@ -688,7 +688,7 @@ different domain.
 이 두 반례는 스크립트의 동작을 제한하기 위해 추가적인 조치가
 필요하다는 것을 알려줍니다, 특히 일부 스크립트가 악의적일 수 있기
 때문입니다. 이것이 바로 SOP가 등장하는 이유입니다.
-## Same-Origin Policy
+## 동일 출처 정책
 
 Before we can state the SOP, the first thing we should do is to introduce the
 notion of an _origin_, which is composed of a protocol, host, and optional port:

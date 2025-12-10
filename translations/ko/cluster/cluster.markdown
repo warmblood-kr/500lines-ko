@@ -415,7 +415,7 @@ class Acceptor(Role):
 복제본은 클라이언트로부터의 ``Invoke`` 메시지에 응답하여 새로운 제안을 생성하며, 사용되지 않은 것으로 믿는 슬롯을 선택하고 현재 리더에게 ``Propose`` 메시지를 보냅니다(\aosafigref{500l.cluster.replica}.)
 더욱이, 선택된 슬롯에 대한 합의가 다른 제안에 대한 것이라면, 복제본은 새로운 슬롯으로 다시 제안해야 합니다.
 
-\aosafigure[240pt]{cluster-images/replica.png}{Replica Role Control Flow}{500l.cluster.replica}
+\aosafigure[240pt]{cluster-images/replica.png}{복제본 역할 제어 흐름}{500l.cluster.replica}
 
 ``Decision`` 메시지들은 클러스터가 합의에 도달한 슬롯들을 나타냅니다.
 여기서, 복제본들은 새로운 결정을 저장한 다음, 결정되지 않은 슬롯에 도달할 때까지 상태 머신을 실행합니다.
@@ -437,19 +437,19 @@ class Acceptor(Role):
 
 리더 역할이 활성화될 때, 같은 노드의 복제본에게 ``Adopted`` 메시지를 보냅니다(\aosafigref{500l.cluster.adopted}.)
 
-\aosafigure[240pt]{cluster-images/adopted.png}{Adopted}{500l.cluster.adopted}
+\aosafigure[240pt]{cluster-images/adopted.png}{채택됨}{500l.cluster.adopted}
 
 수락자 역할이 새로운 리더에게 ``Promise``를 보낼 때, 자신의 로컬 복제본에게 ``Accepting`` 메시지를 보냅니다(\aosafigref{500l.cluster.accepting}.)
 
-\aosafigure[240pt]{cluster-images/accepting.png}{Accepting}{500l.cluster.accepting}
+\aosafigure[240pt]{cluster-images/accepting.png}{수락 중}{500l.cluster.accepting}
 
 활성 리더는 하트비트로 ``Active`` 메시지를 보냅니다(\aosafigref{500l.cluster.active}.) ``LEADER_TIMEOUT``이 만료되기 전에 그러한 메시지가 도착하지 않으면, 복제본은 리더가 죽었다고 가정하고 다음 리더로 넘어갑니다. 이 경우, 모든 복제본이 *같은* 새로운 리더를 선택하는 것이 중요하며, 이를 위해 구성원들을 정렬하고 목록에서 다음 것을 선택합니다.
 
-\aosafigure[240pt]{cluster-images/active.png}{Active}{500l.cluster.active}
+\aosafigure[240pt]{cluster-images/active.png}{활성}{500l.cluster.active}
 
 마지막으로, 노드가 네트워크에 참여할 때, 부트스트랩 역할이 ``Join`` 메시지를 보냅니다(\aosafigref{500l.cluster.bootstrap}.) 복제본은 가장 최근의 상태를 포함하는 ``Welcome`` 메시지로 응답하여, 새로운 노드가 빠르게 속도를 맞출 수 있도록 합니다.
 
-\aosafigure[240pt]{cluster-images/bootstrap.png}{Bootstrap}{500l.cluster.bootstrap}
+\aosafigure[240pt]{cluster-images/bootstrap.png}{부트스트랩}{500l.cluster.bootstrap}
 
 ```python
 class Replica(Role):
@@ -637,7 +637,7 @@ class Leader(Role):
 스카우트는 ``Prepare`` 메시지를 보내고(필요하면 재전송하고), 피어의 과반수로부터 응답을 듣거나 선점당할 때까지 ``Promise`` 응답을 수집합니다.
 각각 ``Adopted`` 또는 ``Preempted``로 리더에게 다시 통신합니다. \newpage
 
-\aosafigure[240pt]{cluster-images/leaderscout.png}{Scout}{500l.cluster.leaderscout}
+\aosafigure[240pt]{cluster-images/leaderscout.png}{스카우트}{500l.cluster.leaderscout}
 
 ```python
 class Scout(Role):
@@ -695,7 +695,7 @@ class Scout(Role):
 제안이 수락되면, 커맨더는 모든 노드에 ``Decision`` 메시지를 브로드캐스트합니다.
 리더에게 ``Decided`` 또는 ``Preempted``로 응답합니다.
 
-\aosafigure[240pt]{cluster-images/leadercommander.png}{Commander}{500l.cluster.leadercommander}
+\aosafigure[240pt]{cluster-images/leadercommander.png}{커맨더}{500l.cluster.leadercommander}
 
 ```python
 class Commander(Role):

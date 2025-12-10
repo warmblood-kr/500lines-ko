@@ -50,7 +50,7 @@ def fetch(url):
 
 Kegel은 1999년에 "C10K"라는 용어를 만들었습니다. 1만 개의 연결은 이제 소규모로 들리지만, 문제는 종류가 아니라 규모만 바뀌었습니다. 그 당시 C10K에 대해 연결당 스레드를 사용하는 것은 비실용적이었습니다. 이제 한계는 훨씬 더 높습니다. 실제로 우리의 장난감 웹 크롤러는 스레드로도 잘 작동할 것입니다. 하지만 수십만 개의 연결을 가진 매우 대규모 애플리케이션의 경우, 한계가 여전히 남아 있습니다: 대부분의 시스템이 여전히 소켓을 생성할 수 있지만 스레드가 부족해지는 한계가 있습니다. 이를 어떻게 극복할 수 있을까요?
 
-## Async
+## 비동기
 
 비동기 I/O 프레임워크는 *논블로킹* 소켓을 사용하여 단일 스레드에서 동시 연산을 수행합니다. 우리의 비동기 크롤러에서는 서버에 연결을 시작하기 전에 소켓을 논블로킹으로 설정합니다:
 
@@ -293,7 +293,7 @@ Exception: parse error
 
 따라서 멀티스레딩과 비동기의 상대적 효율성에 대한 긴 논쟁과는 별개로, 어느 것이 더 오류가 발생하기 쉬운지에 대한 또 다른 논쟁이 있습니다: 스레드는 동기화를 실수하면 데이터 레이스에 취약하지만, 콜백은 스택 찢기로 인해 디버그하기 까다롭습니다. 
 
-## Coroutines
+## 코루틴
 
 우리는 약속으로 여러분을 유혹합니다. 콜백의 효율성과 멀티스레드 프로그래밍의 고전적인 아름다움을 결합한 비동기 코드를 작성하는 것이 가능합니다. 이러한 조합은 "코루틴(coroutines)"이라고 하는 패턴으로 달성됩니다. Python 3.4의 표준 asyncio 라이브러리와 "aiohttp"라는 패키지를 사용하면, 코루틴에서 URL을 가져오는 것이 매우 직접적입니다[^10]:
 
@@ -362,7 +362,7 @@ Python 스택 프레임이 힙 메모리에 할당된다는 것을 이해하는 
 'foo'
 ```
 
-\aosafigure[240pt]{crawler-images/function-calls.png}{Function Calls}{500l.crawler.functioncalls}
+\aosafigure[240pt]{crawler-images/function-calls.png}{함수 호출}{500l.crawler.functioncalls}
 
 이제 Python 제너레이터를 위한 무대가 준비되었습니다. 제너레이터는 동일한 구성 요소&mdash;코드 객체와 스택 프레임&mdash;을 사용하여 놀라운 효과를 만들어냅니다.
 
@@ -404,7 +404,7 @@ Python 제너레이터는 스택 프레임과 코드에 대한 참조(즉, `gen_
 
 `gen_fn` 호출로부터 생성된 모든 제너레이터는 동일한 코드를 가리킵니다. 하지만 각각은 자체 스택 프레임을 가집니다. 이 스택 프레임은 실제 스택에 있지 않고, 사용을 기다리며 힙 메모리에 위치합니다:
 
-\aosafigure[240pt]{crawler-images/generator.png}{Generators}{500l.crawler.generators}
+\aosafigure[240pt]{crawler-images/generator.png}{제너레이터}{500l.crawler.generators}
 
 프레임은 "마지막 명령어" 포인터를 가지며, 이는 가장 최근에 실행한 명령어입니다. 처음에는 마지막 명령어 포인터가 -1로, 제너레이터가 아직 시작되지 않았음을 의미합니다:
 
@@ -460,7 +460,7 @@ StopIteration: done
 
 예외는 값을 가지며, 이는 제너레이터의 반환값입니다: 문자열 `"done"`입니다.
 
-## Building Coroutines With Generators
+## 제너레이터로 코루틴 구축하기
 
 따라서 제너레이터는 일시 중지될 수 있고, 값과 함께 재개될 수 있으며, 반환값을 가집니다. 스파게티 콜백 없이 비동기 프로그래밍 모델을 구축할 수 있는 좋은 기본 요소처럼 들립니다! 우리는 "코루틴"을 만들고자 합니다: 프로그램의 다른 루틴들과 협력적으로 스케줄링되는 루틴입니다. 우리의 코루틴은 Python의 표준 "asyncio" 라이브러리에 있는 것들의 단순화된 버전이 될 것입니다. asyncio에서와 마찬가지로, 제너레이터, 퓨처, "yield from" 문을 사용할 것입니다.
 
@@ -724,7 +724,7 @@ loop()
 
 `read`가 퓨처를 yield할 때, 작업은 `yield from` 문들의 채널을 통해 이를 받습니다. 마치 퓨처가 `fetch`에서 직접 yield된 것처럼 정확히 동작합니다. 루프가 퓨처를 해결하면, 작업은 그 결과를 `fetch`에 보내고, 그 값은 `read`에 의해 받아집니다. 마치 작업이 `read`를 직접 구동하는 것처럼 정확히 동작합니다:
 
-\aosafigure[240pt]{crawler-images/yield-from.png}{Yield From}{500l.crawler.yieldfrom}
+\aosafigure[240pt]{crawler-images/yield-from.png}{Yield From 구문}{500l.crawler.yieldfrom}
 
 코루틴 구현을 완벽하게 하기 위해, 하나의 흠을 다듬어봅시다: 우리 코드는 퓨처를 기다릴 때 `yield`를 사용하지만, 서브 코루틴에게 위임할 때는 `yield from`을 사용합니다. 코루틴이 일시 중지될 때마다 `yield from`을 사용한다면 더 세련될 것입니다. 그러면 코루틴은 기다리는 것의 유형에 대해 신경 쓸 필요가 없습니다.
 
@@ -934,7 +934,7 @@ Python은 이 코드가 `yield from` 문을 포함하는 것을 보고, 제너�
 
 우리가 사용하는 `aiohttp` 패키지는 기본적으로 리디렉션을 따라가서 최종 응답을 줄 것입니다. 하지만 우리는 그렇게 하지 않도록 설정하고, 크롤러에서 리디렉션을 처리합니다. 그래서 같은 목적지로 이어지는 리디렉션 경로들을 통합할 수 있습니다: 이 URL을 이미 보았다면, `self.seen_urls`에 있고 다른 진입점에서 이미 이 경로를 시작했다는 뜻입니다:
 
-\aosafigure[240pt]{crawler-images/redirects.png}{Redirects}{500l.crawler.redirects}
+\aosafigure[240pt]{crawler-images/redirects.png}{리다이렉트}{500l.crawler.redirects}
 
 크롤러가 "foo"를 가져와서 "baz"로 리디렉션되는 것을 보면, "baz"를 큐와 `seen_urls`에 추가합니다. 다음으로 가져온 페이지가 "bar"이고, 이것도 "baz"로 리디렉션된다면, 가져오기 도구는 "baz"를 다시 큐에 넣지 않습니다. 응답이 리디렉션이 아닌 페이지라면, `fetch`는 링크를 파싱하고
 새로운 것들을 큐에 넣습니다.
