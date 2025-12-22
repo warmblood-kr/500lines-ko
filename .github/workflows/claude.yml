@@ -30,12 +30,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Configure AWS Credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          aws-region: ap-northeast-2
-
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@v1
@@ -52,9 +46,3 @@ jobs:
           # Optional: Add claude_args to customize behavior and configuration
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://docs.claude.com/en/docs/claude-code/cli-reference for available options
-
-          use_bedrock: "true"
-        env:
-          AWS_REGION: us-east-1
-          CLAUDE_CODE_MAX_OUTPUT_TOKENS: 4096
-          MAX_THINKING_TOKENS: 1024
